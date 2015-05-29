@@ -1,0 +1,9 @@
+<h1>{{ problem_set.title }}</h1>
+<h4>Due Date: {{ problem_set.due_date }}</h4>
+<p>{{problem_set.description}}</p>
+
+
+{% for problem in problem_set.problems.all %}
+    <h3>{{ problem.title }}</h3>
+    <p>{{ problem.statement }}</p>
+{% endfor %}
