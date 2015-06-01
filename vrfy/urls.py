@@ -17,6 +17,6 @@ from django.conf.urls import include, url
 from django.contrib import admin
 
 urlpatterns = [
-	url(r'^course/', include('course.urls', namespace="course")),
+	url(r'^', include('course.urls', namespace="course")),
   url(r'^admin/', include(admin.site.urls)),
 ]
