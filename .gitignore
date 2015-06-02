@@ -3,3 +3,4 @@
 */__pycache__/
 bower_components
 staticfiles
+node_modules
