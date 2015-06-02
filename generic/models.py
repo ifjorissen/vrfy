@@ -93,7 +93,15 @@ class CSUser(User):
     u.last_name = user_dict['sn'][0]
     u.email = user_dict['mail'][0]
     # u.factors = 0
-    u.save()
+
+    # try: 
+    #   # potentially introduces the problem where u has been updated and u != usr but u.username = usr.username
+    #   usr = CSUser.objects.get(username=u.username) 
+    #   pass
+    # except CSUser.DoesNotExist:
+    #   usr = u
+    #   usr.save()
+    usr, created = CSUser.objects.get_or_create(username= u.username)
 
     # Creating the authenticating factors
     # factor_list = []
@@ -104,7 +112,7 @@ class CSUser(User):
     # u.set_factor_list(factor_list)
     # u.save()
    
-    return u
+    return usr
     
   def refresh_from_ldap(self):
     user_dict = CSUser.ldap_lookup_user(self.username)

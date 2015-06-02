@@ -8,7 +8,7 @@ from .models import Problem, ProblemSet
 
 class ProblemAdmin(admin.ModelAdmin):
 	fieldsets = [
-		(None, {'fields': ['title', 'statement']}),
+		(None, {'fields': ['title', 'description', 'statement']}),
 		('Course Info', {'fields': ['course']}),
 	]
 	list_display = ('title', 'course')

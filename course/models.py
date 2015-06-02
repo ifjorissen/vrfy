@@ -14,12 +14,15 @@ from generic.models import CSUser
 # each problem points to a set of user submitted solutions
 # as well as a summary of results 
 
+
+#jim should be able to upload a markdown (or html file) for his problem sets and have it display
 class Problem(models.Model):
 	# title default could be problem id
 	title = models.CharField(max_length=200)
 	course = models.CharField(max_length=200)
-	statement = models.TextField() #markdown 
-	many_attempts = BooleanField(default = True)
+	description = models.TextField(default='') #a short tl;dr of the problem, what to read
+	statement = models.TextField(default='') #markdown compatible
+	many_attempts = models.BooleanField(default = True)
 	# files_to_upload = 
 	# problem descriptions e.g your solution to 
 	# list of .py uploads that should be uploaded and extras
@@ -39,6 +42,19 @@ class ProblemSolution(models.Model):
 		return self.id
 
 
+class ProblemSet(models.Model):
+	title = models.CharField(max_length=200)
+	description = models.TextField(default='')
+	problems = models.ManyToManyField(Problem)
+	# submissions = models.IntegerField('number of submissions', default = 0)
+	# solutions = models.ManyToManyField(ProblemSolution)
+	pub_date = models.DateTimeField('date assigned')
+	due_date = models.DateTimeField('date due')
+
+	def __str__(self): 
+		return self.title
+
+
 #this has not been tested at all
 #should also use student forms probably: https://docs.djangoproject.com/en/1.8/topics/forms/modelforms/#django.forms.ModelForm
 class StudentSolution(models.Model):
@@ -55,19 +71,6 @@ class StudentSolution(models.Model):
 
 	#attempt number
 
-
-
-class ProblemSet(models.Model):
-	title = models.CharField(max_length=200)
-	description = models.TextField(default='')
-	problems = models.ManyToManyField(Problem)
-	# submissions = models.IntegerField('number of submissions', default = 0)
-	# solutions = models.ManyToManyField(ProblemSolution)
-	pub_date = models.DateTimeField('date assigned')
-	due_date = models.DateTimeField('date due')
-
-	def __str__(self): 
-		return self.title
 
 
 #ability for jim to access somethign on the order of /m121/folio/jfix/hw1/p1/v1/files/  and /m121/folio/jfix/hw1/p1/v1/files/

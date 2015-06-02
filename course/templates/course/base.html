@@ -1,0 +1,22 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>{% block title %}CS@Reed{% endblock %}</title>
+  <meta name="description" content="Computer Science at Reed College">
+  <meta name="author" content="ifjorissen">
+<!--   <link rel="stylesheet" href="css/styles.css?v=1.0">
+ -->
+  <!--[if lt IE 9]>
+  <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+</head>
+
+<body>
+	<header>{% include 'course/includes/nav.html' %}</header>
+	<main>{% block content %}{% endblock %}</main>
+	<footer>{% include 'course/includes/footer.html' %}</footer>
+<!--  <script src="js/scripts.js"></script> -->
+</body>
+</html>

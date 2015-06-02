@@ -6,11 +6,15 @@ from generic.models import CSUser
 
 def index(request):
   authenticate(request)
+  return render(request, 'course/index.html')
+
+def problem_set_index(request):
+  authenticate(request)
   latest_problem_sets = ProblemSet.objects.order_by('-pub_date')[:5]
   context = {'latest_problem_sets': latest_problem_sets}
-  return render(request, 'course/index.html', context)
+  return render(request, 'course/problem_set_index.html', context)
 
-def problem_set(request, ps_id):
+def problem_set_detail(request, ps_id):
   authenticate(request)
   try:
     ps = ProblemSet.objects.get(pk=ps_id)
@@ -20,6 +24,20 @@ def problem_set(request, ps_id):
   response = "here's that problem set: {!s} you clicked on".format(ps_id)
   return render(request, 'course/problem_set_detail.html', {'problem_set': ps})
 
-def results(request):
+#submission & files urls; summary of a problem set & files submitted
+#ability to view each attempt and the files submitted with each attempt
+
+#returns the results of a given problem set (and all attempts)
+def results_detail(request, ps_id):
   authenticate(request)
-  return HttpResponse("And Here are the results for one your problem sets")
+  # logic to figure out if the results are availiable and if so, get them
+  response = "here's the results for that problem set: {!s} you clicked on".format(ps_id)
+  return render(request, 'course/results_detail.html', {'problem_set': ps})
+  # return HttpResponse("And Here are the results for one your problem sets")
+
+def results_index(request):
+  authenticate(request)
+  # logic to figure out if the results are availiable and if so, get them
+  response = "here are all the results that are availiable"
+  return render(request, 'course/results_index.html')
+  # return HttpResponse("And Here are the results for your problem sets")
