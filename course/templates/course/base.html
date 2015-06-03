@@ -2,10 +2,28 @@
 
 <html lang="en">
 <head>
+  {% load staticfiles %}
   <meta charset="utf-8">
-  <title>{% block title %}CS@Reed{% endblock %}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Computer Science at Reed College">
   <meta name="author" content="ifjorissen">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta property="og:site_name" content="cs@reed" />
+  <meta property="og:title" content="Computer Science at Reed College"/>
+  <meta property="og:description" content="computer science submission and feedback for reed college students" />
+  <meta property="og:image" content=""> <!-- TODO logo -->
+  <meta property="og:url" content="http://cs.reed.edu">
+  
+  <title>{% block title %}CS@Reed{% endblock %}</title>
+
+  <link href="{% static 'bootstrap/dist/css/bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'course/css/main.css' %}" rel="stylesheet">
+    {% block stylesheets %}
+
+    {% endblock %}
+    
+  <script src="{% static 'jquery/dist/jquery.js' %}"></script>
+  <script src="{% static 'course/js/app.min.js' %}"></script>
 <!--   <link rel="stylesheet" href="css/styles.css?v=1.0">
  -->
   <!--[if lt IE 9]>
@@ -17,6 +35,10 @@
 	<header>{% include 'course/includes/nav.html' %}</header>
 	<main>{% block content %}{% endblock %}</main>
 	<footer>{% include 'course/includes/footer.html' %}</footer>
+  <script src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
+  {% if debug %}
+    <script src="//localhost:35729/livereload.js"></script>
+  {% endif %}
 <!--  <script src="js/scripts.js"></script> -->
 </body>
 </html>

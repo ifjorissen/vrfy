@@ -58,6 +58,7 @@ class ProblemSet(models.Model):
 #this has not been tested at all
 #should also use student forms probably: https://docs.djangoproject.com/en/1.8/topics/forms/modelforms/#django.forms.ModelForm
 class StudentSolution(models.Model):
+	#email field to email users when result is ready
 	problem = models.ForeignKey(Problem)
 	ps = models.ForeignKey(ProblemSet)
 	user = models.ForeignKey(CSUser)

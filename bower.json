@@ -1,0 +1,9 @@
+{
+  "name": "vrfy",
+  "dependencies": {},
+  "devDependencies": {
+    "jquery": "~2.1.4",
+    "bootstrap-sass": "~3.3.4",
+    "bootstrap": "~3.3.4"
+  }
+}

@@ -26,7 +26,7 @@ DEBUG = True
 TEST = True
 
 ALLOWED_HOSTS = []
-
+INTERNAL_IPS = ['127.0.0.1','localhost']
 
 # Application definition
 
@@ -38,7 +38,8 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'generic',
-    'course'
+    'course',
+    'vrfy',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -110,5 +111,6 @@ STATIC_ROOT = 'staticfiles/'
 STATIC_URL = '/static/'
 STATICFILES_DIRS = (
     # 'webapps_assets/',
+    # os.path.join(BASE_DIR, "static"),
     'bower_components/',
 )

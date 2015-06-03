@@ -35,6 +35,7 @@ def authenticate(request):
   if ((request.user.username != ru) or (ru == '')):
     # Get the user and authenticating factors
     user = get_user(request).refresh_from_ldap()
+    request.user = user
     return True
   # If one of the users factors is valid, return True
   # if user.has_factor(valid_factors):
