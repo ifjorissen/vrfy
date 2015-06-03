@@ -1,5 +1,6 @@
 {% extends 'course/base.html' %}
 
+{% block content %}
 <h1>{{ problem_set.title }}</h1>
 <h4>Due Date: {{ problem_set.due_date }}</h4>
 <p>{{problem_set.description}}</p>
@@ -8,4 +9,13 @@
 {% for problem in problem_set.problems.all %}
     <h3>{{ problem.title }}</h3>
     <p>{{ problem.statement }}</p>
+    <ul>
+    	<li>Required Files for this problem</li>	
+    	<!-- get required files -->
+    	{% for file in problem.problemfile_set.all %}
+    	<li>{{ file.file_title }}</li>
+			{% endfor %}
+    </ul>
 {% endfor %}
+
+{% endblock content %}

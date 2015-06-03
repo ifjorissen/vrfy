@@ -23,6 +23,7 @@ class Problem(models.Model):
 	description = models.TextField(default='') #a short tl;dr of the problem, what to read
 	statement = models.TextField(default='') #markdown compatible
 	many_attempts = models.BooleanField(default = True)
+	# problem_files = models.ManyToManyField('ProblemFile', related_name='required_files')
 	# files_to_upload = 
 	# problem descriptions e.g your solution to 
 	# list of .py uploads that should be uploaded and extras
@@ -31,10 +32,26 @@ class Problem(models.Model):
 	def __str__(self): 
 		return self.title
 
+class ProblemFile(models.Model):
+	file_title = models.CharField(max_length=200)
+	problem = models.ForeignKey(Problem, null=True)
+
+	def __str__(self):
+		return self.file_title
+
+	#make sure you validate extension
+
+class StudentProblemFile(models.Model):
+	prob_file = models.ForeignKey(ProblemFile)
+	# solution = models.ForeignKey(StudentSolution)
+	# potentially could automatically upload to afs
+	submitted_file = models.FileField()
+
+
 
 class ProblemSolution(models.Model):
 	#should problem be a One to One Field?:https://docs.djangoproject.com/en/1.8/topics/db/examples/one_to_one/ and
-	# https://docs.djangoproject.com/en/1.8/topics/db/examples/many_to_one/
+	#https://docs.djangoproject.com/en/1.8/topics/db/examples/many_to_one/
 	problem = models.ForeignKey(Problem)
 	solution = models.TextField()
 
@@ -63,6 +80,7 @@ class StudentSolution(models.Model):
 	ps = models.ForeignKey(ProblemSet)
 	user = models.ForeignKey(CSUser)
 	submitted = models.DateTimeField('date submitted')
+	submitted_files = models.ManyToManyField(StudentProblemFile)
 	# files = models.ManyToManyField()
 	#user who uploaded
 	#problem number
