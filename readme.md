@@ -12,6 +12,20 @@
 
 **Use these names in the settings file**
 
+
+
+### (meeting with adam 6.4.15)
+output from the test.py
+likely include a tools or utils.py file for test.py to use
+some message to the student
+data.csv or json object that gives tango info like number of attempts and date submitted
+data dump to the host server 
+
+return something like results.txt with fields like score, feedback
+to do: give adam and jim and eric a detailed desription of what needs to be in data.csv and results.txt 
+
+
+
 ------
 
 

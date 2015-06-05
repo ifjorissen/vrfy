@@ -41,12 +41,6 @@ class ProblemFile(models.Model):
 
 	#make sure you validate extension
 
-class StudentProblemFile(models.Model):
-	prob_file = models.ForeignKey(ProblemFile)
-	# solution = models.ForeignKey(StudentSolution)
-	# potentially could automatically upload to afs
-	submitted_file = models.FileField()
-
 
 
 class ProblemSolution(models.Model):
@@ -80,7 +74,8 @@ class StudentSolution(models.Model):
 	ps = models.ForeignKey(ProblemSet)
 	user = models.ForeignKey(CSUser)
 	submitted = models.DateTimeField('date submitted')
-	submitted_files = models.ManyToManyField(StudentProblemFile)
+	# attempt_num = models.IntegerField(default=1) //shoudl be max of the file uploads
+	# submitted_files = models.ManyToManyField(StudentProblemFile)
 	# files = models.ManyToManyField()
 	#user who uploaded
 	#problem number
@@ -90,7 +85,14 @@ class StudentSolution(models.Model):
 
 	#attempt number
 
+class StudentProblemFile(models.Model):
+	prob_file = models.ForeignKey(ProblemFile)
+	solution = models.ForeignKey(StudentSolution, null=True)
+	# potentially could automatically upload to afs
+	submitted_file = models.FileField()
+	attempt_num = models.IntegerField(default=1)
 
 
-#ability for jim to access somethign on the order of /m121/folio/jfix/hw1/p1/v1/files/  and /m121/folio/jfix/hw1/p1/v1/files/
+
+#ability for jim to access something on the order of /m121/folio/jfix/hw1/p1/v1/files/  and /m121/folio/jfix/hw1/p1/v1/files/
 #a csv with output for the latest (or best) attempt on the problem set

@@ -3,6 +3,7 @@ from django.http import HttpResponse, Http404
 from .models import ProblemSet
 from generic.views import *
 from generic.models import CSUser
+from django.forms.models import inlineformset_factory
 
 def index(request):
   authenticate(request)
@@ -41,3 +42,25 @@ def results_index(request):
   response = "here are all the results that are availiable"
   return render(request, 'course/results_index.html')
   # return HttpResponse("And Here are the results for your problem sets")
+
+# problem set id, problem id
+def add_student_solution_files(request, ps_id, p_id):
+  problem_set = ProblemSet.objects.get(pk=ps_id)
+
+  for problem in problem_set.problems:
+    SSFileInlineFormSet = inlineformset_factory(StudentSolution, StudentProblemFile, fields=('file_title'))
+
+    # author = Author.objects.get(pk=author_id)
+    # BookInlineFormSet = inlineformset_factory(Author, Book, fields=('title',))
+    if request.method == "POST":
+        formset = SSFileInlineFormSet(request.POST, request.FILES, instance=problem)
+        if formset.is_valid():
+            formset.save()
+            # Do something. Should generally end with a redirect. For example:
+            return HttpResponseRedirect(author.get_absolute_url())
+    else:
+        formset = SSFileInlineFormSet(instance=problem)
+
+    return render_to_response("manage_books.html", {
+        "formset": formset,
+    })
