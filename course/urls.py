@@ -9,3 +9,5 @@ urlpatterns = [
   url(r'^results/$', views.results_index, name='results_index'),
   url(r'^results/(?P<ps_id>[0-9]+)/$', views.results_detail, name='results_detail'),
 ]
+
+

@@ -35,7 +35,7 @@ class Problem(models.Model):
 class ProblemFile(models.Model):
 	file_title = models.CharField(max_length=200)
 	problem = models.ForeignKey(Problem, null=True)
-
+#add field for extension
 	def __str__(self):
 		return self.file_title
 
@@ -54,6 +54,7 @@ class ProblemSolution(models.Model):
 
 
 class ProblemSet(models.Model):
+	# course = 
 	title = models.CharField(max_length=200)
 	description = models.TextField(default='')
 	problems = models.ManyToManyField(Problem)
