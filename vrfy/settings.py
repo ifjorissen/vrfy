@@ -83,9 +83,9 @@ DATABASES = {
         'NAME': 'vrfy_dev',
         # The following settings are not used with sqlite3
         'USER': 'vrfy_dev_usr',
-        'PASSWORD': '',
+        'PASSWORD': 'pass',
         'HOST': 'localhost',
-        'PORT': '',
+        'PORT': '5400',
     }
 }
 
