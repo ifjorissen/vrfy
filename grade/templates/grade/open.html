@@ -1,0 +1,18 @@
+<head>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+<script>
+ $(document).ready( function() {
+     $('#open').click(function() {
+        url = '{{ tango_address }}open/{{ key }}/' + $('#labname').val() + "/";
+        req = new XMLHttpRequest();
+        req.open( "GET", url, false );
+        req.send();
+        $('div').html(req.response);
+    });
+ });
+</script>
+</head>
+
+Lab name: <input type="text" name="labname" id="labname" /></br>
+<button id="open">Open!</button></br>
+<div></div>

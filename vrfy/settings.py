@@ -40,6 +40,7 @@ INSTALLED_APPS = (
     'generic',
     'course',
     'vrfy',
+    'grade',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -58,7 +59,7 @@ ROOT_URLCONF = 'vrfy.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -114,3 +115,9 @@ STATICFILES_DIRS = (
     # os.path.join(BASE_DIR, "static"),
     'bower_components/',
 )
+
+#address of the tango server
+TANGO_ADDRESS = "http://localhost:3000/"
+#key to access tango server
+TANGO_KEY = "test"
+
