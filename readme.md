@@ -37,6 +37,10 @@
 Create a user for the admin interface:
 `python3 manage.py createsuperuser`
 
+##Getting Tango to work
+  * Follow [their instructions](https://github.com/autolab/Tango/wiki/Tango-with-Docker) for getting Tango running with docker
+  * In `vrfy/settings.py` change `TANGO_ADDRESS` to the Tango server's address and `TANGO_KEY` to one of the keys for the server
+
 -----
 
 ##Goals:
