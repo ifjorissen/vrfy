@@ -9,6 +9,7 @@ def index(request):
   authenticate(request)
   return render(request, 'course/index.html')
 
+
 def problem_set_index(request):
   authenticate(request)
   latest_problem_sets = ProblemSet.objects.order_by('-pub_date')[:5]
@@ -48,7 +49,7 @@ def add_student_solution_files(request, ps_id, p_id):
   problem_set = ProblemSet.objects.get(pk=ps_id)
 
   for problem in problem_set.problems:
-    SSFileInlineFormSet = inlineformset_factory(StudentSolution, StudentProblemFile, fields=('file_title'))
+    SSFileInlineFormSet = inlineformset_factory(StudentProblemSolution, StudentProblemFile, fields=('file_title'))
 
     # author = Author.objects.get(pk=author_id)
     # BookInlineFormSet = inlineformset_factory(Author, Book, fields=('title',))

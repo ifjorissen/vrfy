@@ -1,5 +1,3 @@
-this will only be changed on ifj_dev 
-
 ##Python3 Virtual Env
 
   * `mkdir ~/Envs/sds_vrfy`
@@ -47,7 +45,11 @@ to do: give adam and jim and eric a detailed desription of what needs to be in d
 ### If there are migrations to make:
   * `python3 manage.py makemigrations <app_name>`
   * `python3 manage.py migrate`
-  * `python3 manage.py syncdb`
+
+
+### Testing via the admin interface
+  * log in (create a superuser if you didn'd do that already)
+  * any problems (and associated solution files) that are created will be added to the problem_assets folder (for more on the directory structure surrounding that, see solution_file_upload_path() and student_file_upload_path() in course/models.py)
 
 
 Create a user for the admin interface:
