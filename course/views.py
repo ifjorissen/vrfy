@@ -9,6 +9,15 @@ def index(request):
   authenticate(request)
   return render(request, 'course/index.html')
 
+def attempt_problem_set(request, ps_id):
+  authenticate(request)
+  try:
+    ps = ProblemSet.objects.get(pk=ps_id)
+  except ProblemSet.DoesNot.Exist:
+    raise Http404("Problem Set Does Not Exist (or has yet to be released)")
+
+  response = "here's that problem set: {!s} you clicked on".format(ps_id)
+  return render(request, 'course/attempt_problem_set.html', {'problem_set': ps})
 
 def problem_set_index(request):
   authenticate(request)

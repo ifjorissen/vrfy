@@ -1,21 +1,47 @@
 {% extends 'course/base.html' %}
 
 {% block content %}
-<h1>{{ problem_set.title }}</h1>
-<h4>Due Date: {{ problem_set.due_date }}</h4>
-<p>{{problem_set.description}}</p>
+<section class="problem-set">
+<section class="ps-info page-header">
+<h1>{{ problem_set.title }}<small>  ( Due {{ problem_set.due_date }} )</small></h1>
+<p class="lead">{{problem_set.description}}</p>
+</section>
 
 
 {% for problem in problem_set.problems.all %}
-    <h3>{{ problem.title }}</h3>
+  <section class="panel panel-default">
+    <div class="panel-heading"><h3>{{ problem.title }}</h3></div>
+    <div class="panel-body">
+    <p>{{ problem.description }}</p>
     <p>{{ problem.statement }}</p>
-    <ul>
-    	<li>Required Files for this problem</li>	
-    	<!-- get required files -->
-    	{% for file in problem.problemfile_set.all %}
-    	<li>{{ file.file_title }}</li>
-			{% endfor %}
+        <ul class="list-inline">
+     <li>Required Files: </li>
+      {% for file in problem.requiredproblemfilename_set.all %}
+        <li>{{ file.file_title }}</li>
+      {% endfor %}
     </ul>
+    <div class="dropdown">
+      <button class="btn btn-default dropdown-toggle" type="button" id="requiredFilesDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+        Required Files
+        <span class="caret"></span>
+      </button>
+      <ul class="dropdown-menu list-inline list-group" aria-labelledby="requiredFilesDropdown">
+      {% for file in problem.requiredproblemfilename_set.all %}
+        <li>{{ file.file_title }}</li>
+      {% endfor %}
+      </ul>
+    </div>
+    </div>
+<!--     <ul class="list-inline">
+     <li>Required Files: </li>
+      {% for file in problem.requiredproblemfilename_set.all %}
+        <li>{{ file.file_title }}</li>
+      {% endfor %}
+    </ul> -->
+   </section>
 {% endfor %}
+<a class="btn btn-default" href="{% url 'course:attempt_problem_set' problem_set.id %}" role="button">Attempt {{ problem_set.title }}</a>
+</section>
+
 
 {% endblock content %}

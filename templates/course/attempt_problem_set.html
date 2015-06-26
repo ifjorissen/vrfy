@@ -1,0 +1,27 @@
+{% extends 'course/base.html' %}
+
+{% block content %}
+<section class="problem-set">
+<section class="ps-info page-header">
+<h1>Attempt {{ problem_set.title }}<small>  ( Due {{ problem_set.due_date }} )</small></h1>
+<p class="lead">{{problem_set.description}}</p>
+</section>
+
+
+{% for problem in problem_set.problems.all %}
+<form class="form-horizontal">
+<h3>{{ problem.title }}</h3>
+<p class="lead">{{ problem.statement }}</p>
+<p class="help-block">Upload the required files for {{problem.title}}</p>
+{% for file in problem.requiredproblemfilename_set.all %}
+  <div class="form-group">
+    <label class="col-sm-2" for="exampleInputFile">{{ file.file_title }}</label>
+    <input class="col-sm-8" type="file" id="exampleInputFile">
+  </div>
+{% endfor %}
+  <!-- <button type="submit" class="btn btn-default">Submit</button> -->
+</form>
+<hr>
+{% endfor %}
+ <button type="submit" class="btn btn-default">Submit All Problems</button>
+{% endblock content %}

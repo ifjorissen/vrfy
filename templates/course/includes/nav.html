@@ -1,8 +1,23 @@
-<nav>
-	<span>Hello, {{user.username}}</span>
-	<ul class="list-inline">
-		<li><a href={% url 'course:index'%}>Home</a></li>
-		<li><a href={% url 'course:problem_set_index'%}>Problem Sets</a></li>
-		<li><a href={% url 'course:results_index'%}>Results</a></li>
-	</ul>
+<nav id="cs-nav" class="navbar navbar-default navbar-fixed-top">
+	<div class="container-fluid">
+		<div class="navbar-header">
+		<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#nav-links" aria-expanded="false">
+	        <span class="sr-only">Toggle navigation</span>
+	        <span class="icon-bar"></span>
+	        <span class="icon-bar"></span>
+	        <span class="icon-bar"></span>
+	      </button>
+	      <span class="navbar-brand">CS@Reed</span>
+	  </div>
+	  <div id="nav-links" class="collapse navbar-collapse links">
+	  	<ul class="nav navbar-nav navbar-right">
+				<li class="navbar-link"><a href="#"> Hello, {{user.username}}</a></li>
+			</ul>
+			<ul class="nav navbar-nav" role="menu">
+				<li class="navbar-link" role="menuitem"><a href={% url 'course:index'%}>Home</a></li>
+				<li class="navbar-link" role="menuitem"><a href={% url 'course:problem_set_index'%}>Problem Sets</a></li>
+				<li class="navbar-link" role="menuitem"><a href={% url 'course:results_index'%}>Results</a></li>
+			</ul>
+		</div>
+	</div>
 </nav>
