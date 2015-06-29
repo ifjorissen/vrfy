@@ -45,11 +45,20 @@ to do: give adam and jim and eric a detailed desription of what needs to be in d
 ### If there are migrations to make:
   * `python3 manage.py makemigrations <app_name>`
   * `python3 manage.py migrate`
-  * `python3 manage.py syncdb`
+
+
+### Testing via the admin interface
+  * log in (create a superuser if you didn'd do that already)
+  * any problems (and associated solution files) that are created will be added to the problem_assets folder (for more on the directory structure surrounding that, see solution_file_upload_path() and student_file_upload_path() in course/models.py)
 
 
 Create a user for the admin interface:
 `python3 manage.py createsuperuser`
+
+##Getting Tango to work
+  * Follow [their instructions](https://github.com/autolab/Tango/wiki/Tango-with-Docker) for getting Tango running with docker
+  * In `vrfy/settings.py` change `TANGO_ADDRESS` to the Tango server's address and `TANGO_KEY` to one of the keys for the server
+  * When you start the server you may want to use sudo, ie: `sudo python restful-tango/server.py` to make sure it has permission to edit the courselabs
 
 -----
 
