@@ -1,9 +1,6 @@
 from django.db import models
 from generic.models import CSUser
 
-
-# Create your models here.
-
 # A problem model, which requires:
 # a problem title 
 # a class associated with the problem

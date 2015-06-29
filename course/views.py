@@ -1,8 +1,14 @@
-from django.shortcuts import render
-from django.http import HttpResponse, Http404 
+from django.shortcuts import render, get_object_or_404
+from django.http import HttpResponse, Http404, HttpResponseRedirect
 from .models import ProblemSet
 from generic.views import *
 from generic.models import CSUser
+import requests
+
+import sys
+sys.path.append("../")
+import vrfy.settings
+
 
 def index(request):
   authenticate(request)
@@ -24,6 +30,23 @@ def problem_set_detail(request, ps_id):
   response = "here's that problem set: {!s} you clicked on".format(ps_id)
   return render(request, 'course/problem_set_detail.html', {'problem_set': ps})
 
+#for submitting files
+def problem_set_submit(request, ps_id):
+  if request.method == 'POST':#make sure the user doesn't type this into the address bar
+    ps = get_object_or_404(ProblemSet, pk=ps_id)
+    
+    url = vrfy.settings.TANGO_ADDRESS + "upload/" + vrfy.settings.TANGO_KEY + "/hw1/"
+
+    #getting all the submitted files
+    for name, f in request.FILES.items():
+      header = {'Filename': name}
+      r = requests.post(url, data=f.read(), headers=header)
+    
+    return HttpResponseRedirect("/results/" + ps_id + "/")
+    
+  else:
+    raise Http404("Don't do that")
+
 #submission & files urls; summary of a problem set & files submitted
 #ability to view each attempt and the files submitted with each attempt
 
@@ -31,6 +54,7 @@ def problem_set_detail(request, ps_id):
 def results_detail(request, ps_id):
   authenticate(request)
   # logic to figure out if the results are availiable and if so, get them
+  ps = get_object_or_404(ProblemSet, pk=ps_id)
   response = "here's the results for that problem set: {!s} you clicked on".format(ps_id)
   return render(request, 'course/results_detail.html', {'problem_set': ps})
   # return HttpResponse("And Here are the results for one your problem sets")

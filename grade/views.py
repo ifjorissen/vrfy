@@ -1,13 +1,12 @@
 from django.shortcuts import render
-import sys
+from django.views.generic.edit import CreateView
 
-sys.path.append("../")
-import vrfy.settings
-
+from .models import Assignment
 
 def index(request):
     return render(request, 'grade/index.html')
 
-def openTngo(request):
-    context = {'tango_address': vrfy.settings.TANGO_ADDRESS, 'key': vrfy.settings.TANGO_KEY}
-    return render(request, 'grade/open.html', context)
+class AssignmentCreate(CreateView):
+    model = Assignment
+    fields = '__all__'
+

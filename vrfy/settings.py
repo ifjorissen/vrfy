@@ -117,7 +117,7 @@ STATICFILES_DIRS = (
 )
 
 #address of the tango server
-TANGO_ADDRESS = "http://localhost:3000/"
+TANGO_ADDRESS = "http://localhost:3300/"
 #key to access tango server
 TANGO_KEY = "test"
 
