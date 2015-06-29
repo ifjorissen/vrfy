@@ -1,18 +1,17 @@
 from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse, Http404, HttpResponseRedirect
+from django.utils.text import slugify
 from .models import ProblemSet
 from generic.views import *
 from generic.models import CSUser
-#<<<<<<< HEAD
 import requests
 
 import sys
 sys.path.append("../")
 import vrfy.settings
 
-#=======
 from django.forms.models import inlineformset_factory
-#>>>>>>> ifj_dev
+
 
 def index(request):
   authenticate(request)
@@ -46,14 +45,19 @@ def problem_set_detail(request, ps_id):
 
 #for submitting files
 def problem_set_submit(request, ps_id):
+  authenticate(request)
+
   if request.method == 'POST':#make sure the user doesn't type this into the address bar
     ps = get_object_or_404(ProblemSet, pk=ps_id)
     
-    url = vrfy.settings.TANGO_ADDRESS + "upload/" + vrfy.settings.TANGO_KEY + "/hw1/"
+    #opens the courselab
+    
+    
+    url = vrfy.settings.TANGO_ADDRESS + "upload/" + vrfy.settings.TANGO_KEY + "/" + slugify(ps.title) + "/"
 
     #getting all the submitted files
     for name, f in request.FILES.items():
-      header = {'Filename': name}
+      header = {'Filename': name + " "+ request.user.username}
       r = requests.post(url, data=f.read(), headers=header)
     
     return HttpResponseRedirect("/results/" + ps_id + "/")
