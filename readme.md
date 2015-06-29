@@ -40,6 +40,7 @@ Create a user for the admin interface:
 ##Getting Tango to work
   * Follow [their instructions](https://github.com/autolab/Tango/wiki/Tango-with-Docker) for getting Tango running with docker
   * In `vrfy/settings.py` change `TANGO_ADDRESS` to the Tango server's address and `TANGO_KEY` to one of the keys for the server
+  * When you start the server you may want to used sudo, ie: `sudo python restful-tango/server.py` to make sure it has permission to edit the courselabs
 
 -----
 
