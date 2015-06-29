@@ -1,4 +1,27 @@
-html, body{
+$reed-red: #a80e16;
+$reed-maroon: #936664;
+$reed-lgrey: #efefef;
+
+$nav-padding: 10px;
+$nav-height: 70px + $nav-padding;
+
+
+#cs-nav{
 	background: whitesmoke;
+	border-bottom: .5rem solid $reed-red;
+}
+
+.problem-set{
+	.ps-info{
+
+	}
+}
+
+html, body{
+	background: white;
 	font-family: Garamond, 'Helvetica Neue', Helvetica, Sans-Serif;
+}
+
+body{
+	padding-top: $nav-height;
 }

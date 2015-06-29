@@ -5,3 +5,4 @@ bower_components
 staticfiles
 node_modules
 **/*~
+*/static/
