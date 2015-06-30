@@ -3,16 +3,13 @@ from django.http import HttpResponse, Http404, HttpResponseRedirect
 from .models import ProblemSet
 from generic.views import *
 from generic.models import CSUser
-#<<<<<<< HEAD
 import requests
 
 import sys
 sys.path.append("../")
 import vrfy.settings
 
-#=======
 from django.forms.models import inlineformset_factory
-#>>>>>>> ifj_dev
 
 def index(request):
   authenticate(request)
@@ -79,8 +76,7 @@ def results_index(request):
   response = "here are all the results that are availiable"
   return render(request, 'course/results_index.html')
   # return HttpResponse("And Here are the results for your problem sets")
-#<<<<<<< HEAD
-#=======
+
 """
 # problem set id, problem id
 def add_student_solution_files(request, ps_id, p_id):
@@ -104,4 +100,3 @@ def add_student_solution_files(request, ps_id, p_id):
         "formset": formset,
     })
 """
-#>>>>>>> ifj_dev
