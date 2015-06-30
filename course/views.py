@@ -1,5 +1,6 @@
 from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse, Http404, HttpResponseRedirect
+from django.utils import timezone
 from .models import ProblemSet
 from generic.views import *
 from generic.models import CSUser
@@ -17,20 +18,20 @@ def index(request):
 
 def attempt_problem_set(request, ps_id):
   authenticate(request)
-  ps = get_object_or_404(ProblemSet, pk=ps_id)
+  ps = get_object_or_404(ProblemSet, pk=ps_id, pub_date__lte=timezone.now())
   
   response = "here's that problem set: {!s} you clicked on".format(ps_id)
   return render(request, 'course/attempt_problem_set.html', {'problem_set': ps})
 
 def problem_set_index(request):
   authenticate(request)
-  latest_problem_sets = ProblemSet.objects.order_by('-pub_date')[:5]
+  latest_problem_sets = ProblemSet.objects.filter(pub_date__lte=timezone.now()).order_by('-pub_date')
   context = {'latest_problem_sets': latest_problem_sets}
   return render(request, 'course/problem_set_index.html', context)
 
 def problem_set_detail(request, ps_id):
   authenticate(request)
-  ps = get_object_or_404(ProblemSet, pk=ps_id)
+  ps = get_object_or_404(ProblemSet, pk=ps_id, pub_date__lte=timezone.now())
 
   response = "here's that problem set: {!s} you clicked on".format(ps_id)
   return render(request, 'course/problem_set_detail.html', {'problem_set': ps})
@@ -38,7 +39,7 @@ def problem_set_detail(request, ps_id):
 #for submitting files
 def problem_set_submit(request, ps_id):
   if request.method == 'POST':#make sure the user doesn't type this into the address bar
-    ps = get_object_or_404(ProblemSet, pk=ps_id)
+    ps = get_object_or_404(ProblemSet, pk=ps_id, pub_date__lte=timezone.now())
     
     url = vrfy.settings.TANGO_ADDRESS + "upload/" + vrfy.settings.TANGO_KEY + "/hw1/"
 
@@ -59,7 +60,7 @@ def problem_set_submit(request, ps_id):
 def results_detail(request, ps_id):
   authenticate(request)
   # logic to figure out if the results are availiable and if so, get them
-  ps = get_object_or_404(ProblemSet, pk=ps_id)
+  ps = get_object_or_404(ProblemSet, pk=ps_id, pub_date__lte=timezone.now())
   response = "here's the results for that problem set: {!s} you clicked on".format(ps_id)
   return render(request, 'course/results_detail.html', {'problem_set': ps})
   # return HttpResponse("And Here are the results for one your problem sets")

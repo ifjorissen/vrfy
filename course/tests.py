@@ -1,3 +1,4 @@
+import random
 import datetime
 from django.test import TestCase
 from django.utils import timezone
@@ -6,20 +7,33 @@ from django.core.urlresolvers import reverse
 from . import views
 from .models import ProblemSet
 
-class NonExistantProblemsetTests(TestCase):
+class ProblemSetTests(TestCase):
+  """
+  A Model for TestCases that use Problem sets 
+  It makes a new problem set for testing and then deletes it when the tests are over
+  """
+  @classmethod
+  def setUpClass(cls):
+    cls.ps = ProblemSet(title='test_ps_' + str(random.randint(1,10000)), pub_date=timezone.now(), due_date=timezone.now() + datetime.timedelta(days=30))
+    cls.ps.save()
+    cls.pk = cls.ps.pk
+    super(ProblemSetTests, cls).setUpClass()
+  
+  @classmethod
+  def tearDownClass(cls):
+    #if the ps still exists, delete it
+    if cls.ps.id != None :
+      cls.ps.delete()
+    super(ProblemSetTests, cls).tearDownClass()
+  
+class NonExistantProblemsetTests(ProblemSetTests):
   """
   Tests that the course pages give a 404 when you try to access a page that doesnt exist
   """
   @classmethod
   def setUpClass(cls):
-    #makes a new problem set, gets the primary key then deletes the problem set so
-    #we know that this pk is attached to no item in the db
-    _ps = ProblemSet(title='test_ps', pub_date=timezone.now(), due_date=timezone.now() + datetime.timedelta(days=30))
-    _ps.save()
-    cls.pk = _ps.pk
-    _ps.delete()
     super(NonExistantProblemsetTests, cls).setUpClass()
-
+    cls.ps.delete()
 
   def test_attempt_gives_404_for_nonexistant_problem_set(self):
     response = self.client.get(reverse('course:attempt_problem_set', args=(self.pk,)))
@@ -36,17 +50,11 @@ class NonExistantProblemsetTests(TestCase):
   def test_results_gives_404_for_nonexistant_problem_set(self):
     response = self.client.get(reverse('course:results_detail', args=(self.pk,)))
     self.assertEqual(response.status_code, 404)
-
-class GetExistingProblemsetTests(TestCase):
+  
+class GetExistingProblemsetTests(ProblemSetTests):
   """
   Test that pages return working for existing problem sets 
   """
-  @classmethod
-  def setUpClass(cls):
-    cls._ps = ProblemSet(title='test_ps', pub_date=timezone.now(), due_date=timezone.now() + datetime.timedelta(days=30))
-    cls._ps.save()
-    cls.pk = cls._ps.pk
-    super(GetExistingProblemsetTests, cls).setUpClass()
   
   def test_attempt_gives_200_for_existing_problem_set(self):
     response = self.client.get(reverse('course:attempt_problem_set', args=(self.pk,)))
@@ -65,11 +73,30 @@ class GetExistingProblemsetTests(TestCase):
     response = self.client.get(reverse('course:results_detail', args=(self.pk,)))
     self.assertEqual(response.status_code, 200)
 
+class CantSeeFutureAssignmentsTests(ProblemSetTests):
+  """
+  Tests if you can see problem sets with their pubdate in the future
+  """
   @classmethod
-  def tearDownClass(cls):
-    cls._ps.delete()
-    super(GetExistingProblemsetTests, cls).tearDownClass()
+  def setUpClass(cls):
+    super(CantSeeFutureAssignmentsTests, cls).setUpClass()
+    #makes the ps's pub date in the future
+    cls.ps.pub_date = timezone.now() + datetime.timedelta(days=5)
+    cls.ps.save()
+    
+  def test_attempt_gives_404_for_future_problem_set(self):
+    response = self.client.get(reverse('course:attempt_problem_set', args=(self.ps.pk,)))
+    self.assertEqual(response.status_code, 404)
 
+  def test_detail_gives_404_for_future_problem_set(self):
+    response = self.client.get(reverse('course:problem_set_detail', args=(self.ps.pk,)))
+    self.assertEqual(response.status_code, 404)
 
-  
-  
+  def test_submit_gives_404_for_future_problem_set(self):
+    response = self.client.post(reverse('course:problem_set_submit', args=(self.ps.pk,)))
+    self.assertEqual(response.status_code, 404)
+
+  def test_results_gives_404_for_future_problem_set(self):
+    response = self.client.get(reverse('course:results_detail', args=(self.ps.pk,)))
+    self.assertEqual(response.status_code, 404)
+
