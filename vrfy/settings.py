@@ -86,7 +86,7 @@ DATABASES = {
         'USER': 'vrfy_dev_usr',
         'PASSWORD': 'pass',
         'HOST': 'localhost',
-        'PORT': '5400',
+        'PORT': '5432',
     }
 }
 
