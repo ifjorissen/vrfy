@@ -1,7 +1,9 @@
 from django.contrib import admin
 
-# Register your models here.
 from .models import Problem, ProblemSet, RequiredProblemFilename, ProblemSolutionFile
+
+admin.site.site_header = "Homework Administration"
+admin.site.site_title = "Homework Administration"
 
 # admin.site.register(Problem)
 # admin.site.register(ProblemSet)
