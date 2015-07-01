@@ -36,7 +36,7 @@ module.exports = function(grunt) {
     watch: {
             options: {livereload: true},
             sass: {
-                files: ['<%= course.sassDir %>/*'],
+                files: ['<%= course.sassDir %>/**'],
                 tasks: ['sass']
             },
             javascript: {
@@ -59,6 +59,6 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-watch');
 
   // Register tasks here.
-  grunt.registerTask('default', ['sass', 'concat', 'watch']);
+  grunt.registerTask('default', ['sass', 'concat']);
 
 };
