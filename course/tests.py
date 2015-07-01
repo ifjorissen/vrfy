@@ -73,6 +73,11 @@ class GetExistingProblemsetTests(ProblemSetTests):
     response = self.client.get(reverse('course:results_detail', args=(self.pk,)))
     self.assertEqual(response.status_code, 200)
 
+  #checks for the name of the problem set on the index page
+  def test_ps_index_lists_existing_problem_sets(self):
+    response = self.client.get(reverse('course:problem_set_index'))
+    self.assertIn(self.ps.title, str(response.content))
+
 class CantSeeFutureAssignmentsTests(ProblemSetTests):
   """
   Tests if you can see problem sets with their pubdate in the future
@@ -99,4 +104,9 @@ class CantSeeFutureAssignmentsTests(ProblemSetTests):
   def test_results_gives_404_for_future_problem_set(self):
     response = self.client.get(reverse('course:results_detail', args=(self.ps.pk,)))
     self.assertEqual(response.status_code, 404)
+
+  #Checks that the future ps is not on the index page
+  def test_ps_index_doesnt_list_future_problem_sets(self):
+    response = self.client.get(reverse('course:problem_set_index'))
+    self.assertNotIn(self.ps.title, str(response.content))
 
