@@ -110,6 +110,8 @@ SERVER_EMAIL = 'isjoriss@reed.edu'
 # https://docs.djangoproject.com/en/1.8/howto/static-files/
 STATIC_ROOT = 'staticfiles/'
 STATIC_URL = '/static/'
+MEDIA_ROOT = 'problem_assets/'
+MEDIA_URL = '/problem_assets/'
 STATICFILES_DIRS = (
     # 'webapps_assets/',
     # os.path.join(BASE_DIR, "static"),
