@@ -1,6 +1,7 @@
 from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse, Http404, HttpResponseRedirect
 from django.utils import timezone
+from django.utils.text import slugify
 from .models import ProblemSet
 from generic.views import *
 from generic.models import CSUser
@@ -41,7 +42,7 @@ def problem_set_submit(request, ps_id):
   if request.method == 'POST':#make sure the user doesn't type this into the address bar
     ps = get_object_or_404(ProblemSet, pk=ps_id, pub_date__lte=timezone.now())
     
-    url = vrfy.settings.TANGO_ADDRESS + "upload/" + vrfy.settings.TANGO_KEY + "/hw1/"
+    url = vrfy.settings.TANGO_ADDRESS + "upload/" + vrfy.settings.TANGO_KEY + "/" + slugify(ps.title) + "/"
 
     #getting all the submitted files
     for name, f in request.FILES.items():
