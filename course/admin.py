@@ -63,38 +63,30 @@ class ProblemSetAdmin(admin.ModelAdmin):
   
   #add a courselab and files to Tango when Problem Set is added and saved for the first time
   def response_add(self, request, obj, post_url_continue=None):
-    #upload the files to the courselab after we open it
-    def _upload_ps_files(r, *args, **kwargs):
-      #upload the files
-      if r.status_code is 200:
-        url = vrfy.settings.TANGO_ADDRESS + "upload/" + vrfy.settings.TANGO_KEY + "/" + slugify(obj.title) + "/"
-        for problem in obj.problems.all():
-          for psfile in ProblemSolutionFile.objects.filter(problem=problem):
-            f = psfile.file_upload
-            header = {'Filename': f.name.split("/")[-1]}
-            r = requests.post(url, data=f.read(), headers=header)
-      else:
-        raise Http404("something really bad must have happened when contacting tango")
-
-    #open (make) the courselab on tango server with the callback _upload_ps_files
-    url = vrfy.settings.TANGO_ADDRESS + "open/" + vrfy.settings.TANGO_KEY + "/" + slugify(obj.title) + "/"
-    r = requests.get(url, hooks=dict(response=_upload_ps_files))
-
-    #return a response
+    self._open_and_upload(obj)
     return super(ProblemSetAdmin, self).response_add(request, obj, post_url_continue=None)
         
   #reupload files to Tanfo when a Problem Set is changed and saved
   def response_change(self, request, obj):
-    # just need to reupload the files (if the model exists, we've already created a courselab)
+    self._open_and_upload(obj)
+    return super(ProblemSetAdmin, self).response_change(request, obj)
+    
+  def _open_and_upload(self, obj):
+    """
+    Helper function that gets called for response change and response add
+    It opens a new courselab and then uploads the grading files
+    """
+    #open (make) the courselab on tango server with the callback _upload_ps_files
+    url = vrfy.settings.TANGO_ADDRESS + "open/" + vrfy.settings.TANGO_KEY + "/" + slugify(obj.title) + "/"
+    r = requests.get(url)
+    
+    #upload the files
     url = vrfy.settings.TANGO_ADDRESS + "upload/" + vrfy.settings.TANGO_KEY + "/" + slugify(obj.title) + "/"
     for problem in obj.problems.all():
       for psfile in ProblemSolutionFile.objects.filter(problem=problem):
         f = psfile.file_upload
         header = {'Filename': f.name.split("/")[-1]}
         r = requests.post(url, data=f.read(), headers=header)
-
-    #return a response
-    return super(ProblemSetAdmin, self).response_change(request, obj)
 
 # admin.site.register(RequiredProblemFilename, RequiredProblemFilenameAdmin)
 # admin.site.register(ProblemSolution, ProblemSolutionAdmin)

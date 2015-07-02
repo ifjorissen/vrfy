@@ -110,3 +110,9 @@ class CantSeeFutureAssignmentsTests(ProblemSetTests):
     response = self.client.get(reverse('course:problem_set_index'))
     self.assertNotIn(self.ps.title, str(response.content))
 
+class AdminSubmissionTests(TestCase):
+
+  def test_admin_makes_new_courselab_in_tango_when_making_new_problem_set(self):
+    response = self.client.get(reverse('admin:course_ProblemSet_add'))
+    self.assertEqaul(response.status_code, False)
+
