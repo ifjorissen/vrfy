@@ -1,8 +1,14 @@
 import random
 import datetime
+import requests
 from django.test import TestCase
 from django.utils import timezone
+from django.utils.text import slugify
 from django.core.urlresolvers import reverse
+
+import sys
+sys.path.append("../")
+import vrfy.settings
 
 from . import views
 from .models import ProblemSet
@@ -113,6 +119,11 @@ class CantSeeFutureAssignmentsTests(ProblemSetTests):
 class AdminSubmissionTests(TestCase):
 
   def test_admin_makes_new_courselab_in_tango_when_making_new_problem_set(self):
-    response = self.client.get(reverse('admin:course_ProblemSet_add'))
-    self.assertEqaul(response.status_code, False)
+    name = 'test_ps_' + str(random.randint(1,10000))
+    r = self.client.post(reverse('admin:course_problemset_add'), {'title' : name, 'description' : 'something', '_save': ['Save'], 'pub_date_0': ['2015-07-02'], 'due_date_0': ['2015-07-02'], 'problems': ['2'], 'pub_date_1': ['18:03:53'], 'csrfmiddlewaretoken': ['CEOH3CWH8Er8hnWedEDwsC1PeBk3XoR0'], 'due_date_1': ['18:03:55']})
+    self.assertEqual(r.status_code, False)
+    url = vrfy.settings.TANGO_ADDRESS + "open/" + vrfy.settings.TANGO_KEY + "/" + slugify(name) + "/"
+    response = requests.get(url)
+    #if this command creats the courselab, then it wasn't created by the admin
+    self.assertNotEqual(response.json()["statusMsg"], "Created directory")
 
