@@ -10,7 +10,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import Select
 from django.contrib.auth.models import User
 from django.core.files import File as Dfile
-
+import shutil
 
 import sys
 sys.path.append("../")
@@ -21,6 +21,7 @@ from .models import ProblemSet, Problem, ProblemSolutionFile
 
 ADMIN_USERNAME = "admin"
 ADMIN_PASSWORD = "password"
+COURSELAB_DIR = "/home/alex/verify_project/courselabs/"
 
 class ProblemSetTests(TestCase):
   """
@@ -127,14 +128,12 @@ class CantSeeFutureAssignmentsTests(ProblemSetTests):
 
 class AdminTests(LiveServerTestCase):
   
-  @classmethod
-  def setUpClass(cls):
-    cls.driver = webdriver.Firefox()
-    super(AdminTests, cls).setUpClass()
+  def setUp(self):
+    self.driver = webdriver.Firefox()
+    User.objects.create_superuser(ADMIN_USERNAME, 'fake@example.com', ADMIN_PASSWORD)
 
   #helper function that logs in to the admin side
   def _login(self):
-    User.objects.create_superuser(ADMIN_USERNAME, 'fake@example.com', ADMIN_PASSWORD)
     self.driver.find_element_by_id("id_username").send_keys(ADMIN_USERNAME)
     pw = self.driver.find_element_by_id("id_password")
     pw.send_keys(ADMIN_PASSWORD)
@@ -176,7 +175,7 @@ class AdminTests(LiveServerTestCase):
     self.driver.find_element_by_class_name("deletelink").click()
     self.driver.find_element_by_name("post").submit()
     #remove it from Tango
-    
+    shutil.rmtree(COURSELAB_DIR + vrfy.settings.TANGO_KEY + "-" + name)
 
   def test_new_problem_set_opens_courselab(self):
     prob = self._new_problem("fun problem")
@@ -215,9 +214,6 @@ class AdminTests(LiveServerTestCase):
     #Check that the uploaded file is in the courselabs
     self.assertIn("my_solution_file", str(response.json()["files"]))
 
-
-  @classmethod
-  def tearDownClass(cls):
-    cls.driver.close()
-    super(AdminTests, cls).tearDownClass()
+  def tearDown(self):
+    self.driver.close()
 
