@@ -2,7 +2,6 @@
 #Add tests for:
 #adding a new file to existing problem set
 #changing the name of a problem set
-#student submitting an assignment
 
 import random
 import datetime
@@ -244,6 +243,10 @@ class TangoFormTests(LiveServerTestCase):
     name = "test_ps_" + str(random.randint(1,10000))
     self._new_ps(name)
     
+    url = vrfy.settings.TANGO_ADDRESS + "open/" + vrfy.settings.TANGO_KEY + "/" + self._get_courselab_name(name) + "/"
+    response1 = requests.get(url)
+    beforesize = len(response1.json()["files"])
+    
     #navigate to the form
     self.driver.get(self.live_server_url + "/problem_sets/")
     self.driver.find_element_by_link_text(name).click()
@@ -253,16 +256,16 @@ class TangoFormTests(LiveServerTestCase):
     fileupload = self.driver.find_element_by_id(filename)
     fileupload.send_keys("/home/alex/Desktop/bull.py");
     fileupload.submit()
-
-    url = vrfy.settings.TANGO_ADDRESS + "open/" + vrfy.settings.TANGO_KEY + "/" + self._get_courselab_name(name) + "/"
-    response = requests.get(url)
+    
+    response2 = requests.get(url)
+    aftersize = len(response2.json()["files"])
     
     self._del_ps(name)
     probfile.delete()
     prob.delete()
     
-    #Check that the uploaded file is in the courselabs
-    self.assertIn(filename, str(response.json()["files"]))
+    #Check there are more files in the courselab than before the upload
+    self.assertGreater(aftersize, beforesize)
 
   def tearDown(self):
     self.driver.close()
