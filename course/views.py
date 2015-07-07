@@ -85,8 +85,13 @@ def results_detail(request, ps_id):
   authenticate(request)
   # logic to figure out if the results are availiable and if so, get them
   ps = get_object_or_404(ProblemSet, pk=ps_id, pub_date__lte=timezone.now())
-  response = "here's the results for that problem set: {!s} you clicked on".format(ps_id)
-  return render(request, 'course/results_detail.html', {'problem_set': ps})
+  
+  #poll the tango server
+  url = vrfy.settings.TANGO_ADDRESS + "poll/" + vrfy.settings.TANGO_KEY + "/" + slugify(ps.title) + "/" + slugify(ps.title) + "-" + request.user.username + "/"
+  r = requests.get(url)
+  
+  context = {'output': r.text}
+  return render(request, 'course/results_detail.html', context)
   # return HttpResponse("And Here are the results for one your problem sets")
 
 def results_index(request):
