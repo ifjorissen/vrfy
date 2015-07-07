@@ -3,6 +3,7 @@ from django.utils.text import slugify
 from django.http import Http404
 from .models import Problem, ProblemSet, RequiredProblemFilename, ProblemSolutionFile
 import requests
+import shutil
 
 import sys
 sys.path.append("../")
@@ -70,7 +71,11 @@ class ProblemSetAdmin(admin.ModelAdmin):
   def response_change(self, request, obj):
     self._open_and_upload(obj)
     return super(ProblemSetAdmin, self).response_change(request, obj)
-    
+
+  def response_delete(self, request, obj_display, obj_id):
+    shutil.rmtree(vrfy.settings.TANGO_COURSELAB_DIR + vrfy.settings.TANGO_KEY + "-" + slugify(obj_display))
+    return super(ProblemSetAdmin, self).response_delete(request, obj_display, obj_id)
+
   def _open_and_upload(self, obj):
     """
     Helper function that gets called for response change and response add

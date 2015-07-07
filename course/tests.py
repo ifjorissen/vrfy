@@ -15,7 +15,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import Select
 from django.contrib.auth.models import User
 from django.core.files import File as Dfile
-import shutil
+
 
 import sys
 sys.path.append("../")
@@ -27,7 +27,6 @@ from . import models
 
 ADMIN_USERNAME = "admin"
 ADMIN_PASSWORD = "password"
-COURSELAB_DIR = "/home/alex/verify_project/courselabs/"
 
 class ProblemSetTests(TestCase):
   """
@@ -180,8 +179,6 @@ class TangoFormTests(LiveServerTestCase):
     self.driver.find_element_by_link_text(name).click()
     self.driver.find_element_by_class_name("deletelink").click()
     self.driver.find_element_by_name("post").submit()
-    #remove it from Tango
-    shutil.rmtree(COURSELAB_DIR + vrfy.settings.TANGO_KEY + "-" + name)
 
   #get the name of the courselab on the Tango server
   def _get_courselab_name(self, name):

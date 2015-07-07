@@ -122,4 +122,7 @@ STATICFILES_DIRS = (
 TANGO_ADDRESS = "http://localhost:3300/"
 #key to access tango server
 TANGO_KEY = "test"
+#location of the tango courselabs folder
+TANGO_COURSELAB_DIR = "/home/alex/verify_project/courselabs/"
+
 
