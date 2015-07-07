@@ -1,17 +1,26 @@
 import random
 import datetime
 import requests
-from django.test import TestCase
+from django.test import TestCase, LiveServerTestCase
 from django.utils import timezone
 from django.utils.text import slugify
 from django.core.urlresolvers import reverse
+from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support.ui import Select
+from django.contrib.auth.models import User
+from django.core.files import File as Dfile
+
 
 import sys
 sys.path.append("../")
 import vrfy.settings
 
 from . import views
-from .models import ProblemSet
+from .models import ProblemSet, Problem, ProblemSolutionFile
+
+ADMIN_USERNAME = "admin"
+ADMIN_PASSWORD = "password"
 
 class ProblemSetTests(TestCase):
   """
@@ -116,14 +125,99 @@ class CantSeeFutureAssignmentsTests(ProblemSetTests):
     response = self.client.get(reverse('course:problem_set_index'))
     self.assertNotIn(self.ps.title, str(response.content))
 
-class AdminSubmissionTests(TestCase):
+class AdminTests(LiveServerTestCase):
+  
+  @classmethod
+  def setUpClass(cls):
+    cls.driver = webdriver.Firefox()
+    super(AdminTests, cls).setUpClass()
 
-  def test_admin_makes_new_courselab_in_tango_when_making_new_problem_set(self):
-    name = 'test_ps_' + str(random.randint(1,10000))
-    r = self.client.post(reverse('admin:course_problemset_add'), {'title' : name, 'description' : 'something', '_save': ['Save'], 'pub_date_0': ['2015-07-02'], 'due_date_0': ['2015-07-02'], 'problems': ['2'], 'pub_date_1': ['18:03:53'], 'csrfmiddlewaretoken': ['CEOH3CWH8Er8hnWedEDwsC1PeBk3XoR0'], 'due_date_1': ['18:03:55']})
-    self.assertEqual(r.status_code, False)
+  #helper function that logs in to the admin side
+  def _login(self):
+    User.objects.create_superuser(ADMIN_USERNAME, 'fake@example.com', ADMIN_PASSWORD)
+    self.driver.find_element_by_id("id_username").send_keys(ADMIN_USERNAME)
+    pw = self.driver.find_element_by_id("id_password")
+    pw.send_keys(ADMIN_PASSWORD)
+    pw.send_keys(Keys.RETURN)
+  
+  #helper function to make a new problem
+  def _new_problem(self, name):
+    prob = Problem.objects.create(title=name, course="420", description="Super fun problem", statement="yay")
+    return prob
+  
+  #adds a new solution file
+  def _new_solfile(self, prob, filepath):
+    with open(filepath, 'r') as f:
+      sol = ProblemSolutionFile.objects.create(problem=prob)
+      df = Dfile(f)
+      sol.file_upload.save(filepath, df)
+    return sol
+    
+  #helper function that fills out a form for a new problem set
+  def _new_ps(self, name):
+    self.driver.find_element_by_id("id_title").send_keys(name)
+    self.driver.find_element_by_id("id_description").send_keys("This is a description")
+    problems = Select(self.driver.find_element_by_id('id_problems'))
+    problems.select_by_index(0)
+    
+    self.driver.find_element_by_xpath("/html/body/div[1]/div[3]/div/form/div/fieldset[3]/div[1]/div/p/span[1]/a[1]").click()
+    self.driver.find_element_by_xpath("/html/body/div[1]/div[3]/div/form/div/fieldset[3]/div[1]/div/p/span[2]/a[1]").click()
+    self.driver.find_element_by_xpath("/html/body/div[1]/div[3]/div/form/div/fieldset[3]/div[2]/div/p/span[1]/a[1]").click()
+    self.driver.find_element_by_xpath("/html/body/div[1]/div[3]/div/form/div/fieldset[3]/div[2]/div/p/span[2]/a[1]").click()
+
+    self.driver.find_element_by_name("_save").click()
+
+    return name
+    
+  def _del_ps(self, name):
+    #remove it from the db
+    self.driver.get(self.live_server_url + "/admin/course/problemset/")
+    self.driver.find_element_by_link_text(name).click()
+    self.driver.find_element_by_class_name("deletelink").click()
+    self.driver.find_element_by_name("post").submit()
+    #remove it from Tango
+    
+
+  def test_new_problem_set_opens_courselab(self):
+    prob = self._new_problem("fun problem")
+    self.driver.get(self.live_server_url + "/admin/course/problemset/add")
+    self._login()
+    
+    name = "test_ps_" + str(random.randint(1,10000))
+    self._new_ps(name)
+    
     url = vrfy.settings.TANGO_ADDRESS + "open/" + vrfy.settings.TANGO_KEY + "/" + slugify(name) + "/"
     response = requests.get(url)
-    #if this command creats the courselab, then it wasn't created by the admin
+    
+    #clean up the db and the tango courselab folder
+    self._del_ps(name)
+    prob.delete()
+    
+    #if that request creates the courselab, then it wasn't created by the admin app
     self.assertNotEqual(response.json()["statusMsg"], "Created directory")
+
+  def test_new_problem_set_uploads_file(self):
+    prob = self._new_problem("fun problem")
+    sol = self._new_solfile(prob, "my_solution_file.txt")
+    self.driver.get(self.live_server_url + "/admin/course/problemset/add")
+    self._login()
+    
+    name = "test_ps_" + str(random.randint(1,10000))
+    self._new_ps(name)
+    
+    url = vrfy.settings.TANGO_ADDRESS + "open/" + vrfy.settings.TANGO_KEY + "/" + slugify(name) + "/"
+    response = requests.get(url)
+    
+    self._del_ps(name)
+    sol.delete()
+    prob.delete()
+    
+    #Check that the uploaded file is in the courselabs
+    self.assertIn("my_solution_file", str(response.json()["files"]))
+
+
+  @classmethod
+  def tearDownClass(cls):
+    cls.driver.close()
+    super(AdminTests, cls).tearDownClass()
 
