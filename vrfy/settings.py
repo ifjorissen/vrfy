@@ -40,7 +40,6 @@ INSTALLED_APPS = (
     'generic',
     'course',
     'vrfy',
-    'grade',
 )
 
 MIDDLEWARE_CLASSES = (
