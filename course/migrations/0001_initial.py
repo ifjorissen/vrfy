@@ -15,7 +15,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Problem',
             fields=[
-                ('id', models.AutoField(primary_key=True, serialize=False, verbose_name='ID', auto_created=True)),
+                ('id', models.AutoField(auto_created=True, primary_key=True, verbose_name='ID', serialize=False)),
                 ('title', models.CharField(max_length=200)),
                 ('course', models.CharField(max_length=200)),
                 ('description', models.TextField(default='')),
@@ -26,7 +26,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='ProblemSet',
             fields=[
-                ('id', models.AutoField(primary_key=True, serialize=False, verbose_name='ID', auto_created=True)),
+                ('id', models.AutoField(auto_created=True, primary_key=True, verbose_name='ID', serialize=False)),
                 ('title', models.CharField(max_length=200)),
                 ('description', models.TextField(default='')),
                 ('pub_date', models.DateTimeField(verbose_name='date assigned')),
@@ -37,16 +37,16 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='ProblemSolutionFile',
             fields=[
-                ('id', models.AutoField(primary_key=True, serialize=False, verbose_name='ID', auto_created=True)),
+                ('id', models.AutoField(auto_created=True, primary_key=True, verbose_name='ID', serialize=False)),
                 ('file_upload', models.FileField(upload_to=course.models.solution_file_upload_path)),
-                ('comment', models.CharField(max_length=200, null=True)),
+                ('comment', models.CharField(null=True, max_length=200)),
                 ('problem', models.ForeignKey(to='course.Problem', null=True)),
             ],
         ),
         migrations.CreateModel(
             name='RequiredProblemFilename',
             fields=[
-                ('id', models.AutoField(primary_key=True, serialize=False, verbose_name='ID', auto_created=True)),
+                ('id', models.AutoField(auto_created=True, primary_key=True, verbose_name='ID', serialize=False)),
                 ('file_title', models.CharField(max_length=200)),
                 ('problem', models.ForeignKey(to='course.Problem', null=True)),
             ],
@@ -54,31 +54,31 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='StudentProblemFile',
             fields=[
-                ('id', models.AutoField(primary_key=True, serialize=False, verbose_name='ID', auto_created=True)),
+                ('id', models.AutoField(auto_created=True, primary_key=True, verbose_name='ID', serialize=False)),
                 ('submitted_file', models.FileField(upload_to=course.models.student_file_upload_path)),
-                ('prob_file', models.ForeignKey(to='course.RequiredProblemFilename')),
+                ('required_problem_filename', models.ForeignKey(to='course.RequiredProblemFilename', null=True)),
             ],
         ),
         migrations.CreateModel(
             name='StudentProblemSet',
             fields=[
-                ('id', models.AutoField(primary_key=True, serialize=False, verbose_name='ID', auto_created=True)),
+                ('id', models.AutoField(auto_created=True, primary_key=True, verbose_name='ID', serialize=False)),
+                ('submitted', models.DateTimeField(verbose_name='date submitted')),
                 ('problem_set', models.ForeignKey(to='course.ProblemSet')),
+                ('user', models.ForeignKey(to='generic.CSUser', null=True)),
             ],
         ),
         migrations.CreateModel(
             name='StudentProblemSolution',
             fields=[
-                ('id', models.AutoField(primary_key=True, serialize=False, verbose_name='ID', auto_created=True)),
-                ('submitted', models.DateTimeField(verbose_name='date submitted')),
+                ('id', models.AutoField(auto_created=True, primary_key=True, verbose_name='ID', serialize=False)),
                 ('problem', models.ForeignKey(to='course.Problem')),
-                ('ps', models.ForeignKey(to='course.ProblemSet')),
-                ('user', models.ForeignKey(to='generic.CSUser')),
+                ('student_problem_set', models.ForeignKey(to='course.StudentProblemSet', null=True)),
             ],
         ),
         migrations.AddField(
             model_name='studentproblemfile',
-            name='solution',
+            name='student_problem_solution',
             field=models.ForeignKey(to='course.StudentProblemSolution', null=True),
         ),
     ]

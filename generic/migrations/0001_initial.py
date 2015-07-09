@@ -16,7 +16,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='CSUser',
             fields=[
-                ('user_ptr', models.OneToOneField(parent_link=True, to=settings.AUTH_USER_MODEL, primary_key=True, serialize=False, auto_created=True)),
+                ('user_ptr', models.OneToOneField(auto_created=True, parent_link=True, serialize=False, to=settings.AUTH_USER_MODEL, primary_key=True)),
             ],
             options={
                 'verbose_name': 'user',

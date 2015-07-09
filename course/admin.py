@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.utils.text import slugify
 from django.http import Http404
-from .models import Problem, ProblemSet, RequiredProblemFilename, ProblemSolutionFile
+from . import models #Problem, ProblemSet, RequiredProblemFilename, ProblemSolutionFile
 import requests
 import shutil
 
@@ -20,13 +20,17 @@ admin.site.site_title = "Homework Administration"
 #   extra = 1
 
 class RequiredProblemFilenameInline(admin.TabularInline):
-  model = RequiredProblemFilename
+  model = models.RequiredProblemFilename
   extra = 3
 
 
 class ProblemSolutionFileInline(admin.TabularInline):
-  model = ProblemSolutionFile
+  model = models.ProblemSolutionFile
   extra = 3
+
+#class StudentProblemSetInline(admin.StackedInline):
+#  model = models.StudentProblemSet
+#  show_change_link = True
 
 
 # class ProblemSolutionAdmin(admin.ModelAdmin):
@@ -38,7 +42,7 @@ class ProblemSolutionFileInline(admin.TabularInline):
 
 class ProblemAdmin(admin.ModelAdmin):
   class Meta:
-    model = Problem
+    model = models.Problem
 
   fieldsets = [
     ('Problem Info', {'fields': ['title', 'description', 'statement', 'many_attempts']}),
@@ -59,7 +63,7 @@ class ProblemSetAdmin(admin.ModelAdmin):
     ('Problems', {'fields':['problems']}),
     ('Release & Due Dates', {'fields': ['pub_date', 'due_date']}),
   ]
-  # inlines = [ProblemInline]
+  #inlines = [StudentProblemSetInline]
   list_display = ('title', 'pub_date', 'due_date')
   
   #add a courselab and files to Tango when Problem Set is added and saved for the first time
@@ -88,12 +92,15 @@ class ProblemSetAdmin(admin.ModelAdmin):
     #upload the files
     url = vrfy.settings.TANGO_ADDRESS + "upload/" + vrfy.settings.TANGO_KEY + "/" + slugify(obj.title) + "/"
     for problem in obj.problems.all():
-      for psfile in ProblemSolutionFile.objects.filter(problem=problem):
+      for psfile in models.ProblemSolutionFile.objects.filter(problem=problem):
         f = psfile.file_upload
         header = {'Filename': f.name.split("/")[-1]}
         r = requests.post(url, data=f.read(), headers=header)
 
 # admin.site.register(RequiredProblemFilename, RequiredProblemFilenameAdmin)
 # admin.site.register(ProblemSolution, ProblemSolutionAdmin)
-admin.site.register(Problem, ProblemAdmin)
-admin.site.register(ProblemSet, ProblemSetAdmin)
+admin.site.register(models.Problem, ProblemAdmin)
+admin.site.register(models.ProblemSet, ProblemSetAdmin)
+admin.site.register(models.StudentProblemSet)
+admin.site.register(models.StudentProblemSolution)
+admin.site.register(models.StudentProblemFile)
