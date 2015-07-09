@@ -28,9 +28,19 @@ class ProblemSolutionFileInline(admin.TabularInline):
   model = models.ProblemSolutionFile
   extra = 3
 
-#class StudentProblemSetInline(admin.StackedInline):
-#  model = models.StudentProblemSet
-#  show_change_link = True
+class StudentProblemSetInline(admin.TabularInline):
+  model = models.StudentProblemSet
+  extra = 0
+  show_change_link = True
+
+class StudentProblemSolutionInline(admin.TabularInline):
+  model = models.StudentProblemSolution
+  extra = 0
+  show_change_link = True
+
+class StudentProblemFileInline(admin.TabularInline):
+  model = models.StudentProblemFile
+  extra = 0
 
 
 # class ProblemSolutionAdmin(admin.ModelAdmin):
@@ -63,7 +73,7 @@ class ProblemSetAdmin(admin.ModelAdmin):
     ('Problems', {'fields':['problems']}),
     ('Release & Due Dates', {'fields': ['pub_date', 'due_date']}),
   ]
-  #inlines = [StudentProblemSetInline]
+  inlines = [StudentProblemSetInline]
   list_display = ('title', 'pub_date', 'due_date')
   
   #add a courselab and files to Tango when Problem Set is added and saved for the first time
@@ -97,10 +107,15 @@ class ProblemSetAdmin(admin.ModelAdmin):
         header = {'Filename': f.name.split("/")[-1]}
         r = requests.post(url, data=f.read(), headers=header)
 
+class StudentProblemSetAdmin(admin.ModelAdmin):
+  inlines = [StudentProblemSolutionInline]
+
+class StudentProblemSolutionAdmin(admin.ModelAdmin):
+  inlines = [StudentProblemFileInline]
+
 # admin.site.register(RequiredProblemFilename, RequiredProblemFilenameAdmin)
 # admin.site.register(ProblemSolution, ProblemSolutionAdmin)
 admin.site.register(models.Problem, ProblemAdmin)
 admin.site.register(models.ProblemSet, ProblemSetAdmin)
-admin.site.register(models.StudentProblemSet)
-admin.site.register(models.StudentProblemSolution)
-admin.site.register(models.StudentProblemFile)
+admin.site.register(models.StudentProblemSet, StudentProblemSetAdmin)
+admin.site.register(models.StudentProblemSolution, StudentProblemSolutionAdmin)
