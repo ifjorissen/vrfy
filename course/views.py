@@ -2,7 +2,7 @@ from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse, Http404, HttpResponseRedirect
 from django.utils import timezone
 from django.utils.text import slugify
-from .models import ProblemSet, ProblemSolutionFile
+from .models import *
 from generic.views import *
 from generic.models import CSUser
 import requests
@@ -29,6 +29,10 @@ def attempt_problem_set(request, ps_id):
 def problem_set_index(request):
   authenticate(request)
   latest_problem_sets = ProblemSet.objects.filter(pub_date__lte=timezone.now()).order_by('-pub_date')
+  student_problemset_solutions = [StudentProblemSet.objects.filter(user=request.user, problem_set__id = ps.id) for ps in latest_problem_sets]
+  print(request.user)
+  print(student_problemset_solutions)
+  print(StudentProblemSet.objects.filter(user=request.user))
   context = {'latest_problem_sets': latest_problem_sets}
   return render(request, 'course/problem_set_index.html', context)
 
@@ -39,6 +43,54 @@ def problem_set_detail(request, ps_id):
   response = "here's that problem set: {!s} you clicked on".format(ps_id)
   return render(request, 'course/problem_set_detail.html', {'problem_set': ps})
 
+def problem_submit(request, p_id, ps_id):
+  authenticate(request)
+  if request.method == 'POST':#make sure the user doesn't type this into the address bar
+    ps = get_object_or_404(ProblemSet, pk=ps_id, pub_date__lte=timezone.now())
+    problem = get_object_or_404(Problem, pk=p_id)
+
+    #create the student stuff
+    student_ps_sol, sps_created = StudentProblemSet.objects.get_or_create( problem_set=ps, user=request.user, submitted=timezone.now())
+    student_psol, s_created = StudentProblemSolution.objects.get_or_create(problem=problem, student_problem_set=student_ps_sol)
+    
+    #opens the courselab
+    url = vrfy.settings.TANGO_ADDRESS + "upload/" + vrfy.settings.TANGO_KEY + "/" + slugify(ps.title)+ "/"
+    files = []
+
+    #getting all the submitted files
+    for name, f in request.FILES.items():
+      localfile = name + "-"+ request.user.username
+      header = {'Filename': localfile}
+      r = requests.post(url, data=f.read(), headers=header)
+      files.append({"localFile" : localfile, "destFile":name})#for the addJob command
+      required_pf = RequiredProblemFilename(pk=p_id, file_title=name)
+      print(required_pf)
+      prob_file, pf_created = StudentProblemFile.objects.get_or_create(required_problem_filename=required_pf, student_problem_solution = student_psol, submitted_file=f)
+    
+    #getting all the grader files
+    for psfile in ProblemSolutionFile.objects.filter(problem=problem):
+      # prob_file = StudentProblemFile.get_or_create(required_problem_filename=psfile.)
+      name = psfile.file_upload.name.split("/")[-1]
+      if "makefile" in name.lower():#if makefile is in the name, designate it as THE makefile
+        files.append({"localFile" : name, "destFile": "Makefile"})
+      else:
+        files.append({"localFile" : name, "destFile": name})
+
+    #making Tango run the files
+    jobname = slugify(ps.title) + "-" + request.user.username
+    body = json.dumps({"image": "autograding_image", "files": files, "jobName": jobname, "output_file": jobname,"timeout": 1000})
+    #raise Http404(body)
+    url = vrfy.settings.TANGO_ADDRESS + "addJob/" + vrfy.settings.TANGO_KEY + "/" + slugify(ps.title) + "/"
+    r = requests.post(url, data=body)
+    
+    #create the student solution
+    # student_ps_sol = StudentProblemSet.objects.get_or_create(problem_set=ps, user=request.user, submitted=timezone.now())
+    return HttpResponseRedirect("/results/" + ps_id + "/" + p_id + "/")
+    
+  else:
+    raise Http404("Don't do that")
+
+  pass
 #for submitting files
 def problem_set_submit(request, ps_id):
   authenticate(request)
@@ -55,10 +107,14 @@ def problem_set_submit(request, ps_id):
       header = {'Filename': localfile}
       r = requests.post(url, data=f.read(), headers=header)
       files.append({"localFile" : localfile, "destFile":name})#for the addJob command
+      # required_pf = RequiredProblemFilename(pk=ps_id)
+      # prob_file = StudentProblemFile.get_or_create(required_problem_filename=psfile.)
     
     #getting all the grader files
     for problem in ps.problems.all():
+      #create the student problem solution & files
       for psfile in ProblemSolutionFile.objects.filter(problem=problem):
+        # prob_file = StudentProblemFile.get_or_create(required_problem_filename=psfile.)
         name = psfile.file_upload.name.split("/")[-1]
         if "makefile" in name.lower():#if makefile is in the name, designate it as THE makefile
           files.append({"localFile" : name, "destFile": "Makefile"})
@@ -72,6 +128,8 @@ def problem_set_submit(request, ps_id):
     url = vrfy.settings.TANGO_ADDRESS + "addJob/" + vrfy.settings.TANGO_KEY + "/" + slugify(ps.title) + "/"
     r = requests.post(url, data=body)
     
+    #create the student solution
+    # student_ps_sol = StudentProblemSet.objects.get_or_create(problem_set=ps, user=request.user, submitted=timezone.now())
     return HttpResponseRedirect("/results/" + ps_id + "/")
     
   else:
@@ -96,6 +154,21 @@ def results_detail(request, ps_id):
   
   #only send the data that the student should see
   context = {"score_sum" : log_data["score_sum"], "score_key" : log_data["score_key"], "external_log" : log_data["external_log"]}
+  return render(request, 'course/results_detail.html', context)
+  # return HttpResponse("And Here are the results for one your problem sets")
+
+  #returns the results of a given problem set (and all attempts)
+def results_problem_detail(request, p_id, ps_id):
+  authenticate(request)
+  # logic to figure out if the results are availiable and if so, get them
+  ps = get_object_or_404(ProblemSet, pk=ps_id, pub_date__lte=timezone.now())
+  problem = get_object_or_404(Problem, pk=ps_id)
+  
+  #poll the tango server
+  url = vrfy.settings.TANGO_ADDRESS + "poll/" + vrfy.settings.TANGO_KEY + "/" + slugify(ps.title) + "/" + slugify(ps.title) + "-" + request.user.username + "/"
+  r = requests.get(url)
+  
+  context = {'output': r.text}
   return render(request, 'course/results_detail.html', context)
   # return HttpResponse("And Here are the results for one your problem sets")
 
