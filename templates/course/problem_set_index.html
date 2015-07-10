@@ -1,15 +1,29 @@
 {% extends 'course/base.html' %}
 
 {% block content %}
-{% if latest_problem_sets %}
-    <ul class="list-group">
-    {% for ps in latest_problem_sets %}
-        <li class="list-group-item"><a href="{% url 'course:problem_set_detail' ps.id %}">{{ ps.title }}</a></li>
-    {% endfor %}
-    </ul>
-{% else %}
-    <p>No problem sets are available.</p>
-{% endif %}
+<div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
+  {% for ps in latest_problem_sets %}
+  <div class="panel panel-default">
+    <div class="panel-heading" role="tab" id="headingOne">
+      <h4 class="panel-title">
+        <span role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+          {{ ps.title }}
+        </span>
+        <a class ="pull-right" href="{% url 'course:problem_set_detail' ps.id %}">view all problems
+        <span class="glyphicon glyphicon-arrow-right"></span></a>
+      </h4>
+    </div>
+    <div id="collapseOne" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="headingOne">
+      <div class="list-group">
+      {% for problem in ps.problems.all %}
+      <li class="list-group-item"><span>{{ problem.title }}</span><span class="badge">Attempt</span></li>
+      {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% empty %}
+  {% endfor %}
+</div>
 {% endblock %}
 
 
