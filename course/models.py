@@ -20,7 +20,7 @@ def student_file_upload_path(instance, filename):
   problem = instance.student_problem_solution.problem
   course = problem.course
 
-  return slugify('{0}/folio/{1}/{2}/{3}_files/{4}'.format(course, user, problem_set, problem.title, filename))
+  return '{0}/folio/{1}/{2}/{3}_files/{4}'.format(course, user, slugify(problem_set), slugify(problem.title), filename)
 
 def solution_file_upload_path(instance, filename):
   #filepath should be of the form: course/solutions/problem_set/problem/filename 
@@ -37,10 +37,6 @@ class Problem(models.Model):
   statement = models.TextField(default='') #markdown compatible
   many_attempts = models.BooleanField(default = True)
   # slug = models.SlugField(max_length = 60, unique = True, default='')
-  # problem_files = models.ManyToManyField('ProblemFile', related_name='required_files')
-  # files_to_upload = 
-  # problem descriptions e.g your solution to 
-  # list of .py uploads that should be uploaded and extras
   # assigned = models.BooleanField(default = False)
 
   def __str__(self): 
@@ -52,16 +48,6 @@ class RequiredProblemFilename(models.Model):
   #add field for extension
   def __str__(self):
     return self.file_title
-
-
-
-# class ProblemSolution(models.Model):
-#   #should problem be a One to One Field?:https://docs.djangoproject.com/en/1.8/topics/db/examples/one_to_one/ and
-#   #https://docs.djangoproject.com/en/1.8/topics/db/examples/many_to_one/
-#   problem = models.ForeignKey(Problem)
-
-#   def __str__(self): 
-#     return self.id
 
 class ProblemSolutionFile(models.Model):
   # file_title = models.CharField(max_length=200)
@@ -86,9 +72,8 @@ class ProblemSet(models.Model):
 class StudentProblemSet(models.Model):
   problem_set = models.ForeignKey(ProblemSet)
   user = models.ForeignKey('generic.CSUser', null=True)
-  submitted = models.DateTimeField('date submitted')
-  # solutions = models.ManyToManyField(StudentSolution)
-  # comments = models.TextField()
+  submitted = models.DateTimeField('date submitted', null=True)
+  # comments = models.TextField(), 
 
   def __str__(self): 
     return self.problem_set.title + " - " + self.user.username
@@ -102,9 +87,6 @@ class StudentProblemSolution(models.Model):
   # attempt_num = models.IntegerField(default=1) //shoudl be max of the file uploads
   # submitted_files = models.ManyToManyField(StudentProblemFile)
   # files = models.ManyToManyField()
-  #user who uploaded
-  #problem number
-  #problem set number
   #date time
   #submitted files
 
@@ -118,7 +100,7 @@ class StudentProblemFile(models.Model):
   student_problem_solution = models.ForeignKey(StudentProblemSolution, null=True)
   # potentially could automatically upload to afs
   submitted_file = models.FileField(upload_to=student_file_upload_path)
-  # attempt_num = models.IntegerField(default=1)
+  attempt_num = models.IntegerField(default=1)
 
 
 
