@@ -1,4 +1,13 @@
 {% extends 'course/base.html' %}
 {% block content %}
-<p>{{ output }}</p>
+<p>If the results aren't there or haven't changed since your last submission, try refreshing the page in 30 seconds</p>
+<h3>Total Score: {{ score_sum }}</h3>
+<h4>Problem Scores:</h4>
+<ul style="list-style-type:none">
+{% for problem, score in score_key.items %}
+    <li>{{ problem }}: {{ score }}</li>
+{% endfor %}
+</ul>
+<h4>Comments:</h4>
+<p>{{ external_log }}</p>
 {% endblock content %}

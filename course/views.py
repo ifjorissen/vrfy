@@ -67,7 +67,7 @@ def problem_set_submit(request, ps_id):
 
     #making Tango run the files
     jobname = slugify(ps.title) + "-" + request.user.username
-    body = json.dumps({"image": "autograding_image", "files": files, "jobName": jobname, "output_file": jobname,"timeout": 1000})
+    body = json.dumps({"image": "autograding_image", "files": files, "jobName": jobname, "output_file": jobname,"timeout": 10})
     #raise Http404(body)
     url = vrfy.settings.TANGO_ADDRESS + "addJob/" + vrfy.settings.TANGO_KEY + "/" + slugify(ps.title) + "/"
     r = requests.post(url, data=body)
@@ -90,7 +90,10 @@ def results_detail(request, ps_id):
   url = vrfy.settings.TANGO_ADDRESS + "poll/" + vrfy.settings.TANGO_KEY + "/" + slugify(ps.title) + "/" + slugify(ps.title) + "-" + request.user.username + "/"
   r = requests.get(url)
   
-  context = {'output': r.text}
+  log_data = json.loads(r.text.split("\n")[-2])#theres a line with an empty string after the last actual output line
+
+  #only send the data that the student should see
+  context = {"score_sum" : log_data["score_sum"], "score_key" : log_data["score_key"], "external_log" : log_data["external_log"]}
   return render(request, 'course/results_detail.html', context)
   # return HttpResponse("And Here are the results for one your problem sets")
 
