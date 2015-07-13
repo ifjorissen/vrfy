@@ -20,7 +20,7 @@ def student_file_upload_path(instance, filename):
   problem = instance.student_problem_solution.problem
   course = problem.course
 
-  return slugify('{0}/folio/{1}/{2}/{3}_files/{4}'.format(course, user, problem_set, problem.title, filename))
+  return '{0}/folio/{1}/{2}/{3}_files/{4}'.format(slugify(course), slugify(user), slugify(problem_set), slugify(problem.title), slugify(filename))
 
 def solution_file_upload_path(instance, filename):
   #filepath should be of the form: course/solutions/problem_set/problem/filename 
