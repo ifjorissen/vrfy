@@ -98,6 +98,13 @@ class ProblemSetAdmin(admin.ModelAdmin):
 
       upload_url = vrfy.settings.TANGO_ADDRESS + "upload/" + vrfy.settings.TANGO_KEY + "/" + slugify(obj.title) + "_" + \
       slugify(problem.title) + "/"
+
+      #upload the grader librarires
+      for lib in models.GraderLib.objects.all():
+        f = lib.lib_upload
+        header = {'Filename': f.name.split("/")[-1]}
+        r = requests.post(upload_url, data=f.read(), headers=header)
+
       #upload the grading script
       grading = problem.grade_script
       grading_name = grading.name.split("/")[-1]
@@ -125,3 +132,4 @@ admin.site.register(models.Problem, ProblemAdmin)
 admin.site.register(models.ProblemSet, ProblemSetAdmin)
 admin.site.register(models.StudentProblemSet, StudentProblemSetAdmin)
 admin.site.register(models.StudentProblemSolution, StudentProblemSolutionAdmin)
+admin.site.register(models.GraderLib)

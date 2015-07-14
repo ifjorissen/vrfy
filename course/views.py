@@ -102,6 +102,11 @@ def problem_submit(request, ps_id, p_id):
         prob_file = StudentProblemFile.objects.create(required_problem_filename=required_pf, student_problem_solution = student_psol, submitted_file=f)
         prob_file.save()
     
+    #add grader libraries
+    for lib in GraderLib.objects.all():
+      name = lib.lib_upload.name.split("/")[-1]
+      files.append({"localFile" : name, "destFile": name})
+
     #getting all the grader files
     grading = problem.grade_script
     name = grading.name.split("/")[-1]
