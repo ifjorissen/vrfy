@@ -23,10 +23,6 @@ def index(request):
   authenticate(request)
   return render(request, 'course/index.html')
 
-def submit_success(request):
-  authenticate(request)
-  return render(request, 'course/submit_success.html')
-
 def attempt_problem_set(request, ps_id):
   authenticate(request)
   ps = get_object_or_404(ProblemSet, pk=ps_id, pub_date__lte=timezone.now())
@@ -57,13 +53,6 @@ def problem_set_index(request):
   # student_problemset_solutions = [StudentProblemSet.objects.filter(user=request.user, problem_set__id = ps.id) for ps in latest_problem_sets]
   context = {'ps_dict': ps_sol_dict}
   return render(request, 'course/problem_set_index.html', context)
-
-def problem_set_detail(request, ps_id):
-  authenticate(request)
-  ps = get_object_or_404(ProblemSet, pk=ps_id, pub_date__lte=timezone.now())
-
-  response = "here's that problem set: {!s} you clicked on".format(ps_id)
-  return render(request, 'course/problem_set_detail.html', {'problem_set': ps})
 
 def problem_submit(request, ps_id, p_id):
   authenticate(request)
@@ -163,26 +152,26 @@ def results_detail(request, ps_id):
     context = {'sps': student_ps, "ps_results" : results_dict}
   return render(request, 'course/results_detail.html', context)
 
-def results_index(request):
-  authenticate(request)
+# def results_index(request):
+#   authenticate(request)
   # logic to figure out if the results are availiable and if so, get them
-  response = "here are all the results that are availiable"
+  # response = "here are all the results that are availiable"
   #get all the student problem sets
-  sps_sets = StudentProblemSet.objects.filter(user=request.user).order_by('submitted')
-  sps_results_dict = {}
-  for sps in sps_sets:
-    try:
-      result_set = ProblemResultSet.objects.get(sp_set=sps)
-    except ProblemResultSet.DoesNotExist:
-      result_set = None
-    sps_results_dict[sps] = result_set
+  # sps_sets = StudentProblemSet.objects.filter(user=request.user).order_by('submitted')
+  # sps_results_dict = {}
+  # for sps in sps_sets:
+  #   try:
+  #     result_set = ProblemResultSet.objects.get(sp_set=sps)
+  #   except ProblemResultSet.DoesNotExist:
+  #     result_set = None
+  #   sps_results_dict[sps] = result_set
   #show the latest results
   #get the latest result for each existing solution
   # for sps in studentp_sets:
     # results = ProblemResult.objects.filter(user=request.user).order_by('timestamp')
     # context = {'results': results}
-  context = {'sps_results_dict': sps_results_dict}
-  return render(request, 'course/results_index.html', context)
+  # context = {'sps_results_dict': sps_results_dict}
+  # return render(request, 'course/results_index.html', context)
   # return HttpResponse("And Here are the results for your problem sets")
 
 """
