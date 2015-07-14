@@ -1,23 +1,36 @@
 {% extends 'course/base.html' %}
-
+ps_dict
 {% block content %}
 <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
-  {% for ps in latest_problem_sets %}
+  {% for ps, s_sol in ps_dict.items %}
   <div class="panel panel-default">
     <div class="panel-heading" role="tab" id="headingOne">
-      <h4 class="panel-title">
-        <span role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-          {{ ps.title }}
-        </span>
-        <a class ="pull-right" href="{% url 'course:problem_set_detail' ps.id %}">view all problems
+      <h4><span role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+        {{ ps.title }}</span>
+        {% if s_sol and s_sol.submitted %}
+        <a class ="pull-right" href="{% url 'course:attempt_problem_set' ps.id %}">re-attempt problems
         <span class="glyphicon glyphicon-arrow-right"></span></a>
+        {% else %}
+        <a class ="pull-right" href="{% url 'course:attempt_problem_set' ps.id %}">attempt problems
+        <span class="glyphicon glyphicon-arrow-right"></span></a>
+        {% endif %}
       </h4>
     </div>
-    <div id="collapseOne" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="headingOne">
+    <div id="collapseOne" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingOne">
       <div class="list-group">
-      {% for problem in ps.problems.all %}
-      <li class="list-group-item"><span>{{ problem.title }}</span><span class="badge">Attempt</span></li>
-      {% endfor %}
+      {% if s_sol %}
+        {% for solution in s_sol.studentproblemsolution_set.all %}
+        {% if solution.submitted %}
+          <li class="list-group-item"><span>{{ solution.problem.title }}</span><span class="badge">Attempted on {{solution.submitted}}</span></li>
+        {% else %}  
+          <li class="list-group-item"><span>{{ solution.problem.title }}</span><span class="badge">Attempt</span></li>
+        {% endif %}
+        {% endfor %}
+      {% else %}
+        {% for problem in ps.problems.all %}
+        <li class="list-group-item"><span>{{ problem.title }}</span><span class="badge">Attempt</span></li>
+        {% endfor %}
+      {% endif %}
       </div>
     </div>
   </div>
