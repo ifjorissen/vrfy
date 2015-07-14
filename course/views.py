@@ -134,10 +134,8 @@ def results_detail(request, ps_id):
   student_ps = get_object_or_404(StudentProblemSet, problem_set=ps, user=request.user)
   results_dict = {}
   
-  print(student_ps.studentproblemsolution_set.all())
   for solution in student_ps.studentproblemsolution_set.all():
     if solution.submitted:
-      print(solution)
       result = {}
   #poll the tango server
       url = vrfy.settings.TANGO_ADDRESS + "poll/" + vrfy.settings.TANGO_KEY + "/" + slugify(ps.title) + "_" + \
@@ -155,7 +153,6 @@ def results_detail(request, ps_id):
       result = None
     results_dict[solution] = result
     #make a result object
-    print(results_dict)
     #only send the data that the student should see
     context = {'sps': student_ps, "ps_results" : results_dict}
   return render(request, 'course/results_detail.html', context)
