@@ -28,9 +28,8 @@ module.exports = function(grunt) {
     },
     concat: {
             dev: {
-              src: ['<%= course.jsDir %>'],
-              dest: '<%= course.buildjs %>/app.min.js'
-
+              src: ['<%= course.jsDir %>/**'],
+              dest: '<%= course.buildjs %>/app.min.js',
             },
     }, 
     watch: {
@@ -40,7 +39,7 @@ module.exports = function(grunt) {
                 tasks: ['sass']
             },
             javascript: {
-                files: ['<%= course.jsDir %>/*'],
+                files: ['<%= course.jsDir %>/**'],
                 tasks: ['concat:dev']
             }
             // sass: {
