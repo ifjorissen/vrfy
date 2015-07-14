@@ -1,15 +1,48 @@
 {% extends 'course/base.html' %}
 {% block content %}
+<section class="problem-set">
+<section class="ps-info page-header">
+<h1>{{ sps.problem_set.title }} <small> ( Due {{ sps.problem_set.due_date }} )</small></h1>
 <p>If the results aren't there or haven't changed since your last submission, try refreshing the page in 30 seconds</p>
-<h3>Total Score: {{ score_sum }}</h3>
-<h4>Problem Scores:</h4>
-<ul style="list-style-type:none">
-{% for problem, score in score_key.items %}
-    <li>{{ problem }}: {{ score }}</li>
-{% endfor %}
-</ul>
-<h4>Comments:</h4>
-{% for comment in external_log %}
-  <p>{{ comment }}</p>
+</section>
+
+{% for solution, result in ps_results.items %}
+{% if result %}
+  <section id="solution-{{solution.id}}" class="panel panel-default">
+    <div class="panel-heading">
+      <h3><span role="button" data-toggle="collapse" data-parent="#solution-{{solution.id}}" href="#collapse-solution-{{solution.id}}" aria-expanded="true">
+        {{ solution.problem.title }}</span><span class="pull-right badge">{{result.score_sum}}</span></h3>
+    </div>
+    <div id="collapse-solution-{{solution.id}}" class="panel-body panel-collapse collapse in" role="tabpanel">
+      <h4>Attempts: {{solution.attempt_num}}</h4>
+      <!-- <h3>Total Score: {{ result.score_sum }}</h3> -->
+      {% if result.score_key.items %}
+      <h4>Problem Scores:</h4>
+      <ul class="list-group">
+      {% for problem, score in result.score_key.items %}
+        <li class="list-group-item">{{ problem }}: {{ score }}</li>
+      {% endfor %}
+      </ul>
+      {% endif %}
+      {% if result.external_log.items%}
+      <h4>Comments:</h4>
+      <ul class="list-group">
+      {% for key, msg in result.external_log.items %}
+        <li class="list-group-item">{{ key }}: {{ msg }}</li>
+      {% endfor %}
+      </ul>
+      {% endif %}
+    </div>
+  </section>
+{% else %}
+  <section id="solution-{{solution.id}}" class="panel panel-default">
+    <div class="panel-heading">
+      <h3><span>You have not attempted {{ solution.problem.title }} yet </span></h3>
+    </div>
+    <div class="panel-body" >
+      <p>No results Available -- try the problem! </p>
+    </div>
+  </section>
+{% endif %}
 {% endfor %}
 {% endblock content %}
