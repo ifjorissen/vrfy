@@ -92,7 +92,7 @@ def results_detail(request, ps_id):
   try:
     log_data = json.loads(r.text.split("\n")[-2])#theres a line with an empty string after the last actual output line
   except ValueError: #if the json isn't there, something went wrong when running the job, or the grader file messed up
-    raise Http404("Something went wrong. Make sure your code is bug free and resubmit. \nIf the problem persists, contact your professor or TA")
+    return HttpResponseServerError("Something went wrong. Make sure your code is bug free and resubmit. \nIf the problem persists, contact your professor or TA")
   
   #only send the data that the student should see
   context = {"score_sum" : log_data["score_sum"], "score_key" : log_data["score_key"], "external_log" : log_data["external_log"]}

@@ -9,5 +9,7 @@
 {% endfor %}
 </ul>
 <h4>Comments:</h4>
-<p>{{ external_log }}</p>
+{% for comment in external_log %}
+  <p>{{ comment }}</p>
+{% endfor %}
 {% endblock content %}
