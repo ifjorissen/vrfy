@@ -1,4 +1,5 @@
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
+from django.core.urlresolvers import reverse
 from django.http import HttpResponse, Http404, HttpResponseRedirect
 from django.utils import timezone
 from django.utils.text import slugify
@@ -19,12 +20,27 @@ def index(request):
   authenticate(request)
   return render(request, 'course/index.html')
 
+def submit_success(request):
+  authenticate(request)
+  return render(request, 'course/submit_success.html')
+
 def attempt_problem_set(request, ps_id):
   authenticate(request)
   ps = get_object_or_404(ProblemSet, pk=ps_id, pub_date__lte=timezone.now())
-  
+  sps_sol, sps_created = StudentProblemSet.objects.get_or_create(problem_set=ps, user=request.user)
+
+  problem_solution_dict = {}
+  for problem in ps.problems.all():
+    #try to get the student solution
+    try:
+      student_solution = StudentProblemSolution.objects.get(problem=problem, student_problem_set=sps_sol)
+    except StudentProblemSolution.DoesNotExist:
+      student_solution = None
+
+    problem_solution_dict[problem] = student_solution
+
   response = "here's that problem set: {!s} you clicked on".format(ps_id)
-  return render(request, 'course/attempt_problem_set.html', {'problem_set': ps})
+  return render(request, 'course/attempt_problem_set.html', {'problem_set': ps, 'problem_set_dict':problem_solution_dict})
 
 def problem_set_index(request):
   authenticate(request)
@@ -43,14 +59,18 @@ def problem_set_detail(request, ps_id):
   response = "here's that problem set: {!s} you clicked on".format(ps_id)
   return render(request, 'course/problem_set_detail.html', {'problem_set': ps})
 
-def problem_submit(request, p_id, ps_id):
+def problem_submit(request, ps_id, p_id):
   authenticate(request)
   if request.method == 'POST':#make sure the user doesn't type this into the address bar
     ps = get_object_or_404(ProblemSet, pk=ps_id, pub_date__lte=timezone.now())
     problem = get_object_or_404(Problem, pk=p_id)
 
     #create the student stuff
-    student_ps_sol, sps_created = StudentProblemSet.objects.get_or_create( problem_set=ps, user=request.user, submitted=timezone.now())
+    student_ps_sol, sps_created = StudentProblemSet.objects.get_or_create(problem_set=ps, user=request.user)
+    if sps_created:
+      student_ps_sol.submitted = timezone.now()
+      student_ps_sol.save()
+
     student_psol, s_created = StudentProblemSolution.objects.get_or_create(problem=problem, student_problem_set=student_ps_sol)
     
     #opens the courselab
@@ -63,9 +83,16 @@ def problem_submit(request, p_id, ps_id):
       header = {'Filename': localfile}
       r = requests.post(url, data=f.read(), headers=header)
       files.append({"localFile" : localfile, "destFile":name})#for the addJob command
-      required_pf = RequiredProblemFilename(pk=p_id, file_title=name)
-      print(required_pf)
-      prob_file, pf_created = StudentProblemFile.objects.get_or_create(required_problem_filename=required_pf, student_problem_solution = student_psol, submitted_file=f)
+      required_pf = RequiredProblemFilename.objects.get(pk=p_id, file_title=name)
+      try:
+        prob_file = StudentProblemFile.objects.get(required_problem_filename=required_pf, student_problem_solution = student_psol, submitted_file=f).latest('attempt_num')
+        attempts = prob_file.attempt + 1
+        new_prob_file = StudentProblemFile.objects.create(required_problem_filename=required_pf, student_problem_solution = student_psol, submitted_file=f, attempt_num = attempts)
+        new_prob_file.save()
+
+      except StudentProblemFile.DoesNotExist:
+        prob_file = StudentProblemFile.objects.create(required_problem_filename=required_pf, student_problem_solution = student_psol, submitted_file=f)
+        prob_file.save
     
     #getting all the grader files
     for psfile in ProblemSolutionFile.objects.filter(problem=problem):
@@ -83,9 +110,7 @@ def problem_submit(request, p_id, ps_id):
     url = vrfy.settings.TANGO_ADDRESS + "addJob/" + vrfy.settings.TANGO_KEY + "/" + slugify(ps.title) + "/"
     r = requests.post(url, data=body)
     
-    #create the student solution
-    # student_ps_sol = StudentProblemSet.objects.get_or_create(problem_set=ps, user=request.user, submitted=timezone.now())
-    return HttpResponseRedirect("/results/" + ps_id + "/" + p_id + "/")
+    return redirect('course:attempt_problem_set', ps_id)
     
   else:
     raise Http404("Don't do that")
@@ -130,7 +155,8 @@ def problem_set_submit(request, ps_id):
     
     #create the student solution
     # student_ps_sol = StudentProblemSet.objects.get_or_create(problem_set=ps, user=request.user, submitted=timezone.now())
-    return HttpResponseRedirect("/results/" + ps_id + "/")
+    # return HttpResponseRedirect("/results/problem-set-" + ps_id + "/")
+    return redirect('course:results_detail.html', ps_id)
     
   else:
     raise Http404("Don't do that")
