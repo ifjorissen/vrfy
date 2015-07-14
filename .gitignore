@@ -6,3 +6,5 @@ staticfiles
 node_modules
 **/*~
 */static/
+problem_assets/*/**
+problem_assets/**

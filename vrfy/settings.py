@@ -40,7 +40,6 @@ INSTALLED_APPS = (
     'generic',
     'course',
     'vrfy',
-    'grade',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -110,6 +109,8 @@ SERVER_EMAIL = 'isjoriss@reed.edu'
 # https://docs.djangoproject.com/en/1.8/howto/static-files/
 STATIC_ROOT = 'staticfiles/'
 STATIC_URL = '/static/'
+MEDIA_ROOT = 'problem_assets/'
+MEDIA_URL = '/problem_assets/'
 STATICFILES_DIRS = (
     # 'webapps_assets/',
     # os.path.join(BASE_DIR, "static"),
@@ -120,4 +121,7 @@ STATICFILES_DIRS = (
 TANGO_ADDRESS = "http://localhost:3300/"
 #key to access tango server
 TANGO_KEY = "test"
+#location of the tango courselabs folder
+TANGO_COURSELAB_DIR = "/home/alex/verify_project/courselabs/"
+
 

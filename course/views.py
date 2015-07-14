@@ -1,16 +1,19 @@
 from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse, Http404, HttpResponseRedirect
 from django.utils import timezone
-from .models import ProblemSet
+from django.utils.text import slugify
+from .models import ProblemSet, ProblemSolutionFile
 from generic.views import *
 from generic.models import CSUser
 import requests
+import json
 
 import sys
 sys.path.append("../")
 import vrfy.settings
 
 from django.forms.models import inlineformset_factory
+
 
 def index(request):
   authenticate(request)
@@ -38,15 +41,36 @@ def problem_set_detail(request, ps_id):
 
 #for submitting files
 def problem_set_submit(request, ps_id):
+  authenticate(request)
+
   if request.method == 'POST':#make sure the user doesn't type this into the address bar
     ps = get_object_or_404(ProblemSet, pk=ps_id, pub_date__lte=timezone.now())
     
-    url = vrfy.settings.TANGO_ADDRESS + "upload/" + vrfy.settings.TANGO_KEY + "/hw1/"
-
+    #opens the courselab
+    url = vrfy.settings.TANGO_ADDRESS + "upload/" + vrfy.settings.TANGO_KEY + "/" + slugify(ps.title) + "/"
+    files = []
     #getting all the submitted files
     for name, f in request.FILES.items():
-      header = {'Filename': name}
+      localfile = name + "-"+ request.user.username
+      header = {'Filename': localfile}
       r = requests.post(url, data=f.read(), headers=header)
+      files.append({"localFile" : localfile, "destFile":name})#for the addJob command
+    
+    #getting all the grader files
+    for problem in ps.problems.all():
+      for psfile in ProblemSolutionFile.objects.filter(problem=problem):
+        name = psfile.file_upload.name.split("/")[-1]
+        if "makefile" in name.lower():#if makefile is in the name, designate it as THE makefile
+          files.append({"localFile" : name, "destFile": "Makefile"})
+        else:
+          files.append({"localFile" : name, "destFile": name})
+
+    #making Tango run the files
+    jobname = slugify(ps.title) + "-" + request.user.username
+    body = json.dumps({"image": "autograding_image", "files": files, "jobName": jobname, "output_file": jobname,"timeout": 10})
+    #raise Http404(body)
+    url = vrfy.settings.TANGO_ADDRESS + "addJob/" + vrfy.settings.TANGO_KEY + "/" + slugify(ps.title) + "/"
+    r = requests.post(url, data=body)
     
     return HttpResponseRedirect("/results/" + ps_id + "/")
     
@@ -61,8 +85,18 @@ def results_detail(request, ps_id):
   authenticate(request)
   # logic to figure out if the results are availiable and if so, get them
   ps = get_object_or_404(ProblemSet, pk=ps_id, pub_date__lte=timezone.now())
-  response = "here's the results for that problem set: {!s} you clicked on".format(ps_id)
-  return render(request, 'course/results_detail.html', {'problem_set': ps})
+  
+  #poll the tango server
+  url = vrfy.settings.TANGO_ADDRESS + "poll/" + vrfy.settings.TANGO_KEY + "/" + slugify(ps.title) + "/" + slugify(ps.title) + "-" + request.user.username + "/"
+  r = requests.get(url)
+  try:
+    log_data = json.loads(r.text.split("\n")[-2])#theres a line with an empty string after the last actual output line
+  except ValueError: #if the json isn't there, something went wrong when running the job, or the grader file messed up
+    raise Http404("Something went wrong. Make sure your code is bug free and resubmit. \nIf the problem persists, contact your professor or TA")
+  
+  #only send the data that the student should see
+  context = {"score_sum" : log_data["score_sum"], "score_key" : log_data["score_key"], "external_log" : log_data["external_log"]}
+  return render(request, 'course/results_detail.html', context)
   # return HttpResponse("And Here are the results for one your problem sets")
 
 def results_index(request):
