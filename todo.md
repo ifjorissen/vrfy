@@ -11,6 +11,8 @@
  * run-python based on the grader file (maybe require that it's always grade.py)
  * max-of() function for student problem sets to set the attempt to the max of the student uploaded files
  * refuse to submit if required files are not added (attempt_problem_set.html)
+ * results object for a student problem solution (json file gets dumped into a file in the folio(??))
 
-
-
+* remove remnants of grade app
+* make sure that all queries ONLY return results _for this user_ !!!
+* problem coloring based on score?

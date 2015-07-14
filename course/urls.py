@@ -13,7 +13,6 @@ urlpatterns = [
   url(r'^submit/success/$', views.submit_success, name='submit_success'),
 
   #results urls
-  # url(r'^results/problem-set(?P<ps_id>[0-9]+)/problem(?P<p_id>[0-9]+)/$', views.results_problem_detail, name='results_problem_detail'),
   url(r'^results/problem-set(?P<ps_id>[0-9]+)/$', views.results_detail, name='results_detail'),
   url(r'^results/$', views.results_index, name='results_index'),
 ]

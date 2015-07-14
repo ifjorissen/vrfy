@@ -3,9 +3,7 @@
 {% block content %}
 <section class="problem-set">
 <section class="ps-info page-header">
-<h1 role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-        {{ problem_set.title }} <small> ( Due {{ problem_set.due_date }} )</small>
-        </h1>
+<h1>{{ problem_set.title }} <small> ( Due {{ problem_set.due_date }} )</small></h1>
 <p class="lead">{{problem_set.description}}</p>
 </section>
 

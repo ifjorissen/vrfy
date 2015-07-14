@@ -19,7 +19,7 @@ class RequiredProblemFilenameInline(admin.TabularInline):
 
 class ProblemSolutionFileInline(admin.TabularInline):
   model = models.ProblemSolutionFile
-  extra = 2
+  extra = 5
 
 class StudentProblemSetInline(admin.TabularInline):
   model = models.StudentProblemSet
@@ -85,21 +85,28 @@ class ProblemSetAdmin(admin.ModelAdmin):
     It opens a new courselab and then uploads the grading files
     """
     #open (make) the courselab on tango server with the callback _upload_ps_files
-    url = vrfy.settings.TANGO_ADDRESS + "open/" + vrfy.settings.TANGO_KEY + "/" + slugify(obj.title) + "/"
-    r = requests.get(url)
+    # url = vrfy.settings.TANGO_ADDRESS + "open/" + vrfy.settings.TANGO_KEY + "/" + slugify(obj.title) + "/"
+    # r = requests.get(url)
     
     #upload the files
-    url = vrfy.settings.TANGO_ADDRESS + "upload/" + vrfy.settings.TANGO_KEY + "/" + slugify(obj.title) + "/"
+    # url = vrfy.settings.TANGO_ADDRESS + "upload/" + vrfy.settings.TANGO_KEY + "/" + slugify(obj.title) + "_" + \
+    #   + slugify(problem.title) + "/"
     for problem in obj.problems.all():
+      open_url = vrfy.settings.TANGO_ADDRESS + "open/" + vrfy.settings.TANGO_KEY + "/" + slugify(obj.title) + "_" + \
+      slugify(problem.title) + "/" 
+      r = requests.get(open_url)
+
+      upload_url = vrfy.settings.TANGO_ADDRESS + "upload/" + vrfy.settings.TANGO_KEY + "/" + slugify(obj.title) + "_" + \
+      slugify(problem.title) + "/"
       #upload the grading script
       grading = problem.grade_script
       header = {'Filename': grading.name.split("/")[-1]}
-      r = requests.post(url, data=grading.read(), headers=header)
+      r = requests.post(upload_url, data=grading.read(), headers=header)
       #upload all the other files
       for psfile in models.ProblemSolutionFile.objects.filter(problem=problem):
         f = psfile.file_upload
         header = {'Filename': f.name.split("/")[-1]}
-        r = requests.post(url, data=f.read(), headers=header)
+        r = requests.post(upload_url, data=f.read(), headers=header)
 
 class StudentProblemSetAdmin(admin.ModelAdmin):
   inlines = [StudentProblemSolutionInline]

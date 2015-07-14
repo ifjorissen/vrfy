@@ -82,7 +82,7 @@ def problem_submit(request, ps_id, p_id):
     student_psol.save()
     
     #opens the courselab
-    url = vrfy.settings.TANGO_ADDRESS + "upload/" + vrfy.settings.TANGO_KEY + "/" + slugify(ps.title)+ "/"
+    url = vrfy.settings.TANGO_ADDRESS + "upload/" + vrfy.settings.TANGO_KEY + "/" + slugify(ps.title)+ "_" + slugify(problem.title) + "/"
     files = []
 
     #getting all the submitted files
@@ -115,10 +115,10 @@ def problem_submit(request, ps_id, p_id):
         files.append({"localFile" : name, "destFile": name})
 
     #making Tango run the files
-    jobname = slugify(ps.title) + "-" + request.user.username
+    jobname = slugify(ps.title) + "_" + slugify(problem.title) + "-" + request.user.username
     body = json.dumps({"image": "autograding_image", "files": files, "jobName": jobname, "output_file": jobname,"timeout": 1000})
     #raise Http404(body)
-    url = vrfy.settings.TANGO_ADDRESS + "addJob/" + vrfy.settings.TANGO_KEY + "/" + slugify(ps.title) + "/"
+    url = vrfy.settings.TANGO_ADDRESS + "addJob/" + vrfy.settings.TANGO_KEY + "/" + slugify(ps.title) + "_" + slugify(problem.title) + "/"
     r = requests.post(url, data=body)
     
     return redirect('course:attempt_problem_set', ps_id)
@@ -126,107 +126,39 @@ def problem_submit(request, ps_id, p_id):
   else:
     raise Http404("Don't do that")
 
-#for submitting files
-# def problem_set_submit(request, ps_id):
-#   authenticate(request)
-
-#   if request.method == 'POST':#make sure the user doesn't type this into the address bar
-#     ps = get_object_or_404(ProblemSet, pk=ps_id, pub_date__lte=timezone.now())
-    
-#     #opens the courselab
-#     url = vrfy.settings.TANGO_ADDRESS + "upload/" + vrfy.settings.TANGO_KEY + "/" + slugify(ps.title) + "/"
-#     files = []
-#     #getting all the submitted files
-#     for name, f in request.FILES.items():
-#       localfile = name + "-"+ request.user.username
-#       header = {'Filename': localfile}
-#       r = requests.post(url, data=f.read(), headers=header)
-#       files.append({"localFile" : localfile, "destFile":name})#for the addJob command
-#       # required_pf = RequiredProblemFilename(pk=ps_id)
-#       # prob_file = StudentProblemFile.get_or_create(required_problem_filename=psfile.)
-    
-# <<<<<<< HEAD
-#     #getting all the grader files
-#     for problem in ps.problems.all():
-#       #create the student problem solution & files
-#       for psfile in ProblemSolutionFile.objects.filter(problem=problem):
-#         # prob_file = StudentProblemFile.get_or_create(required_problem_filename=psfile.)
-#         name = psfile.file_upload.name.split("/")[-1]
-#         if "makefile" in name.lower():#if makefile is in the name, designate it as THE makefile
-#           files.append({"localFile" : name, "destFile": "Makefile"})
-#         else:
-#           files.append({"localFile" : name, "destFile": name})
-
-#     #making Tango run the files
-#     jobname = slugify(ps.title) + "-" + request.user.username
-#     body = json.dumps({"image": "autograding_image", "files": files, "jobName": jobname, "output_file": jobname,"timeout": 10})
-#     #raise Http404(body)
-#     url = vrfy.settings.TANGO_ADDRESS + "addJob/" + vrfy.settings.TANGO_KEY + "/" + slugify(ps.title) + "/"
-#     r = requests.post(url, data=body)
-# =======
-#     #getting all the grader files
-#     for problem in ps.problems.all():
-#       #create the student problem solution & files
-#       for psfile in ProblemSolutionFile.objects.filter(problem=problem):
-#         # prob_file = StudentProblemFile.get_or_create(required_problem_filename=psfile.)
-#         name = psfile.file_upload.name.split("/")[-1]
-#         if "makefile" in name.lower():#if makefile is in the name, designate it as THE makefile
-#           files.append({"localFile" : name, "destFile": "Makefile"})
-#         else:
-#           files.append({"localFile" : name, "destFile": name})
-
-#     #making Tango run the files
-#     jobname = slugify(ps.title) + "-" + request.user.username
-#     body = json.dumps({"image": "autograding_image", "files": files, "jobName": jobname, "output_file": jobname,"timeout": 1000})
-#     #raise Http404(body)
-#     url = vrfy.settings.TANGO_ADDRESS + "addJob/" + vrfy.settings.TANGO_KEY + "/" + slugify(ps.title) + "/"
-#     r = requests.post(url, data=body)
-# >>>>>>> major changes to problem results and attempts: now student models are created and updateed and the attempts are logged
-    
-#     #create the student solution
-#     # student_ps_sol = StudentProblemSet.objects.get_or_create(problem_set=ps, user=request.user, submitted=timezone.now())
-#     # return HttpResponseRedirect("/results/problem-set-" + ps_id + "/")
-#     return redirect('course:results_detail.html', ps_id)
-    
-#   else:
-#     raise Http404("Don't do that")
-
-#submission & files urls; summary of a problem set & files submitted
-#ability to view each attempt and the files submitted with each attempt
-
 #returns the results of a given problem set (and all attempts)
 def results_detail(request, ps_id):
   authenticate(request)
   # logic to figure out if the results are availiable and if so, get them
   ps = get_object_or_404(ProblemSet, pk=ps_id, pub_date__lte=timezone.now())
+  student_ps = get_object_or_404(StudentProblemSet, problem_set=ps, user=request.user)
+  results_dict = {}
   
+  print(student_ps.studentproblemsolution_set.all())
+  for solution in student_ps.studentproblemsolution_set.all():
+    if solution.submitted:
+      print(solution)
+      result = {}
   #poll the tango server
-  url = vrfy.settings.TANGO_ADDRESS + "poll/" + vrfy.settings.TANGO_KEY + "/" + slugify(ps.title) + "/" + slugify(ps.title) + "-" + request.user.username + "/"
-  r = requests.get(url)
-  try:
-    log_data = json.loads(r.text.split("\n")[-2])#theres a line with an empty string after the last actual output line
-  except ValueError: #if the json isn't there, something went wrong when running the job, or the grader file messed up
-    raise Http404("Something went wrong. Make sure your code is bug free and resubmit. \nIf the problem persists, contact your professor or TA")
-  
-  #only send the data that the student should see
-  context = {"score_sum" : log_data["score_sum"], "score_key" : log_data["score_key"], "external_log" : log_data["external_log"]}
+      url = vrfy.settings.TANGO_ADDRESS + "poll/" + vrfy.settings.TANGO_KEY + "/" + slugify(ps.title) + "_" + \
+          slugify(solution.problem.title) + "/" + slugify(ps.title) + "_" + \
+          slugify(solution.problem.title) + "-" + request.user.username + "/"
+      r = requests.get(url)
+      try:
+        log_data = json.loads(r.text.split("\n")[-2])#theres a line with an empty string after the last actual output line
+        result["score_sum"] = log_data["score_sum"]
+        result["score_key"] = log_data["score_key"]
+        result["external_log"] = log_data["external_log"]
+      except ValueError: #if the json isn't there, something went wrong when running the job, or the grader file messed up
+        raise Http404("Something went wrong. Make sure your code is bug free and resubmit. \nIf the problem persists, contact your professor or TA")
+    else:
+      result = None
+    results_dict[solution] = result
+    #make a result object
+    print(results_dict)
+    #only send the data that the student should see
+    context = {'sps': student_ps, "ps_results" : results_dict}
   return render(request, 'course/results_detail.html', context)
-  # return HttpResponse("And Here are the results for one your problem sets")
-
-  #returns the results of a given problem set (and all attempts)
-# def results_problem_detail(request, p_id, ps_id):
-#   authenticate(request)
-#   # logic to figure out if the results are availiable and if so, get them
-#   ps = get_object_or_404(ProblemSet, pk=ps_id, pub_date__lte=timezone.now())
-#   problem = get_object_or_404(Problem, pk=ps_id)
-  
-#   #poll the tango server
-#   url = vrfy.settings.TANGO_ADDRESS + "poll/" + vrfy.settings.TANGO_KEY + "/" + slugify(ps.title) + "/" + slugify(ps.title) + "-" + request.user.username + "/"
-#   r = requests.get(url)
-  
-#   context = {'output': r.text}
-#   return render(request, 'course/results_detail.html', context)
-  # return HttpResponse("And Here are the results for one your problem sets")
 
 def results_index(request):
   authenticate(request)
