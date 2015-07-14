@@ -100,8 +100,15 @@ class ProblemSetAdmin(admin.ModelAdmin):
       slugify(problem.title) + "/"
       #upload the grading script
       grading = problem.grade_script
-      header = {'Filename': grading.name.split("/")[-1]}
+      grading_name = grading.name.split("/")[-1]
+      header = {'Filename': grading_name}
       r = requests.post(upload_url, data=grading.read(), headers=header)
+
+      #upload the makefile that will run the grading script
+      header = {'Filename': "autograde-Makefile"}
+      makefile = 'autograde:\n	@python3 ' + grading_name
+      r = requests.post(upload_url, data=makefile, headers=header)
+
       #upload all the other files
       for psfile in models.ProblemSolutionFile.objects.filter(problem=problem):
         f = psfile.file_upload

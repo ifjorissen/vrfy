@@ -107,12 +107,12 @@ def problem_submit(request, ps_id, p_id):
     name = grading.name.split("/")[-1]
     files.append({"localFile" : name, "destFile": name})
 
+    #add the makefile
+    files.append({"localFile" : "autograde-Makefile", "destFile": "Makefile"})
+
     for psfile in ProblemSolutionFile.objects.filter(problem=problem):
       name = psfile.file_upload.name.split("/")[-1]
-      if "makefile" in name.lower():#if makefile is in the name, designate it as THE makefile
-        files.append({"localFile" : name, "destFile": "Makefile"})
-      else:
-        files.append({"localFile" : name, "destFile": name})
+      files.append({"localFile" : name, "destFile": name})
 
     #making Tango run the files
     jobname = slugify(ps.title) + "_" + slugify(problem.title) + "-" + request.user.username
