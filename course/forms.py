@@ -1,6 +1,6 @@
 from django import forms
 from django.forms.models import modelformset_factory
-from .models import Problem, ProblemSet, StudentSolution
+from .models import Problem, ProblemSet, StudentProblemSolution
 
 
 # class FileUploadForm(forms.Form):
@@ -13,6 +13,7 @@ from .models import Problem, ProblemSet, StudentSolution
 	
 #https://docs.djangoproject.com/en/1.8/topics/forms/modelforms/#model-formsets
 StudentProblemFileFormSet = modelformset_factory(StudentProblemFile, fields=('submitted_file'))
+StudentProblemFormset = modelformset_factory(StudentProblemSolution)
 
 # class StudentProblemFileForm(forms.ModelForm):
 # 	class Meta: 

@@ -1,27 +1,67 @@
 {% extends 'course/base.html' %}
-
+{% load staticfiles %}
 {% block content %}
 <section class="problem-set">
 <section class="ps-info page-header">
-<h1>Attempt {{ problem_set.title }}<small>  ( Due {{ problem_set.due_date }} )</small></h1>
+<h1>{{ problem_set.title }} <small> ( Due {{ problem_set.due_date }} )</small></h1>
 <p class="lead">{{problem_set.description}}</p>
 </section>
 
-<form class="form-horizontal" action="submit/" method="POST" enctype="multipart/form-data">
-{% csrf_token %}
-{% for problem in problem_set.problems.all %}
-  <h3>{{ problem.title }}</h3>
-  <p class="lead">{{ problem.statement }}</p>
-  <p class="help-block">Upload the required files for {{problem.title}}</p>
-  {% for file in problem.requiredproblemfilename_set.all %}
-    <div class="form-group">
-      <label class="col-sm-2" for="{{ file.file_title }}">{{ file.file_title }}</label>
-      <input class="col-sm-8" type="file" name="{{ file.file_title }}" id="{{ file.file_title }}">
+{% for problem, solution in problem_set_dict.items %}
+{% if solution.submitted %}
+  <section id="problem-{{problem.id}}" class="panel panel-default">
+    <div class="panel-heading">
+      <h3><span role="button" data-toggle="collapse" data-parent="#problem-{{problem.id}}" href="#collapse-problem-{{problem.id}}" aria-expanded="true" aria-controls="collapseOne">
+          Re-attempt {{ problem.title }} <small>(Attempt No. {{solution.attempt_num}})</small></span></h3>
     </div>
-  {% endfor %}
-  <!-- <button type="submit" class="btn btn-default">Submit</button> -->
-  <hr>
+    <div id="collapse-problem-{{problem.id}}" class="panel-body panel-collapse collapse" role="tabpanel" aria-labelledby="headingOne">
+      <p>{{ problem.description }}</p>
+      <p>{{ problem.statement }}</p>
+      <hr>
+      <section class="problem-form">
+        <form class="form-horizontal" action="{% url 'course:problem_submit' problem_set.id  problem.id %}" method="POST" enctype="multipart/form-data">
+          {% csrf_token %}
+          <p class="help-block">Upload the required files for {{problem.title}}</p>
+          {% for file in problem.requiredproblemfilename_set.all %}
+            <div class="form-group">
+              <label class="col-sm-2" for="{{ file.file_title }}">{{ file.file_title }}</label>
+              <input class="col-sm-8" type="file" name="{{ file.file_title }}" id="{{ file.file_title }}">
+            </div>
+          {% endfor %}
+          <button type="submit" class="btn btn-default">Submit {{problem.title}}</button>
+        </form>
+      </section>
+    </div>
+  </section>
+{% else %}
+  <section id="problem-{{problem.id}}" class="panel panel-default">
+    <div class="panel-heading">
+      <h3><span role="button" data-toggle="collapse" data-parent="#problem-{{problem.id}}" href="#collapse-problem-{{problem.id}}" aria-expanded="true" aria-controls="collapseOne">
+          Attempt {{ problem.title }}</span></h3>
+    </div>
+    <div id="collapse-problem-{{problem.id}}" class="panel-body panel-collapse collapse in" role="tabpanel" aria-labelledby="headingOne">
+      <p>{{ problem.description }}</p>
+      <p>{{ problem.statement }}</p>
+      <hr>
+      <section class="problem-form">
+        <form class="form-horizontal" action="{% url 'course:problem_submit' problem_set.id  problem.id %}" method="POST" enctype="multipart/form-data">
+          {% csrf_token %}
+          <p class="help-block">Upload the required files for {{problem.title}}</p>
+          {% for file in problem.requiredproblemfilename_set.all %}
+            <div class="form-group">
+              <label class="col-sm-2" for="{{ file.file_title }}">{{ file.file_title }}</label>
+              <input class="col-sm-8" type="file" name="{{ file.file_title }}" id="{{ file.file_title }}">
+            </div>
+          {% endfor %}
+          <button type="submit" class="btn btn-default">Submit {{problem.title}}</button>
+        </form>
+      </section>
+    </div>
+  </section>
+{% endif %}
 {% endfor %}
-<input type="submit" class="btn btn-default" value="Submit All Problems">
-</form>
 {% endblock content %}
+
+{% block otherscripts %}
+<script src="{% static 'course/js/app.min.js' %}"></script>
+{% endblock %}

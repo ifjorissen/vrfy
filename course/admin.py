@@ -12,21 +12,14 @@ import vrfy.settings
 admin.site.site_header = "Homework Administration"
 admin.site.site_title = "Homework Administration"
 
-# admin.site.register(Problem)
-# admin.site.register(ProblemSet)
-
-# class ProblemSolutionInline(admin.TabularInline):
-#   model = ProblemSolution
-#   extra = 1
-
 class RequiredProblemFilenameInline(admin.TabularInline):
   model = models.RequiredProblemFilename
-  extra = 3
+  extra = 2
 
 
 class ProblemSolutionFileInline(admin.TabularInline):
   model = models.ProblemSolutionFile
-  extra = 3
+  extra = 5
 
 class StudentProblemSetInline(admin.TabularInline):
   model = models.StudentProblemSet
@@ -55,16 +48,11 @@ class ProblemAdmin(admin.ModelAdmin):
     model = models.Problem
 
   fieldsets = [
-    ('Problem Info', {'fields': ['title', 'description', 'statement', 'many_attempts']}),
-    # ('Required Files', {'fields': ['problem_files']}),
-    ('Course Info', {'fields': ['course']}),
+    ('Problem Info', {'fields': ['title', 'description', 'statement', 'many_attempts', 'course']}),
+    ('Grading Script', {'fields': ['grade_script']}),
   ]
   inlines = [RequiredProblemFilenameInline, ProblemSolutionFileInline]
   list_display = ('title', 'course')
-
-# class ProblemInline(admin.StackedInline):
-#   model = Problem
-#   extra = 1
 
 
 class ProblemSetAdmin(admin.ModelAdmin):
@@ -73,6 +61,7 @@ class ProblemSetAdmin(admin.ModelAdmin):
     ('Problems', {'fields':['problems']}),
     ('Release & Due Dates', {'fields': ['pub_date', 'due_date']}),
   ]
+  filter_vertical = ['problems']
   inlines = [StudentProblemSetInline]
   list_display = ('title', 'pub_date', 'due_date')
   
@@ -96,16 +85,28 @@ class ProblemSetAdmin(admin.ModelAdmin):
     It opens a new courselab and then uploads the grading files
     """
     #open (make) the courselab on tango server with the callback _upload_ps_files
-    url = vrfy.settings.TANGO_ADDRESS + "open/" + vrfy.settings.TANGO_KEY + "/" + slugify(obj.title) + "/"
-    r = requests.get(url)
+    # url = vrfy.settings.TANGO_ADDRESS + "open/" + vrfy.settings.TANGO_KEY + "/" + slugify(obj.title) + "/"
+    # r = requests.get(url)
     
     #upload the files
-    url = vrfy.settings.TANGO_ADDRESS + "upload/" + vrfy.settings.TANGO_KEY + "/" + slugify(obj.title) + "/"
+    # url = vrfy.settings.TANGO_ADDRESS + "upload/" + vrfy.settings.TANGO_KEY + "/" + slugify(obj.title) + "_" + \
+    #   + slugify(problem.title) + "/"
     for problem in obj.problems.all():
+      open_url = vrfy.settings.TANGO_ADDRESS + "open/" + vrfy.settings.TANGO_KEY + "/" + slugify(obj.title) + "_" + \
+      slugify(problem.title) + "/" 
+      r = requests.get(open_url)
+
+      upload_url = vrfy.settings.TANGO_ADDRESS + "upload/" + vrfy.settings.TANGO_KEY + "/" + slugify(obj.title) + "_" + \
+      slugify(problem.title) + "/"
+      #upload the grading script
+      grading = problem.grade_script
+      header = {'Filename': grading.name.split("/")[-1]}
+      r = requests.post(upload_url, data=grading.read(), headers=header)
+      #upload all the other files
       for psfile in models.ProblemSolutionFile.objects.filter(problem=problem):
         f = psfile.file_upload
         header = {'Filename': f.name.split("/")[-1]}
-        r = requests.post(url, data=f.read(), headers=header)
+        r = requests.post(upload_url, data=f.read(), headers=header)
 
 class StudentProblemSetAdmin(admin.ModelAdmin):
   inlines = [StudentProblemSolutionInline]
@@ -113,8 +114,6 @@ class StudentProblemSetAdmin(admin.ModelAdmin):
 class StudentProblemSolutionAdmin(admin.ModelAdmin):
   inlines = [StudentProblemFileInline]
 
-# admin.site.register(RequiredProblemFilename, RequiredProblemFilenameAdmin)
-# admin.site.register(ProblemSolution, ProblemSolutionAdmin)
 admin.site.register(models.Problem, ProblemAdmin)
 admin.site.register(models.ProblemSet, ProblemSetAdmin)
 admin.site.register(models.StudentProblemSet, StudentProblemSetAdmin)
