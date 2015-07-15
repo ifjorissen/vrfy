@@ -27,7 +27,7 @@ TEST = True
 
 GRAPPELLI_ADMIN_TITLE = "CS@Reed Admin"
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["localhost"]
 INTERNAL_IPS = ['127.0.0.1','localhost']
 
 # Application definition

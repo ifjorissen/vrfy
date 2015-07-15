@@ -3,6 +3,8 @@ from generic.models import CSUser
 from django.contrib.auth.models import User
 from django.utils.text import slugify
 import os
+import os.path
+import vrfy.settings
 
 # A problem model, which requires:
 # a problem title 
@@ -29,10 +31,14 @@ def solution_file_upload_path(instance, filename):
   course = problem.course
   file_path = '{0}/solutions/{1}_files/{2}'.format(slugify(course), slugify(problem.title), filename)
   #remove the old file
-  try:
-    os.remove(file_path)
-  except OSError:
-      pass
+  if os.path.isfile(vrfy.settings.MEDIA_ROOT + file_path):
+    os.remove(vrfy.settings.MEDIA_ROOT + file_path)
+  return file_path
+
+def grader_lib_upload_path(instance, filename):
+  file_path = 'lib/{0}'.format(filename)
+  if os.path.isfile(vrfy.settings.MEDIA_ROOT + file_path):
+    os.remove(vrfy.settings.MEDIA_ROOT + file_path)
   return file_path
 
 def grade_script_upload_path(instance, filename):
@@ -41,10 +47,8 @@ def grade_script_upload_path(instance, filename):
   course = instance.course
   file_path = '{0}/solutions/{1}_files/{2}'.format(slugify(course), slugify(title), filename)
   #remove the old file
-  try:
-    os.remove(file_path)
-  except OSError:
-      pass
+  if os.path.isfile(vrfy.settings.MEDIA_ROOT + file_path):
+    os.remove(vrfy.settings.MEDIA_ROOT + file_path)
   return file_path
 
 class Problem(models.Model):
@@ -136,6 +140,13 @@ class ProblemResult(models.Model):
   sanity_log = models.TextField(null=True)
   raw_log = models.TextField(null=True)
 
+#for testrunner files like session.py or sanity.py
+class GraderLib(models.Model):
+  lib_upload = models.FileField(upload_to=grader_lib_upload_path)
+  comment = models.CharField(max_length=200, null=True, blank=True)
+  
+  def __str__(self):
+    return self.lib_upload.name.split("/")[-1]
 
 
 #ability for jim to access something on the order of /m121/folio/jfix/hw1/p1/v1/files/  and /m121/folio/jfix/hw1/p1/v1/files/

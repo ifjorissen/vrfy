@@ -91,17 +91,22 @@ def problem_submit(request, ps_id, p_id):
         prob_file = StudentProblemFile.objects.create(required_problem_filename=required_pf, student_problem_solution = student_psol, submitted_file=f)
         prob_file.save()
     
+    #add grader libraries
+    for lib in GraderLib.objects.all():
+      name = lib.lib_upload.name.split("/")[-1]
+      files.append({"localFile" : name, "destFile": name})
+
     #getting all the grader files
     grading = problem.grade_script
     name = grading.name.split("/")[-1]
     files.append({"localFile" : name, "destFile": name})
 
+    #add the makefile
+    files.append({"localFile" : "autograde-Makefile", "destFile": "Makefile"})
+
     for psfile in ProblemSolutionFile.objects.filter(problem=problem):
       name = psfile.file_upload.name.split("/")[-1]
-      if "makefile" in name.lower():#if makefile is in the name, designate it as THE makefile
-        files.append({"localFile" : name, "destFile": "Makefile"})
-      else:
-        files.append({"localFile" : name, "destFile": name})
+      files.append({"localFile" : name, "destFile": name})
 
     #making Tango run the files
     jobname = slugify(ps.title) + "_" + slugify(problem.title) + "-" + request.user.username
@@ -144,6 +149,7 @@ def results_detail(request, ps_id):
         result_obj.save()
       except ValueError: #if the json isn't there, something went wrong when running the job, or the grader file messed up
         raise Http404("Something went wrong. Make sure your code is bug free and resubmit. \nIf the problem persists, contact your professor or TA")
+    
     else:
       result_obj = None
     results_dict[solution] = result_obj
