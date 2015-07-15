@@ -25,15 +25,12 @@ SECRET_KEY = '#yu7$c#_y#2sip5i@hi^#iocpoa0))m14@e3ob_#0&#rvj_)w+'
 DEBUG = True
 TEST = True
 
-GRAPPELLI_ADMIN_TITLE = "CS@Reed Admin"
-
 ALLOWED_HOSTS = []
 INTERNAL_IPS = ['127.0.0.1','localhost']
 
 # Application definition
 
 INSTALLED_APPS = (
-    'grappelli',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -43,6 +40,7 @@ INSTALLED_APPS = (
     'generic',
     'course',
     'vrfy',
+    'grade',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -67,7 +65,6 @@ TEMPLATES = [
             'context_processors': [
                 'django.template.context_processors.debug',
                 'django.template.context_processors.request',
-                'django.core.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
             ],
@@ -84,7 +81,7 @@ WSGI_APPLICATION = 'vrfy.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'vrfy_dev',
+        'NAME': 'vrfy_dev_db',
         # The following settings are not used with sqlite3
         'USER': 'vrfy_dev_usr',
         'PASSWORD': 'pass',
@@ -125,7 +122,4 @@ STATICFILES_DIRS = (
 TANGO_ADDRESS = "http://localhost:3300/"
 #key to access tango server
 TANGO_KEY = "test"
-#location of the tango courselabs folder
-TANGO_COURSELAB_DIR = "/home/alex/verify_project/courselabs/"
-
 
