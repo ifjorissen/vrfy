@@ -53,7 +53,7 @@ class ProblemAdmin(admin.ModelAdmin):
     ('Grading Script', {'fields': ['grade_script']}),
   ]
   inlines = [RequiredProblemFilenameInline, ProblemSolutionFileInline]
-  list_display = ('title', 'course')
+  list_display = ('title', 'course', 'submissions')
 
   def response_change(self, request, obj):
     """
@@ -68,6 +68,10 @@ class ProblemAdmin(admin.ModelAdmin):
     
     return super(ProblemAdmin, self).response_change(request, obj)
 
+  def submissions(self, obj):
+    student_solutions = obj.studentproblemsolution_set.all()
+    return len(student_solutions)
+
 
 class ProblemSetAdmin(admin.ModelAdmin):
   fieldsets = [
@@ -77,7 +81,10 @@ class ProblemSetAdmin(admin.ModelAdmin):
   ]
   filter_vertical = ['problems']
   inlines = [StudentProblemSetInline]
-  list_display = ('title', 'pub_date', 'due_date')
+  list_display = ('title', 'pub_date', 'due_date', 'problems_included',)
+
+  def problems_included(self, obj):
+    return ", ".join([problem.title for problem in obj.problems.all()])    
   
   #add a courselab and files to Tango when Problem Set is added and saved for the first time
   def response_add(self, request, obj, post_url_continue=None):
@@ -98,18 +105,13 @@ class ProblemSetAdmin(admin.ModelAdmin):
     Helper function that gets called for response change and response add
     It opens a new courselab and then uploads the grading files
     """
-    #open (make) the courselab on tango server with the callback _upload_ps_files
-    # url = vrfy.settings.TANGO_ADDRESS + "open/" + vrfy.settings.TANGO_KEY + "/" + slugify(obj.title) + "/"
-    # r = requests.get(url)
-    
-    #upload the files
-    # url = vrfy.settings.TANGO_ADDRESS + "upload/" + vrfy.settings.TANGO_KEY + "/" + slugify(obj.title) + "_" + \
-    #   + slugify(problem.title) + "/"
     for problem in obj.problems.all():
+      #open (make) the courselab on tango server with the callback _upload_ps_files
       open_url = vrfy.settings.TANGO_ADDRESS + "open/" + vrfy.settings.TANGO_KEY + "/" + slugify(obj.title) + "_" + \
       slugify(problem.title) + "/" 
       r = requests.get(open_url)
-
+      
+      #upload the files
       upload_url = vrfy.settings.TANGO_ADDRESS + "upload/" + vrfy.settings.TANGO_KEY + "/" + slugify(obj.title) + "_" + \
       slugify(problem.title) + "/"
 
@@ -138,9 +140,21 @@ class ProblemSetAdmin(admin.ModelAdmin):
 
 class StudentProblemSetAdmin(admin.ModelAdmin):
   inlines = [StudentProblemSolutionInline]
+  list_display = ('problem_set','user','submitted',)
 
 class StudentProblemSolutionAdmin(admin.ModelAdmin):
   inlines = [StudentProblemFileInline]
+  list_display = ('problem', 'student_problem_set', 'attempt_num', 'submitted', 'latest_result')
+
+  def get_user(self, obj):
+    return obj.student_problem_set.user
+
+  def latest_result(self, obj):
+    result_obj = obj.problemresult_set.all().order_by('timestamp')[0]
+    score = result_obj.score
+    return score
+
+
 
 admin.site.register(models.Problem, ProblemAdmin)
 admin.site.register(models.ProblemSet, ProblemSetAdmin)

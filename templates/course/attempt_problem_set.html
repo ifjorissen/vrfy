@@ -12,7 +12,7 @@
   <section id="problem-{{problem.id}}" class="panel panel-default">
     <div class="panel-heading">
       <h3><span role="button" data-toggle="collapse" data-parent="#problem-{{problem.id}}" href="#collapse-problem-{{problem.id}}" aria-expanded="true" aria-controls="collapseOne">
-          Re-attempt {{ problem.title }} <small>(Attempt No. {{solution.attempt_num}})</small></span></h3>
+          Re-attempt {{ problem.title }} <small>(Attempt No. {{solution.attempt_num|add:'1'}})</small></span></h3>
     </div>
     <div id="collapse-problem-{{problem.id}}" class="panel-body panel-collapse collapse" role="tabpanel" aria-labelledby="headingOne">
       <p>{{ problem.description }}</p>
