@@ -5,6 +5,7 @@ from django.utils.text import slugify
 from vrfy.settings import TANGO_ADDRESS, TANGO_KEY, TANGO_COURSELAB_DIR, MAKEFILE_NAME
 import requests
 import json
+import shutil
 
 def _request(action, courselab, method, body=None, headers=None, outputFile=""):
   """
@@ -47,5 +48,11 @@ def addJob(problem, problemset, files, jobName, output_file, image="autograding_
 def poll(problem, problemset, outputFile):
   courselab = _get_courselab(problem, problemset)
   return _request("poll", courselab, "GET", outputFile=outputFile)
+
+def delete(problem, problemset):
+  """
+  deletes a courselab
+  """
+  pass
 
 

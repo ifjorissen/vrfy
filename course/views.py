@@ -70,16 +70,14 @@ def problem_submit(request, ps_id, p_id):
     student_psol.submitted = timezone.now()
     student_psol.attempt_num += 1 
     student_psol.save()
-    
-    #opens the courselab
-    url = vrfy.settings.TANGO_ADDRESS + "upload/" + vrfy.settings.TANGO_KEY + "/" + slugify(ps.title)+ "_" + slugify(problem.title) + "/"
-    files = []
+   
+    files = []#for the addJob
 
     #getting all the submitted files
     for name, f in request.FILES.items():
       localfile = name + "-"+ request.user.username
-      header = {'Filename': localfile}
-      r = requests.post(url, data=f.read(), headers=header)
+      tango.upload(problem, ps, localfile, f.read())
+
       files.append({"localFile" : localfile, "destFile":name})#for the addJob command
       required_pf = RequiredProblemFilename.objects.get(problem=problem, file_title=name)
       try:
@@ -105,9 +103,7 @@ def problem_submit(request, ps_id, p_id):
     for psfile in ProblemSolutionFile.objects.filter(problem=problem):
       name = psfile.file_upload.name.split("/")[-1]
       files.append({"localFile" : name, "destFile": name})
-    
-    
-    
+
     #making Tango run the files
     jobName = slugify(ps.title) + "_" + slugify(problem.title) + "-" + request.user.username
     tango.addJob(problem, ps, files, jobName, jobName)

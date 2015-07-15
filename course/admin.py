@@ -60,7 +60,7 @@ class ProblemAdmin(admin.ModelAdmin):
     upload files to Tango
     I only need to do this when a problem is changed, because when a problem is added, it doesn't have a problem set yet
     """
-    for ps in models.ProblemSet.objects.filter(problems=obj):
+    for ps in obj.problemset_set.all():
       #upload problemsolutionfiles
       for psfile in models.ProblemSolutionFile.objects.filter(problem=obj):
         f = psfile.file_upload
@@ -107,36 +107,26 @@ class ProblemSetAdmin(admin.ModelAdmin):
     """
     for problem in obj.problems.all():
       #open (make) the courselab on tango server with the callback _upload_ps_files
-      open_url = vrfy.settings.TANGO_ADDRESS + "open/" + vrfy.settings.TANGO_KEY + "/" + slugify(obj.title) + "_" + \
-      slugify(problem.title) + "/" 
-      r = requests.get(open_url)
+      tango.open(problem, obj)
       
-      #upload the files
-      upload_url = vrfy.settings.TANGO_ADDRESS + "upload/" + vrfy.settings.TANGO_KEY + "/" + slugify(obj.title) + "_" + \
-      slugify(problem.title) + "/"
-
       #upload the grader librarires
       for lib in models.GraderLib.objects.all():
         f = lib.lib_upload
-        header = {'Filename': f.name.split("/")[-1]}
-        r = requests.post(upload_url, data=f.read(), headers=header)
+        tango.upload(problem, obj, f.name.split("/")[-1], f.read())
 
       #upload the grading script
       grading = problem.grade_script
       grading_name = grading.name.split("/")[-1]
-      header = {'Filename': grading_name}
-      r = requests.post(upload_url, data=grading.read(), headers=header)
+      tango.upload(problem, obj, grading_name, grading.read())
 
       #upload the makefile that will run the grading script
-      header = {'Filename': vrfy.settings.MAKEFILE_NAME}
       makefile = 'autograde:\n	@python3 ' + grading_name
-      r = requests.post(upload_url, data=makefile, headers=header)
+      tango.upload(problem, obj, vrfy.settings.MAKEFILE_NAME, makefile)
 
       #upload all the other files
       for psfile in models.ProblemSolutionFile.objects.filter(problem=problem):
         f = psfile.file_upload
-        header = {'Filename': f.name.split("/")[-1]}
-        r = requests.post(upload_url, data=f.read(), headers=header)
+        tango.upload(problem, obj, f.name.split("/")[-1], f.read())
 
 class StudentProblemSetAdmin(admin.ModelAdmin):
   inlines = [StudentProblemSolutionInline]
@@ -154,10 +144,28 @@ class StudentProblemSolutionAdmin(admin.ModelAdmin):
     score = result_obj.score
     return score
 
+class GraderLibAdmin(admin.ModelAdmin):
+  
+  def response_add(self, request, obj, post_url_continue=None):
+    self._upload_to_ps(obj)
+    return super(GraderLibAdmin, self).response_add(request, obj, post_url_continue=None)
+        
+  #reupload files to Tanfo when a Problem Set is changed and saved
+  def response_change(self, request, obj):
+    self._upload_to_ps(obj)
+    return super(GraderLibAdmin, self).response_change(request, obj)
+  
+  def _upload_to_ps(self, obj):
+    
+    for ps in models.ProblemSet.objects.all():
+      for problem in ps.problems.all():
+        f = obj.lib_upload
+        tango.upload(problem, ps, f.name.split("/")[-1], f.read())
+
 
 
 admin.site.register(models.Problem, ProblemAdmin)
 admin.site.register(models.ProblemSet, ProblemSetAdmin)
 admin.site.register(models.StudentProblemSet, StudentProblemSetAdmin)
 admin.site.register(models.StudentProblemSolution, StudentProblemSolutionAdmin)
-admin.site.register(models.GraderLib)
+admin.site.register(models.GraderLib, GraderLibAdmin)
