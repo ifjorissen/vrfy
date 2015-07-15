@@ -122,6 +122,24 @@ class StudentProblemFile(models.Model):
   submitted_file = models.FileField(upload_to=student_file_upload_path)
   attempt_num = models.IntegerField(default=0)
 
+class ProblemResultSet(models.Model):
+  sp_set = models.ForeignKey(StudentProblemSet)
+  problem_set = models.ForeignKey(ProblemSet)
+  user = models.ForeignKey('generic.CSUser', null=True)
+
+class ProblemResult(models.Model):
+  sp_sol = models.ForeignKey(StudentProblemSolution)
+  problem = models.ForeignKey(Problem)
+  result_set = models.ForeignKey(ProblemResultSet)
+  user = models.ForeignKey('generic.CSUser', null=True)
+  #general data about the actual results
+  timestamp = models.DateTimeField('date received', null=True)
+  score = models.IntegerField(default=-1)
+  external_log = models.TextField(null=True)
+  internal_log = models.TextField(null=True)
+  sanity_log = models.TextField(null=True)
+  raw_log = models.TextField(null=True)
+
 #for testrunner files like session.py or sanity.py
 class GraderLib(models.Model):
   lib_upload = models.FileField(upload_to=grader_lib_upload_path)
