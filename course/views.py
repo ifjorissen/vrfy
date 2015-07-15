@@ -134,10 +134,8 @@ def results_detail(request, ps_id):
     if solution.submitted:
       result_obj = ProblemResult.objects.create(sp_sol = solution, result_set=result_set, user=request.user, problem=solution.problem)
   #poll the tango server
-      url = vrfy.settings.TANGO_ADDRESS + "poll/" + vrfy.settings.TANGO_KEY + "/" + slugify(ps.title) + "_" + \
-          slugify(solution.problem.title) + "/" + slugify(ps.title) + "_" + \
-          slugify(solution.problem.title) + "-" + request.user.username + "/"
-      r = requests.get(url)
+      outputFile = slugify(ps.title) + "_" +slugify(solution.problem.title) + "-" + request.user.username
+      r = tango.poll(solution.problem, ps, outputFile)
       try:
         log_data = json.loads(r.text.split("\n")[-2])#theres a line with an empty string after the last actual output line
         #create the result object
