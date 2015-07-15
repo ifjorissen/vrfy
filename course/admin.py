@@ -54,6 +54,23 @@ class ProblemAdmin(admin.ModelAdmin):
   inlines = [RequiredProblemFilenameInline, ProblemSolutionFileInline]
   list_display = ('title', 'course')
 
+  def response_change(self, request, obj):
+    """
+    upload files to Tango
+    I only need to do this when a problem is changed, because when a problem is added, it doesn't have a problem set yet
+    """
+    for ps in models.ProblemSet.objects.filter(problems=obj):
+      url = vrfy.settings.TANGO_ADDRESS + "upload/" + vrfy.settings.TANGO_KEY + "/" + slugify(ps.title) + "_" + \
+        slugify(obj.title) + "/"
+      
+      #upload problemsolutionfiles
+      for psfile in models.ProblemSolutionFile.objects.filter(problem=obj):
+        f = psfile.file_upload
+        header = {'Filename': f.name.split("/")[-1]}
+        r = requests.post(url, data=f.read(), headers=header)
+    
+    return super(ProblemAdmin, self).response_change(request, obj)
+
 
 class ProblemSetAdmin(admin.ModelAdmin):
   fieldsets = [
