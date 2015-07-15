@@ -8,6 +8,7 @@ from generic.views import *
 from generic.models import CSUser
 import requests
 import json
+from util import tango
 
 from django.forms.models import modelformset_factory
 from django.shortcuts import render_to_response
@@ -112,19 +113,19 @@ def problem_submit(request, ps_id, p_id):
     name = grading.name.split("/")[-1]
     files.append({"localFile" : name, "destFile": name})
 
-    #add the makefile
-    files.append({"localFile" : "autograde-Makefile", "destFile": "Makefile"})
-
     for psfile in ProblemSolutionFile.objects.filter(problem=problem):
       name = psfile.file_upload.name.split("/")[-1]
       files.append({"localFile" : name, "destFile": name})
-
+    
+    
+    
     #making Tango run the files
-    jobname = slugify(ps.title) + "_" + slugify(problem.title) + "-" + request.user.username
-    body = json.dumps({"image": "autograding_image", "files": files, "jobName": jobname, "output_file": jobname,"timeout": 1000})
+    jobName = slugify(ps.title) + "_" + slugify(problem.title) + "-" + request.user.username
+    tango.addJob(problem, ps, files, jobName, jobName)
+    
     #raise Http404(body)
-    url = vrfy.settings.TANGO_ADDRESS + "addJob/" + vrfy.settings.TANGO_KEY + "/" + slugify(ps.title) + "_" + slugify(problem.title) + "/"
-    r = requests.post(url, data=body)
+    #url = vrfy.settings.TANGO_ADDRESS + "addJob/" + vrfy.settings.TANGO_KEY + "/" + slugify(ps.title) + "_" + slugify(problem.title) + "/"
+    #r = requests.post(url, data=body)
     
     return redirect('course:attempt_problem_set', ps_id)
     

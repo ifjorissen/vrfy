@@ -8,6 +8,7 @@ import shutil
 import sys
 sys.path.append("../")
 import vrfy.settings
+from util import tango
 
 admin.site.site_header = "Homework Administration"
 admin.site.site_title = "Homework Administration"
@@ -60,14 +61,10 @@ class ProblemAdmin(admin.ModelAdmin):
     I only need to do this when a problem is changed, because when a problem is added, it doesn't have a problem set yet
     """
     for ps in models.ProblemSet.objects.filter(problems=obj):
-      url = vrfy.settings.TANGO_ADDRESS + "upload/" + vrfy.settings.TANGO_KEY + "/" + slugify(ps.title) + "_" + \
-        slugify(obj.title) + "/"
-      
       #upload problemsolutionfiles
       for psfile in models.ProblemSolutionFile.objects.filter(problem=obj):
         f = psfile.file_upload
-        header = {'Filename': f.name.split("/")[-1]}
-        r = requests.post(url, data=f.read(), headers=header)
+        tango.upload(obj, ps, f.name.split("/")[-1], f.read())
     
     return super(ProblemAdmin, self).response_change(request, obj)
 
@@ -129,7 +126,7 @@ class ProblemSetAdmin(admin.ModelAdmin):
       r = requests.post(upload_url, data=grading.read(), headers=header)
 
       #upload the makefile that will run the grading script
-      header = {'Filename': "autograde-Makefile"}
+      header = {'Filename': vrfy.settings.MAKEFILE_NAME}
       makefile = 'autograde:\n	@python3 ' + grading_name
       r = requests.post(upload_url, data=makefile, headers=header)
 

@@ -128,4 +128,5 @@ TANGO_KEY = "test"
 #location of the tango courselabs folder
 TANGO_COURSELAB_DIR = "/home/alex/verify_project/courselabs/"
 
-
+#name of the makefile to be called in Tango
+MAKEFILE_NAME="autograde-Makefile"
