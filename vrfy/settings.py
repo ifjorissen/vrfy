@@ -27,10 +27,10 @@ TEST = True
 
 GRAPPELLI_ADMIN_TITLE = "CS@Reed Admin"
 
+GRAPPELLI_INDEX_DASHBOARD = "vrfy.dashboard.CustomIndexDashboard"
+
 ALLOWED_HOSTS = ["localhost"]
 INTERNAL_IPS = ['127.0.0.1','localhost']
-
-GRAPPELLI_INDEX_DASHBOARD = 'vrfy.dashboard.CustomIndexDashboard'
 
 # Application definition
 
