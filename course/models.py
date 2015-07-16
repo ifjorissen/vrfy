@@ -23,7 +23,7 @@ def student_file_upload_path(instance, filename):
   problem = instance.student_problem_solution.problem
   attempt = instance.attempt_num
   course = problem.course
-  return '{0}/folio/{1}/{2}/{3}_files/v{4}/{5}'.format(course, user, slugify(problem_set), slugify(problem.title), attempt, slugify(filename))
+  return '{0}/folio/{1}/{2}/{3}_files/v{4}/{5}'.format(course, user, slugify(problem_set), slugify(problem.title), attempt, filename)
 
 def solution_file_upload_path(instance, filename):
   #filepath should be of the form: course/solutions/problem_set/problem/filename 

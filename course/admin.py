@@ -52,7 +52,11 @@ class ProblemAdmin(admin.ModelAdmin):
     ('Grading Script', {'fields': ['grade_script']}),
   ]
   inlines = [RequiredProblemFilenameInline, ProblemSolutionFileInline]
-  list_display = ('title', 'course', 'submissions')
+  list_display = ('title', 'course', 'submissions', 'assigned_to')
+
+  def assigned_to(self, obj):
+    problem_sets = obj.problemset_set.all()
+    return ", ".join([ps.title for ps in problem_sets]) 
 
   def submissions(self, obj):
     student_solutions = obj.studentproblemsolution_set.all()
@@ -146,3 +150,5 @@ admin.site.register(models.ProblemSet, ProblemSetAdmin)
 admin.site.register(models.StudentProblemSet, StudentProblemSetAdmin)
 admin.site.register(models.StudentProblemSolution, StudentProblemSolutionAdmin)
 admin.site.register(models.GraderLib)
+admin.site.register(models.ProblemResultSet)
+admin.site.register(models.ProblemResult)
