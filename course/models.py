@@ -148,6 +148,3 @@ class GraderLib(models.Model):
   def __str__(self):
     return self.lib_upload.name.split("/")[-1]
 
-
-#ability for jim to access something on the order of /m121/folio/jfix/hw1/p1/v1/files/  and /m121/folio/jfix/hw1/p1/v1/files/
-#a csv with output for the latest (or best) attempt on the problem set

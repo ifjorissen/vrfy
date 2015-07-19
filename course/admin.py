@@ -143,6 +143,14 @@ class StudentProblemSolutionAdmin(admin.ModelAdmin):
     score = result_obj.score
     return score
 
+class ProblemResultAdmin(admin.ModelAdmin):
+  list_display = ('problem_title', 'problem_set', 'user', 'score', 'timestamp')
+
+  def problem_set(self, obj):
+    return obj.result_set.problem_set.title
+    
+  def problem_title(self, obj):
+    return obj.problem.title
 
 
 admin.site.register(models.Problem, ProblemAdmin)
@@ -151,4 +159,4 @@ admin.site.register(models.StudentProblemSet, StudentProblemSetAdmin)
 admin.site.register(models.StudentProblemSolution, StudentProblemSolutionAdmin)
 admin.site.register(models.GraderLib)
 admin.site.register(models.ProblemResultSet)
-admin.site.register(models.ProblemResult)
+admin.site.register(models.ProblemResult, ProblemResultAdmin)

@@ -16,9 +16,6 @@ import sys
 sys.path.append("../")
 import vrfy.settings
 
-from django.forms.models import inlineformset_factory
-
-
 def index(request):
   authenticate(request)
   return render(request, 'course/index.html')
@@ -77,6 +74,10 @@ def problem_submit(request, ps_id, p_id):
     student_psol.attempt_num += 1 
     student_psol.save()
     
+    #create the student result set & problem
+    result_set, prs_created = ProblemResultSet.objects.get_or_create(sp_set = student_ps_sol, user=request.user, problem_set=ps)
+    prob_result, pr_created = ProblemResult.objects.get_or_create(sp_sol = student_psol, result_set=result_set, user=request.user, problem=problem)
+
     #opens the courselab
     url = vrfy.settings.TANGO_ADDRESS + "upload/" + vrfy.settings.TANGO_KEY + "/" + slugify(ps.title)+ "_" + slugify(problem.title) + "/"
     files = []
@@ -134,13 +135,14 @@ def results_detail(request, ps_id):
   # logic to figure out if the results are availiable and if so, get them
   ps = get_object_or_404(ProblemSet, pk=ps_id, pub_date__lte=timezone.now())
   student_ps = get_object_or_404(StudentProblemSet, problem_set=ps, user=request.user)
+  result_set = get_object_or_404(ProblemResultSet, user=request.user, sp_set=student_ps, problem_set=ps)
   results_dict = {}
-  result_set, created = ProblemResultSet.objects.get_or_create(sp_set = student_ps, user=request.user, problem_set=ps)
 
   for solution in student_ps.studentproblemsolution_set.all():
     if solution.submitted:
-      result_obj = ProblemResult.objects.create(sp_sol = solution, result_set=result_set, user=request.user, problem=solution.problem)
-  #poll the tango server
+      prob_result = ProblemResult.objects.filter(sp_sol = solution, result_set=result_set, user=request.user, problem=solution.problem).latest('timestamp')
+      
+      #poll the tango server
       url = vrfy.settings.TANGO_ADDRESS + "poll/" + vrfy.settings.TANGO_KEY + "/" + slugify(ps.title) + "_" + \
           slugify(solution.problem.title) + "/" + slugify(ps.title) + "_" + \
           slugify(solution.problem.title) + "-" + request.user.username + "/"
@@ -148,20 +150,20 @@ def results_detail(request, ps_id):
       try:
         log_data = json.loads(r.text.split("\n")[-2])#theres a line with an empty string after the last actual output line
         #create the result object
-        # result_obj.score = log_data["score_sum"]
-        result_obj.score = 10
-        result_obj.internal_log = log_data["internal_log"]
-        result_obj.sanity_log = log_data["sanity_compare"]
-        result_obj.external_log = log_data["external_log"]
-        result_obj.raw_log = json.dumps(log_data, indent=4)
-        result_obj.timezone = timezone.now()
-        result_obj.save()
+        # prob_result.score = log_data["score_sum"]
+        prob_result.score = 10
+        prob_result.internal_log = log_data["internal_log"]
+        prob_result.sanity_log = log_data["sanity_compare"]
+        prob_result.external_log = log_data["external_log"]
+        prob_result.raw_log = json.dumps(log_data, indent=4)
+        prob_result.timestamp = timezone.now()
+        prob_result.save()
       except ValueError: #if the json isn't there, something went wrong when running the job, or the grader file messed up
         raise Http404("Something went wrong. Make sure your code is bug free and resubmit. \nIf the problem persists, contact your professor or TA")
     
     else:
-      result_obj = None
-    results_dict[solution] = result_obj
+      prob_result = None
+    results_dict[solution] = prob_result
     #make a result object
     #only send the data that the student should see
     context = {'sps': student_ps, "ps_results" : results_dict}
@@ -192,7 +194,7 @@ def results_problem_detail(request, ps_id, p_id):
         result_obj.sanity_log = log_data["sanity_compare"]
         result_obj.external_log = log_data["external_log"]
         result_obj.raw_log = json.dumps(log_data, indent=4)
-        result_obj.timezone = timezone.now()
+        result_obj.timestamp = timezone.now()
         result_obj.save()
       except ValueError: #if the json isn't there, something went wrong when running the job, or the grader file messed up
         raise Http404("Something went wrong. Make sure your code is bug free and resubmit. \nIf the problem persists, contact your professor or TA")
@@ -200,53 +202,6 @@ def results_problem_detail(request, ps_id, p_id):
     else:
       result_obj = None
     results_dict[solution] = result_obj
-    #make a result object
     #only send the data that the student should see
     context = {'sps': student_ps, "ps_results" : results_dict}
   return render(request, 'course/results_detail.html', context)
-
-# def results_index(request):
-#   authenticate(request)
-  # logic to figure out if the results are availiable and if so, get them
-  # response = "here are all the results that are availiable"
-  #get all the student problem sets
-  # sps_sets = StudentProblemSet.objects.filter(user=request.user).order_by('submitted')
-  # sps_results_dict = {}
-  # for sps in sps_sets:
-  #   try:
-  #     result_set = ProblemResultSet.objects.get(sp_set=sps)
-  #   except ProblemResultSet.DoesNotExist:
-  #     result_set = None
-  #   sps_results_dict[sps] = result_set
-  #show the latest results
-  #get the latest result for each existing solution
-  # for sps in studentp_sets:
-    # results = ProblemResult.objects.filter(user=request.user).order_by('timestamp')
-    # context = {'results': results}
-  # context = {'sps_results_dict': sps_results_dict}
-  # return render(request, 'course/results_index.html', context)
-  # return HttpResponse("And Here are the results for your problem sets")
-
-"""
-# problem set id, problem id
-def add_student_solution_files(request, ps_id, p_id):
-  problem_set = ProblemSet.objects.get(pk=ps_id)
-
-  for problem in problem_set.problems:
-    SSFileInlineFormSet = inlineformset_factory(StudentProblemSolution, StudentProblemFile, fields=('file_title'))
-
-    # author = Author.objects.get(pk=author_id)
-    # BookInlineFormSet = inlineformset_factory(Author, Book, fields=('title',))
-    if request.method == "POST":
-        formset = SSFileInlineFormSet(request.POST, request.FILES, instance=problem)
-        if formset.is_valid():
-            formset.save()
-            # Do something. Should generally end with a redirect. For example:
-            return HttpResponseRedirect(author.get_absolute_url())
-    else:
-        formset = SSFileInlineFormSet(instance=problem)
-
-    return render_to_response("manage_books.html", {
-        "formset": formset,
-    })
-"""
