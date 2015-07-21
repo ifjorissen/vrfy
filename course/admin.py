@@ -192,10 +192,6 @@ admin.site.register(models.Problem, ProblemAdmin)
 admin.site.register(models.ProblemSet, ProblemSetAdmin)
 admin.site.register(models.StudentProblemSet, StudentProblemSetAdmin)
 admin.site.register(models.StudentProblemSolution, StudentProblemSolutionAdmin)
-<<<<<<< HEAD
 admin.site.register(models.GraderLib, GraderLibAdmin)
-=======
-admin.site.register(models.GraderLib)
 admin.site.register(models.ProblemResultSet)
 admin.site.register(models.ProblemResult, ProblemResultAdmin)
->>>>>>> master
