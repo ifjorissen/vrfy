@@ -58,6 +58,7 @@ Create a user for the admin interface:
 `python3 manage.py createsuperuser`
 
 ###Getting Tango to work
+  * clone Tango to your machine (the dist_docker branch or commit eb18878d49c0ca718fc994919ed08b92aa00a77b, see [how to clone old commit](http://stackoverflow.com/questions/1655361/how-to-clone-an-old-git-commit-and-some-more-questions-about-git))
   * Follow [their instructions](https://github.com/autolab/Tango/wiki/Tango-with-Docker) for getting Tango running with docker
   * In `vrfy/settings.py` change `TANGO_ADDRESS` to the Tango server's address, `TANGO_KEY` to one of the keys for the server and `TANGO_COURSELAB_DIR` to the directory where Tango will store its courselabs
   * When you start the server you may want to use sudo, ie: `sudo python restful-tango/server.py` to make sure it has permission to edit the courselabs
