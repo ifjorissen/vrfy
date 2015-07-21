@@ -151,23 +151,28 @@ def results_detail(request, ps_id):
     if solution.submitted:
       prob_result = ProblemResult.objects.filter(sp_sol = solution, job_id=solution.job_id).latest('timestamp')
         #poll the tango server
-      url = vrfy.settings.TANGO_ADDRESS + "poll/" + vrfy.settings.TANGO_KEY + "/" + slugify(ps.title) + "_" + \
-          slugify(solution.problem.title) + "/" + slugify(ps.title) + "_" + \
-          slugify(solution.problem.title) + "-" + request.user.username + "/"
-      r = requests.get(url)
-      try:
-        log_data = json.loads(r.text.split("\n")[-2])#theres a line with an empty string after the last actual output line
-        #create the result object
-        # result_obj.score = log_data["score_sum"]
-        prob_result.score = 10
-        prob_result.internal_log = log_data["internal_log"]
-        prob_result.sanity_log = log_data["sanity_compare"]
-        prob_result.external_log = log_data["external_log"]
-        prob_result.raw_log = log_data
+      outputFile = slugify(ps.title) + "_" +slugify(solution.problem.title) + "-" + request.user.username
+      r = tango.poll(solution.problem, ps, outputFile)
+      line = r.text.split("\n")[-2]#theres a line with an empty string after the last actual output line
+      if "Autodriver: Job timed out after " in line: #thats the text that Tango outputs when a job times out
+        prob_result.score = 0
+        prob_result.external_log = ["Program timed out after " + line.split(" ")[-2] + " seconds."]
         prob_result.timestamp = timezone.now()
         prob_result.save()
-      except ValueError: #if the json isn't there, something went wrong when running the job, or the grader file messed up
-        raise Http404("Something went wrong. Make sure your code is bug free and resubmit. \nIf the problem persists, contact your professor or TA")
+      else:
+        try:
+          log_data = json.loads(line)
+          #create the result object
+          # result_obj.score = log_data["score_sum"]
+          prob_result.score = 10
+          prob_result.internal_log = log_data["internal_log"]
+          prob_result.sanity_log = log_data["sanity_compare"]
+          prob_result.external_log = log_data["external_log"]
+          prob_result.raw_log = log_data
+          prob_result.timestamp = timezone.now()
+          prob_result.save()
+        except ValueError: #if the json isn't there, something went wrong when running the job, or the grader file messed up
+          raise Http404("Something went wrong. Make sure your code is bug free and resubmit. \nIf the problem persists, contact your professor or TA")
     else:
       prob_result = None
     results_dict[solution] = prob_result
