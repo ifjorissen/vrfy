@@ -54,7 +54,11 @@ class ProblemAdmin(admin.ModelAdmin):
     ('Grading Script', {'fields': ['grade_script']}),
   ]
   inlines = [RequiredProblemFilenameInline, ProblemSolutionFileInline]
-  list_display = ('title', 'course', 'submissions')
+  list_display = ('title', 'course', 'submissions', 'assigned_to')
+
+  def assigned_to(self, obj):
+    problem_sets = obj.problemset_set.all()
+    return ", ".join([ps.title for ps in problem_sets]) 
 
   def response_change(self, request, obj):
     """
@@ -155,6 +159,7 @@ class StudentProblemSolutionAdmin(admin.ModelAdmin):
     score = result_obj.score
     return score
 
+
 class GraderLibAdmin(admin.ModelAdmin):
   
   def response_add(self, request, obj, post_url_continue=None):
@@ -173,10 +178,24 @@ class GraderLibAdmin(admin.ModelAdmin):
         f = obj.lib_upload
         tango.upload(problem, ps, f.name.split("/")[-1], f.read())
 
+class ProblemResultAdmin(admin.ModelAdmin):
+  list_display = ('problem_title', 'problem_set', 'user', 'score', 'timestamp')
+
+  def problem_set(self, obj):
+    return obj.result_set.problem_set.title
+    
+  def problem_title(self, obj):
+    return obj.problem.title
 
 
 admin.site.register(models.Problem, ProblemAdmin)
 admin.site.register(models.ProblemSet, ProblemSetAdmin)
 admin.site.register(models.StudentProblemSet, StudentProblemSetAdmin)
 admin.site.register(models.StudentProblemSolution, StudentProblemSolutionAdmin)
+<<<<<<< HEAD
 admin.site.register(models.GraderLib, GraderLibAdmin)
+=======
+admin.site.register(models.GraderLib)
+admin.site.register(models.ProblemResultSet)
+admin.site.register(models.ProblemResult, ProblemResultAdmin)
+>>>>>>> master

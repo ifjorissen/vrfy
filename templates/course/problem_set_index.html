@@ -38,7 +38,7 @@
         {% endfor %}
       {% else %}
         {% for problem in ps.problems.all %}
-        <li class="list-group-item"><span>{{ problem.title }}</span><span class="badge">Attempt</span></li>
+        <li class="list-group-item"><span>{{ problem.title }}</span><span class="small pull-right">not yet attempted</span></li>
         {% endfor %}
       {% endif %}
       </div>

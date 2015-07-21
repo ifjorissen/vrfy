@@ -32,8 +32,6 @@ GRAPPELLI_INDEX_DASHBOARD = "vrfy.dashboard.CustomIndexDashboard"
 ALLOWED_HOSTS = ["localhost"]
 INTERNAL_IPS = ['127.0.0.1','localhost']
 
-
-
 # Application definition
 
 INSTALLED_APPS = (

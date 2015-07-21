@@ -34,6 +34,7 @@ to do: give adam and jim and eric a detailed desription of what needs to be in d
   * start postgres database should be something like `pg_ctl start -D /usr/local/var/postgres`, where `/usr/local/var/postgres` is the location of the database. 
   * In another tab/window `cd <vrfy-dir>` and start the virtual environment
   * `pip install -r requirements.txt` this command installs the python libs for this project 
+    * a note about this: the version of django-grappelli that were's using is not what's currently distributed with `pip install django-grapelli`. Running that will give you the latest stable release compatible with Django 1.7. Since we're using Django 1.8 and there's a stable grappelli branch available, we're grabbing v.2.7.x right from github with:  `pip install git+https://github.com/sehmaschine/django-grappelli.git@stable/2.7.x`
   * `npm install` this command installs the node modules required for this project (if you don't have node installed `brew install node`)
   * `bower install` this command installs the bower components required for this project (if you don't have bower installed `npm install -g bower`)
   * `python3 manage.py collectstatic` this collects static files from the static folders and the bower_components directories (as per vrfy/settings.py).
