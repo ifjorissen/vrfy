@@ -39,7 +39,7 @@ def upload(problem, problemset, filename, file):
   header = {'Filename': filename}
   return _request("upload", courselab, "POST", body=file, headers=header)
 
-def addJob(problem, problemset, files, jobName, output_file, image="autograding_image", timeout=100, max_kb=1000, callback_url=None):
+def addJob(problem, problemset, files, jobName, output_file, image="autograding_image", timeout=10, max_kb=1000, callback_url=None):
   courselab = _get_courselab(problem, problemset)
   #add the makefile
   files.append({"localFile" : MAKEFILE_NAME, "destFile": "Makefile"})
