@@ -11,7 +11,12 @@
 {% for problem, solution in problem_set_dict.items %}
 {% if solution.submitted %}
   {% if not problem.many_attempts %}
-    
+    <section id="problem-{{problem.id}}" class="panel panel-default">
+      <div class="panel-heading">
+        <h3><span class=text-muted>
+            <span class="glyphicon glyphicon-ban-circle"></span> Cannot re-attempt {{ problem.title }}</span></h3>
+      </div>
+    </section>
   {% else %}
     <section id="problem-{{problem.id}}" class="panel panel-default">
       <div class="panel-heading">
