@@ -3,7 +3,8 @@
 {% block content %}
 <section class="problem-set">
 <section class="ps-info page-header">
-<h1>{{ problem_set.title }} <small> ( Due {{ problem_set.due_date }} )</small></h1>
+<p class="h1">{{ problem_set.title }} </p>
+<p class="h2" style="margin-top:0;"><small><span class="glyphicon glyphicon-time"></span> Due {{ problem_set.due_date }}</small></p>
 <p class="lead">{{problem_set.description}}</p>
 </section>
 
@@ -12,7 +13,7 @@
   <section id="problem-{{problem.id}}" class="panel panel-default">
     <div class="panel-heading">
       <h3><span role="button" data-toggle="collapse" data-parent="#problem-{{problem.id}}" href="#collapse-problem-{{problem.id}}" aria-expanded="true" aria-controls="collapseOne">
-          Re-attempt {{ problem.title }} <small>(Attempt No. {{solution.attempt_num|add:'1'}})</small></span></h3>
+          <span class="glyphicon glyphicon-repeat"></span> Re-attempt {{ problem.title }} <small>(Attempt No. {{solution.attempt_num|add:'1'}})</small></span></h3>
     </div>
     <div id="collapse-problem-{{problem.id}}" class="panel-body panel-collapse collapse" role="tabpanel" aria-labelledby="headingOne">
       <p>{{ problem.description }}</p>

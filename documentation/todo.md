@@ -1,5 +1,5 @@
 ## To do list
- * figure out what the deal w/ grappelli is, since 2.6.5 is compatible with django 1.7, but not necessarily 1.8 (7.15.15- seems fine?)
+ *figure out what the deal w/ grappelli is, since 2.6.5 is compatible with django 1.7, but not necessarily 1.8
  * problem set urls should use problem-set.title slug instead of id
  * problem urls should use problem.title slug instead of id
  * javascript to handle the form submission for a student problem set
@@ -17,7 +17,6 @@
 * make sure that all queries ONLY return results _for this user_ !!! (pretty sure this works, 7.14.15)
 * put the new session.py and sanity in a lib ->  admins should not have to upload sanity, session, makefile, or run-python
 * results if a problem has been submitted (7.14.15)
-* 
 
 
 ###Cool stuff
