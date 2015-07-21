@@ -6,6 +6,7 @@ from vrfy.settings import TANGO_ADDRESS, TANGO_KEY, TANGO_COURSELAB_DIR, MAKEFIL
 import requests
 import json
 import shutil
+import os
 
 def _request(action, courselab, method, body=None, headers=None, outputFile=""):
   """
@@ -49,10 +50,14 @@ def poll(problem, problemset, outputFile):
   courselab = _get_courselab(problem, problemset)
   return _request("poll", courselab, "GET", outputFile=outputFile)
 
-def delete(problem, problemset):
+def delete(problem, problemset, filename=""):
   """
-  deletes a courselab
+  deletes a courselab or file in a courselab
   """
-  pass
-
+  path = TANGO_COURSELAB_DIR + _get_courselab(problem, problemset)
+  if filename == "":
+    shutil.rmtree(path)
+  else:
+    path += "/" + filename
+    os.remove(path)
 

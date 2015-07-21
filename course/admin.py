@@ -4,6 +4,7 @@ from django.http import Http404
 from . import models #Problem, ProblemSet, RequiredProblemFilename, ProblemSolutionFile
 import requests
 import shutil
+import os
 
 import sys
 sys.path.append("../")
@@ -61,6 +62,16 @@ class ProblemAdmin(admin.ModelAdmin):
     I only need to do this when a problem is changed, because when a problem is added, it doesn't have a problem set yet
     """
     for ps in obj.problemset_set.all():
+
+      #upload the grading script
+      grading = obj.grade_script
+      grading_name = grading.name.split("/")[-1]
+      tango.upload(obj, ps, grading_name, grading.read())
+
+      #upload the makefile that will run the grading script
+      makefile = 'autograde:\n	@python3 ' + grading_name
+      tango.upload(obj, ps, vrfy.settings.MAKEFILE_NAME, makefile)
+      
       #upload problemsolutionfiles
       for psfile in models.ProblemSolutionFile.objects.filter(problem=obj):
         f = psfile.file_upload
@@ -97,7 +108,7 @@ class ProblemSetAdmin(admin.ModelAdmin):
     return super(ProblemSetAdmin, self).response_change(request, obj)
 
   def response_delete(self, request, obj_display, obj_id):
-    shutil.rmtree(vrfy.settings.TANGO_COURSELAB_DIR + vrfy.settings.TANGO_KEY + "-" + slugify(obj_display))
+    
     return super(ProblemSetAdmin, self).response_delete(request, obj_display, obj_id)
 
   def _open_and_upload(self, obj):
