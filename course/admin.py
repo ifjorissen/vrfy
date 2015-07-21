@@ -21,7 +21,7 @@ class RequiredProblemFilenameInline(admin.TabularInline):
 
 class ProblemSolutionFileInline(admin.TabularInline):
   model = models.ProblemSolutionFile
-  extra = 5
+  extra = 3
 
 class StudentProblemSetInline(admin.TabularInline):
   model = models.StudentProblemSet
@@ -37,24 +37,16 @@ class StudentProblemFileInline(admin.TabularInline):
   model = models.StudentProblemFile
   extra = 0
 
-
-# class ProblemSolutionAdmin(admin.ModelAdmin):
-#   class Meta:
-#     model = ProblemSolution
-    
-#   inlines = [ProblemSolutionFileInline]
-
-
 class ProblemAdmin(admin.ModelAdmin):
   class Meta:
     model = models.Problem
 
   fieldsets = [
-    ('Problem Info', {'fields': ['title', 'description', 'statement', 'many_attempts', 'course']}),
+    ('Problem Info', {'fields': ['title', 'description', 'statement', 'many_attempts', 'cs_course']}),
     ('Grading Script', {'fields': ['grade_script']}),
   ]
   inlines = [RequiredProblemFilenameInline, ProblemSolutionFileInline]
-  list_display = ('title', 'course', 'submissions', 'assigned_to')
+  list_display = ('title', 'cs_course', 'submissions', 'assigned_to')
 
   def assigned_to(self, obj):
     problem_sets = obj.problemset_set.all()

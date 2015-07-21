@@ -11,8 +11,6 @@ class CSUser(User):
   '''Basic features and properties of a student enrolled in a CS class.
 
   Attributes:
-    attended_signator_trainging(bool): whether the student attended
-    signator training. 
     username(str): the username, based on their Reed email
     first_name(str): the users first name
     last_name(str): the users last name
@@ -143,43 +141,6 @@ class CSUser(User):
     # self.add_factors(factor_list)
     # self.save()
     return self
-
-  # def get_factor_list(self):
-  #   # Returns a list of factors as strings
-  #   return map(lambda x: str(x), self.factor_set.all())
-
-  # def set_factor_list(self, factor_list):
-  #   for f in Factor.objects.all():
-  #     if str(f) in factor_list:
-  #       if not self in f.users.all():
-  #         f.users.add(self)
-  #     else:
-  #       if self in f.users.all():
-  #         f.users.remove(self)
-
-  # def add_factors(self, factor_list):
-  #   # Create any factors that haven't already been made
-  #   for factor_name in factor_list:
-  #     if (not Factor.objects.filter(name = factor_name).exists()
-  #       and factor_name in FACTOR_LIST):
-  #       new_factor = Factor.objects.create(name = factor_name)
-  #       new_factor.save()
-
-  #   # Link factors to user
-  #   for f in Factor.objects.all():
-  #     if (str(f) in factor_list) and (not self in f.users.all()):
-  #       f.users.add(self)
-
-  # def has_factor(self, factor_list):
-  #   # Checks in the user has one of the given factors
-  #   users_factors = self.get_factor_list()
-  #   for f in factor_list:
-  #     if f in users_factors:
-  #       return True
-  #   return False
-
-  # def is_admin(self):
-  #   return self.factor_set.filter(name = 'admin') != []
 
   def __unicode__(self):
     return "%s %s" % (self.first_name, self.last_name)
