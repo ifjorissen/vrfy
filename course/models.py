@@ -48,8 +48,8 @@ class Problem(models.Model):
   grade_script = models.FileField(upload_to=grade_script_upload_path, null=True, blank=True)
   
   def clean(self):
-    if self.autograde_problem and self.grade_script == None:
-      raise ValidationError("Grade script required")
+    if self.autograde_problem and (self.grade_script == None or self.grade_script == ""):
+      raise ValidationError({'grade_script': ["This field is required.",]})
 
   def __str__(self): 
     return self.title
