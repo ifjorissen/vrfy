@@ -3,6 +3,7 @@ from generic.models import CSUser
 from catalog.models import Section, Course
 from django.contrib.auth.models import User
 from django.utils.text import slugify
+from django.core.exceptions import ValidationError
 from jsonfield import JSONField
 import os
 import os.path
@@ -43,7 +44,12 @@ class Problem(models.Model):
   description = models.TextField(default='') #a short tl;dr of the problem, what to read
   statement = models.TextField(default='') #markdown compatible
   many_attempts = models.BooleanField(default = True)
-  grade_script = models.FileField(upload_to=grade_script_upload_path)
+  autograde_problem = models.BooleanField(default = True)
+  grade_script = models.FileField(upload_to=grade_script_upload_path, null=True, blank=True)
+  
+  def clean(self):
+    if self.autograde_problem and self.grade_script == None:
+      raise ValidationError("Grade script required")
 
   def __str__(self): 
     return self.title
