@@ -3,10 +3,12 @@ from generic.models import CSUser
 from catalog.models import Section, Course
 from django.contrib.auth.models import User
 from django.utils.text import slugify
+from django.core.exceptions import ValidationError
 from jsonfield import JSONField
 import os
 import os.path
 import vrfy.settings
+from django.utils import timezone
 
 def student_file_upload_path(instance, filename):
   #filepath should be of the form: course/folio/user/problem_set/problem/filename  (maybe add attempt number)
@@ -41,8 +43,13 @@ class Problem(models.Model):
   cs_course = models.ForeignKey('catalog.Course', null=True)
   description = models.TextField(default='') #a short tl;dr of the problem, what to read
   statement = models.TextField(default='') #markdown compatible
-  many_attempts = models.BooleanField(default = True)
-  grade_script = models.FileField(upload_to=grade_script_upload_path)
+  many_attempts = models.BooleanField(default=True)
+  autograde_problem = models.BooleanField(default=True)
+  grade_script = models.FileField(upload_to=grade_script_upload_path, null=True, blank=True)
+  
+  def clean(self):
+    if self.autograde_problem and (self.grade_script == None or self.grade_script == ""):
+      raise ValidationError({'grade_script': ["This field is required.",]})
 
   def __str__(self): 
     return self.title
@@ -67,6 +74,9 @@ class ProblemSet(models.Model):
   pub_date = models.DateTimeField('date assigned')
   due_date = models.DateTimeField('date due')
 
+  def is_already_due(self):
+    return self.due_date < timezone.now()
+  
   def __str__(self): 
     return self.title
 

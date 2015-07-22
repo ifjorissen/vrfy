@@ -42,7 +42,7 @@ class ProblemAdmin(admin.ModelAdmin):
     model = models.Problem
 
   fieldsets = [
-    ('Problem Info', {'fields': ['title', 'description', 'statement', 'many_attempts', 'cs_course']}),
+    ('Problem Info', {'fields': ['title', 'description', 'statement', 'many_attempts', 'autograde_problem', 'cs_course']}),
     ('Grading Script', {'fields': ['grade_script']}),
   ]
   inlines = [RequiredProblemFilenameInline, ProblemSolutionFileInline]
