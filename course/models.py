@@ -7,6 +7,7 @@ from jsonfield import JSONField
 import os
 import os.path
 import vrfy.settings
+from django.utils import timezone
 
 def student_file_upload_path(instance, filename):
   #filepath should be of the form: course/folio/user/problem_set/problem/filename  (maybe add attempt number)
@@ -67,6 +68,9 @@ class ProblemSet(models.Model):
   pub_date = models.DateTimeField('date assigned')
   due_date = models.DateTimeField('date due')
 
+  def is_already_due(self):
+    return self.due_date < timezone.now()
+  
   def __str__(self): 
     return self.title
 

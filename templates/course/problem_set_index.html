@@ -2,14 +2,18 @@
 {% block content %}
 <div class="panel-group" role="tablist" aria-multiselectable="true">
   {% for ps, s_sol in ps_dict.items %}
-  <div class="panel panel-default" id="problemset-{{ps.id}}">
+  {% if ps.is_already_due and not s_sol.submitted %} <div class="panel panel-danger" id="problemset-{{ps.id}}"> {% else %}
+  <div class="panel panel-default" id="problemset-{{ps.id}}">{% endif %}
     <div class="panel-heading" role="tab">
       <div class="flex-panel-wrapper">
       <div role="button" data-toggle="collapse" data-parent="#problemset-{{ps.id}}" href="#collapse-problemset-{{ps.id}}" aria-expanded="true" aria-controls="problemset-{{ps.id}}">
       <p class = "h4">
         {{ ps.title }} 
       </p>
-      <p class="h5"><span class="glyphicon glyphicon-time"></span> Due {{ps.due_date}}</p>
+      <p class="h5">
+        {% if ps.is_already_due %} <span class="glyphicon glyphicon-bell">
+        {% else %} <span class="glyphicon glyphicon-time"> {% endif %}
+        </span> Due {{ps.due_date}}</p>
       </div>
       {% if s_sol and s_sol.submitted %}
         <div class="btn-group" role="group" aria-label="...">
