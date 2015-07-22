@@ -37,15 +37,19 @@ def attempt_problem_set(request, ps_id):
 def submit_success(request, ps_id, p_id):
   authenticate(request)
   job_url = vrfy.settings.TANGO_ADDRESS + "jobs/" + vrfy.settings.TANGO_KEY + "/0/"
+  dead_job_url = vrfy.settings.TANGO_ADDRESS + "jobs/" + vrfy.settings.TANGO_KEY + "/1/"
   info_url = vrfy.settings.TANGO_ADDRESS + "info/" + vrfy.settings.TANGO_KEY +"/"
+
   running_jobs = requests.get(job_url)
-  rj_json = running_jobs.json()
+  dead_jobs = requests.get(dead_job_url)
   info = requests.get(info_url)
 
+  dj_json = dead_jobs.json()
+  rj_json = running_jobs.json()
   info_json = info.json()
-  context = {"info":info_json["info"], "jobs":rj_json}
+  context = {"info":info_json["info"], "jobs":rj_json, "dead_jobs":dj_json}
   #make sure the job is in the queue
-  return render(request, 'course/submit_success.html')
+  return render(request, 'course/submit_success.html', context)
 
 def problem_set_index(request):
   '''
@@ -121,6 +125,12 @@ def problem_submit(request, ps_id, p_id):
       name = psfile.file_upload.name.split("/")[-1]
       files.append({"localFile" : name, "destFile": name})
 
+    #upload the json data object
+    tango_data = json.dumps({"attempts": student_psol.attempt_num, "timedelta": student_psol.isLate()})
+    data_name = "data.json" + "-" + request.user.username
+    tango.upload(problem, ps, data_name, tango_data)
+    files.append({"localFile" : data_name, "destFile": "data.json"})
+
     #making Tango run the files
     jobName = slugify(ps.title) + "_" + slugify(problem.title) + "-" + request.user.username
     r = tango.addJob(problem, ps, files, jobName, jobName)
@@ -159,7 +169,7 @@ def results_detail(request, ps_id):
         log_data = json.loads(r.text.split("\n")[-2])#theres a line with an empty string after the last actual output line
         #create the result object
         # result_obj.score = log_data["score_sum"]
-        prob_result.score = 10
+        prob_result.score = log_data["score_sum"]
         prob_result.internal_log = log_data["internal_log"]
         prob_result.sanity_log = log_data["sanity_compare"]
         prob_result.external_log = log_data["external_log"]
