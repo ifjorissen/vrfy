@@ -85,7 +85,13 @@ class StudentProblemSet(models.Model):
   user = models.ForeignKey('generic.CSUser', null=True)
   submitted = models.DateTimeField('date submitted', null=True)
   # comments = models.TextField(), 
-
+  
+  def all_submitted(self):
+    for s_prob in self.studentproblemsolution_set.all():
+      if not s_prob.submitted:
+        return False
+    return True
+  
   def __str__(self): 
     return self.problem_set.title + " - " + self.user.username
     
