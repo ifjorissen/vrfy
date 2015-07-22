@@ -2,7 +2,7 @@
 {% block content %}
 <div class="panel-group" role="tablist" aria-multiselectable="true">
   {% for ps, s_sol in ps_dict.items %}
-  {% if ps.is_already_due and not s_sol.submitted %} <div class="panel panel-danger" id="problemset-{{ps.id}}"> {% else %}
+  {% if ps.is_already_due and not s_sol.all_submitted %} <div class="panel panel-danger" id="problemset-{{ps.id}}"> {% else %}
   <div class="panel panel-default" id="problemset-{{ps.id}}">{% endif %}
     <div class="panel-heading" role="tab">
       <div class="flex-panel-wrapper">
