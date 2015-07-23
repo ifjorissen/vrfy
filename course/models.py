@@ -107,7 +107,7 @@ class StudentProblemSolution(models.Model):
   def __str__(self): 
     return self.problem.title + " - " + self.student_problem_set.user.username
 
-  def isLate(self):
+  def is_late(self):
     ps_due_date = self.student_problem_set.problem_set.due_date
     submit_date = self.submitted
     if submit_date > ps_due_date:

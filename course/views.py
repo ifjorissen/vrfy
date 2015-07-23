@@ -84,15 +84,12 @@ def problem_submit(request, ps_id, p_id):
     student_psol.submitted = timezone.now()
     student_psol.attempt_num += 1 
     student_psol.save()
-    
+
     #create the student result set & problem
     result_set, prs_created = ProblemResultSet.objects.get_or_create(sp_set = student_ps_sol, user=request.user, problem_set=ps)
     prob_result = ProblemResult.objects.create(sp_sol=student_psol, result_set=result_set, user=request.user, problem=problem)
 
-    #opens the courselab
-    url = vrfy.settings.TANGO_ADDRESS + "upload/" + vrfy.settings.TANGO_KEY + "/" + slugify(ps.title)+ "_" + slugify(problem.title) + "/"
-    files = []
-
+    files = []#for the addJob
     #getting all the submitted files
     for name, f in request.FILES.items():
       localfile = name + "-"+ request.user.username
@@ -126,7 +123,7 @@ def problem_submit(request, ps_id, p_id):
       files.append({"localFile" : name, "destFile": name})
 
     #upload the json data object
-    tango_data = json.dumps({"attempts": student_psol.attempt_num, "timedelta": student_psol.isLate()})
+    tango_data = json.dumps({"attempts": student_psol.attempt_num, "timedelta": student_psol.is_late()})
     data_name = "data.json" + "-" + request.user.username
     tango.upload(problem, ps, data_name, tango_data)
     files.append({"localFile" : data_name, "destFile": "data.json"})
@@ -171,8 +168,8 @@ def results_detail(request, ps_id):
         prob_result.save()
       else:
         try:
-          #grab the log data and populate the result object
           log_data = json.loads(line)
+          #create the result object
           prob_result.score = log_data["score_sum"]
           prob_result.internal_log = log_data["internal_log"]
           prob_result.sanity_log = log_data["sanity_compare"]
@@ -185,6 +182,8 @@ def results_detail(request, ps_id):
     else:
       prob_result = None
     results_dict[solution] = prob_result
+
+    #make a result object
     #only send the data that the student should see
     context = {'sps': student_ps, "ps_results" : results_dict}
   return render(request, 'course/results_detail.html', context)
@@ -200,7 +199,7 @@ def results_problem_detail(request, ps_id, p_id):
   for solution in student_ps.studentproblemsolution_set.all():
     if solution.submitted:
       result_obj = ProblemResult.objects.create(sp_sol = solution, result_set=result_set, user=request.user, problem=solution.problem)
-      #poll the tango server
+  #poll the tango server
       outputFile = slugify(ps.title) + "_" +slugify(solution.problem.title) + "-" + request.user.username
       r = tango.poll(solution.problem, ps, outputFile)
       try:
