@@ -4,11 +4,13 @@ from catalog.models import Section, Course
 from django.contrib.auth.models import User
 from django.utils.text import slugify
 from django.core.exceptions import ValidationError
+from django.core.files import File
 from jsonfield import JSONField
 import os
 import os.path
 import vrfy.settings
 from django.utils import timezone
+from util import tango
 
 def student_file_upload_path(instance, filename):
   #filepath should be of the form: course/folio/user/problem_set/problem/filename  (maybe add attempt number)
@@ -140,6 +142,23 @@ class GraderLib(models.Model):
   lib_upload = models.FileField(upload_to=grader_lib_upload_path)
   comment = models.CharField(max_length=200, null=True, blank=True)
   
+  def save(self, *args, **kwargs):
+    super(GraderLib, self).save(*args, **kwargs)
+    name = self.lib_upload.name.split("/")[-1]
+    f = self.lib_upload.read()
+    for ps in ProblemSet.objects.all():
+      for problem in ps.problems.all():
+        tango.upload(problem, ps, name, f)
+  """
+  def delete(self):
+    os.remove(self.lib_upload.name)
+    name = self.lib_upload.name.split("/")[-1]
+    for ps in ProblemSet.objects.all():
+      for problem in ps.problems.all():
+        tango.delete(problem, ps, name)
+    super(GraderLib, self).delete()
+"""
+
   def __str__(self):
     return self.lib_upload.name.split("/")[-1]
 

@@ -153,22 +153,14 @@ class StudentProblemSolutionAdmin(admin.ModelAdmin):
 
 
 class GraderLibAdmin(admin.ModelAdmin):
-  
-  def response_add(self, request, obj, post_url_continue=None):
-    self._upload_to_ps(obj)
-    return super(GraderLibAdmin, self).response_add(request, obj, post_url_continue=None)
-        
-  #reupload files to Tanfo when a Problem Set is changed and saved
-  def response_change(self, request, obj):
-    self._upload_to_ps(obj)
-    return super(GraderLibAdmin, self).response_change(request, obj)
-  
-  def _upload_to_ps(self, obj):
-    
-    for ps in models.ProblemSet.objects.all():
-      for problem in ps.problems.all():
-        f = obj.lib_upload
-        tango.upload(problem, ps, f.name.split("/")[-1], f.read())
+  #readonly_fields=('lib_upload',)
+  fields = ('lib_upload', 'comment')
+
+  def get_readonly_fields(self, request, obj=None):
+    if obj: # obj is not None, so this is an edit
+        return ['lib_upload',] # Return a list or tuple of readonly fields' names
+    else: # This is an addition
+        return []
 
 class ProblemResultAdmin(admin.ModelAdmin):
   list_display = ('problem_title', 'problem_set', 'user', 'score', 'timestamp')
