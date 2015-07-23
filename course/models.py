@@ -24,20 +24,16 @@ def student_file_upload_path(instance, filename):
 def solution_file_upload_path(instance, filename):
   #filepath should be of the form: course/solutions/problem_set/problem/filename 
   problem = instance.problem
-  course = problem.cs_course.num
-  file_path = '{0}/solutions/{1}_files/{2}'.format(slugify(course), slugify(problem.title), filename)
+  file_path = problem.get_upload_folder() + filename
   return file_path
 
 def grader_lib_upload_path(instance, filename):
   file_path = 'lib/{0}'.format(filename)
   return file_path
 
-
 def grade_script_upload_path(instance, filename):
   #filepath should be of the form: course/solutions/problem_set/problem/filename 
-  title = instance.title
-  course = instance.cs_course.num
-  file_path = '{0}/solutions/{1}_files/{2}'.format(slugify(course), slugify(title), filename)
+  file_path = instance.get_upload_folder() + filename
   return file_path
 
 class Problem(models.Model):
@@ -48,6 +44,11 @@ class Problem(models.Model):
   many_attempts = models.BooleanField(default = True)
   autograde_problem = models.BooleanField(default = True)
   grade_script = models.FileField(upload_to=grade_script_upload_path, null=True, blank=True)
+  
+  def get_upload_folder(self):
+    course = self.cs_course.num
+    file_path = '{0}/solutions/{1}_files/'.format(slugify(course), slugify(self.title))
+    return file_path
   
   def clean(self):
     if self.autograde_problem and (self.grade_script == None or self.grade_script == ""):
