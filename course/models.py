@@ -47,8 +47,8 @@ class Problem(models.Model):
   cs_course = models.ForeignKey('catalog.Course', null=True)
   description = models.TextField(default='') #a short tl;dr of the problem, what to read
   statement = models.TextField(default='') #markdown compatible
-  many_attempts = models.BooleanField(default = True)
-  autograde_problem = models.BooleanField(default = True)
+  many_attempts = models.BooleanField(default=True)
+  autograde_problem = models.BooleanField(default=True)
   grade_script = models.FileField(upload_to=grade_script_upload_path, null=True, blank=True)
   
   def get_upload_folder(self):
@@ -119,6 +119,14 @@ class StudentProblemSolution(models.Model):
   
   def __str__(self): 
     return self.problem.title + " - " + self.student_problem_set.user.username
+
+  def is_late(self):
+    ps_due_date = self.student_problem_set.problem_set.due_date
+    submit_date = self.submitted
+    if submit_date > ps_due_date:
+      return 1
+    else:
+      return 0
   
 class StudentProblemFile(models.Model):
   required_problem_filename = models.ForeignKey(RequiredProblemFilename, null=True)
