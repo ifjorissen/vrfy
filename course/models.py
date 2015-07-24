@@ -85,6 +85,10 @@ class ProblemSet(models.Model):
 
   def is_already_due(self):
     return self.due_date < timezone.now()
+
+  def clean(self):
+    if self.due_date < self.pub_date:
+      raise ValidationError({'pub_date': ["",], 'due_date' : ["Probelem Set cannot be due before it is assigned!",]})
   
   def __str__(self): 
     return self.title
