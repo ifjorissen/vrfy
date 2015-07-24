@@ -25,15 +25,21 @@ def solution_file_upload_path(instance, filename):
   #filepath should be of the form: course/solutions/problem_set/problem/filename 
   problem = instance.problem
   file_path = problem.get_upload_folder() + filename
+  if os.path.isfile(vrfy.settings.MEDIA_ROOT + file_path):
+    os.remove(vrfy.settings.MEDIA_ROOT + file_path)
   return file_path
 
 def grader_lib_upload_path(instance, filename):
   file_path = 'lib/{0}'.format(filename)
+  if os.path.isfile(vrfy.settings.MEDIA_ROOT + file_path):
+    os.remove(vrfy.settings.MEDIA_ROOT + file_path)
   return file_path
 
 def grade_script_upload_path(instance, filename):
   #filepath should be of the form: course/solutions/problem_set/problem/filename 
   file_path = instance.get_upload_folder() + filename
+  if os.path.isfile(vrfy.settings.MEDIA_ROOT + file_path):
+    os.remove(vrfy.settings.MEDIA_ROOT + file_path)
   return file_path
 
 class Problem(models.Model):

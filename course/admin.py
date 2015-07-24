@@ -22,6 +22,8 @@ class RequiredProblemFilenameInline(admin.TabularInline):
 class ProblemSolutionFileInline(admin.TabularInline):
   model = models.ProblemSolutionFile
   extra = 3
+  fields = ['file_upload', 'comment']
+  
 
 class StudentProblemSetInline(admin.TabularInline):
   model = models.StudentProblemSet
@@ -51,6 +53,12 @@ class ProblemAdmin(admin.ModelAdmin):
   def assigned_to(self, obj):
     problem_sets = obj.problemset_set.all()
     return ", ".join([ps.title for ps in problem_sets]) 
+
+  def get_readonly_fields(self, request, obj=None):
+    if obj: # obj is not None, so this is an edit
+        return ['title',]
+    else: # This is an addition
+        return []
 
   def response_change(self, request, obj):
     """
@@ -92,6 +100,12 @@ class ProblemSetAdmin(admin.ModelAdmin):
 
   def problems_included(self, obj):
     return ", ".join([problem.title for problem in obj.problems.all()])    
+  
+  def get_readonly_fields(self, request, obj=None):
+    if obj: # obj is not None, so this is an edit
+        return ['title',]
+    else: # This is an addition
+        return []
   
   #add a courselab and files to Tango when Problem Set is added and saved for the first time
   def response_add(self, request, obj, post_url_continue=None):
