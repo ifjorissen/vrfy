@@ -208,9 +208,14 @@ def results_detail(request, ps_id):
 
     else:
       prob_result = None
-    prob_result.external_log = ast.literal_eval(prob_result.external_log)
     results_dict[solution] = prob_result
-
+    
+    #if the external log cannot be evaluated as a list, then output it's raw text
+    try:
+      results_dict[solution].external_log = ast.literal_eval(prob_result.external_log)
+    except SyntaxError:#pretty inefficient, but I couldnt find a more elegant solution
+      results_dict[solution].external_log = [prob_result.external_log]
+    
     #make a result object
     #only send the data that the student should see
     context = {'sps': student_ps, "ps_results" : results_dict}
