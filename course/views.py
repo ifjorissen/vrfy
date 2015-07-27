@@ -9,6 +9,7 @@ from generic.models import CSUser
 import requests
 import json
 import ast
+import time
 from util import tango
 
 from django.forms.models import modelformset_factory
@@ -95,7 +96,10 @@ def problem_submit(request, ps_id, p_id):
 
     #create the student result set & problem
     result_set, prs_created = ProblemResultSet.objects.get_or_create(sp_set = student_ps_sol, user=request.user, problem_set=ps)
-    prob_result = ProblemResult.objects.create(sp_sol=student_psol, result_set=result_set, user=request.user, problem=problem)
+    mytimestamp = None
+    if not problem.autograde_problem: #if its not being autograded, we should set the timestamp here; if it is, tango will set it
+      mytimestamp = timezone.now()
+    prob_result = ProblemResult.objects.create(sp_sol=student_psol, result_set=result_set, user=request.user, problem=problem, timestamp=mytimestamp)
 
     files = []#for the addJob
     #getting all the submitted files
@@ -173,30 +177,38 @@ def results_detail(request, ps_id):
         outputFile = slugify(ps.title) + "_" +slugify(solution.problem.title) + "-" + request.user.username
         r = tango.poll(solution.problem, ps, outputFile)
         line = r.text.split("\n")[-2]#theres a line with an empty string after the last actual output line
-        if "Autodriver: Job timed out after " in line: #thats the text that Tango outputs when a job times out
-          prob_result.score = 0
-          prob_result.external_log = ["Program timed out after " + line.split(" ")[-2] + " seconds."]
-          prob_result.timestamp = timezone.now()
-          prob_result.save()
-        else:
-          try:
-            log_data = json.loads(line)
-            #create the result object
-            prob_result.score = log_data["score_sum"]
-            prob_result.internal_log = log_data["internal_log"]
-            prob_result.sanity_log = log_data["sanity_compare"]
-            prob_result.external_log = log_data["external_log"]
-            prob_result.raw_log = log_data
+        tango_time = r.text.split("\n")[0].split("[")[1].split("]")[0] #the time is on the first line surrounded by brackets
+        tango_time = time.strftime("%Y-%m-%d %H:%M:%S", time.strptime(tango_time, '%a %b %d %H:%M:%S %Y'))
+        print(tango_time)
+        print(prob_result.timestamp)
+        
+        if tango_time != str(prob_result.timestamp).split("+")[0]:
+          if "Autodriver: Job timed out after " in line: #thats the text that Tango outputs when a job times out
+            prob_result.score = 0
+            prob_result.external_log = ["Program timed out after " + line.split(" ")[-2] + " seconds."]
             prob_result.timestamp = timezone.now()
             prob_result.save()
-          except ValueError: #if the json isn't there, something went wrong when running the job, or the grader file messed up
-            raise Http404("Something went wrong. Make sure your code is bug free and resubmit. \nIf the problem persists, contact your professor or TA")
+          else:
+            try:
+              log_data = json.loads(line)
+              #create the result object
+              prob_result.score = log_data["score_sum"]
+              prob_result.internal_log = log_data["internal_log"]
+              prob_result.sanity_log = log_data["sanity_compare"]
+              prob_result.external_log = log_data["external_log"]
+              prob_result.raw_log = log_data
+              prob_result.timestamp = tango_time
+              prob_result.save()
+            except ValueError: #if the json isn't there, something went wrong when running the job, or the grader file messed up
+              raise Http404("Something went wrong. Make sure your code is bug free and resubmit. \nIf the problem persists, contact your professor or TA")
       
       else:
-        prob_result.external_log = ast.literal_eval(prob_result.external_log)
+        #special not-autograded stuff goes here
+        pass
 
     else:
       prob_result = None
+    prob_result.external_log = ast.literal_eval(prob_result.external_log)
     results_dict[solution] = prob_result
 
     #make a result object

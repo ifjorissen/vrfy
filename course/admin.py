@@ -179,6 +179,7 @@ class GraderLibAdmin(admin.ModelAdmin):
 
 class ProblemResultAdmin(admin.ModelAdmin):
   list_display = ('problem_title', 'problem_set', 'user', 'score', 'timestamp')
+  readonly_fields = ('timestamp',)
 
   def problem_set(self, obj):
     return obj.result_set.problem_set.title

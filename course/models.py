@@ -149,12 +149,12 @@ class ProblemResult(models.Model):
   user = models.ForeignKey('generic.CSUser', null=True)
 
   #general data about the actual results
-  timestamp = models.DateTimeField('date received', null=True)
+  timestamp = models.DateTimeField('date received', null=True, editable=False)
   score = models.IntegerField(default=-1)
-  external_log = models.TextField(null=True)
-  internal_log = models.TextField(null=True)
-  sanity_log = models.TextField(null=True)
-  raw_log = JSONField()
+  external_log = models.TextField(null=True, blank=True)
+  internal_log = models.TextField(null=True, blank=True)
+  sanity_log = models.TextField(null=True, blank=True)
+  raw_log = JSONField(null=True, blank=True)
 
 #for testrunner files like session.py or sanity.py
 class GraderLib(models.Model):
