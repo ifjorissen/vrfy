@@ -166,7 +166,7 @@ class GraderLib(models.Model):
     name = self.lib_upload.name.split("/")[-1]
     f = self.lib_upload.read()
     for ps in ProblemSet.objects.all():
-      for problem in ps.problems.all():
+      for problem in ps.problems.all().filter(autograde_problem=True):
         tango.upload(problem, ps, name, f)
   """
   def delete(self):

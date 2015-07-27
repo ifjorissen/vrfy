@@ -8,6 +8,7 @@ from generic.views import *
 from generic.models import CSUser
 import requests
 import json
+import ast
 from util import tango
 
 from django.forms.models import modelformset_factory
@@ -36,20 +37,27 @@ def attempt_problem_set(request, ps_id):
 
 def submit_success(request, ps_id, p_id):
   authenticate(request)
-  job_url = vrfy.settings.TANGO_ADDRESS + "jobs/" + vrfy.settings.TANGO_KEY + "/0/"
-  dead_job_url = vrfy.settings.TANGO_ADDRESS + "jobs/" + vrfy.settings.TANGO_KEY + "/1/"
-  info_url = vrfy.settings.TANGO_ADDRESS + "info/" + vrfy.settings.TANGO_KEY +"/"
+  
+  problem = get_object_or_404(Problem, pk=p_id)
 
-  running_jobs = requests.get(job_url)
-  dead_jobs = requests.get(dead_job_url)
-  info = requests.get(info_url)
+  if problem.autograde_problem:#if it is running in Tango
+    job_url = vrfy.settings.TANGO_ADDRESS + "jobs/" + vrfy.settings.TANGO_KEY + "/0/"
+    dead_job_url = vrfy.settings.TANGO_ADDRESS + "jobs/" + vrfy.settings.TANGO_KEY + "/1/"
+    info_url = vrfy.settings.TANGO_ADDRESS + "info/" + vrfy.settings.TANGO_KEY +"/"
 
-  dj_json = dead_jobs.json()
-  rj_json = running_jobs.json()
-  info_json = info.json()
-  context = {"info":info_json["info"], "jobs":rj_json, "dead_jobs":dj_json}
-  #make sure the job is in the queue
-  return render(request, 'course/submit_success.html', context)
+    running_jobs = requests.get(job_url)
+    dead_jobs = requests.get(dead_job_url)
+    info = requests.get(info_url)
+
+    dj_json = dead_jobs.json()
+    rj_json = running_jobs.json()
+    info_json = info.json()
+    context = {"info":info_json["info"], "jobs":rj_json, "dead_jobs":dj_json}
+    #make sure the job is in the queue
+    return render(request, 'course/submit_success.html', context)
+
+  else:#if it's a human graded problem
+    return redirect('course:problem_set_index')
 
 def problem_set_index(request):
   '''
@@ -93,10 +101,10 @@ def problem_submit(request, ps_id, p_id):
     #getting all the submitted files
     for name, f in request.FILES.items():
       localfile = name + "-"+ request.user.username
+      if problem.autograde_problem:
+        r = tango.upload(problem, ps, localfile, f.read())
+        files.append({"localFile" : localfile, "destFile":name})#for the addJob command
 
-      r = tango.upload(problem, ps, localfile, f.read())
-
-      files.append({"localFile" : localfile, "destFile":name})#for the addJob command
       required_pf = RequiredProblemFilename.objects.get(problem=problem, file_title=name)
       try:
         prob_file = StudentProblemFile.objects.filter(required_problem_filename=required_pf, student_problem_solution = student_psol).latest('attempt_num')
@@ -107,39 +115,41 @@ def problem_submit(request, ps_id, p_id):
       except StudentProblemFile.DoesNotExist:
         prob_file = StudentProblemFile.objects.create(required_problem_filename=required_pf, student_problem_solution = student_psol, submitted_file=f)
         prob_file.save()
-      
-    #add grader libraries
-    for lib in GraderLib.objects.all():
-      name = lib.lib_upload.name.split("/")[-1]
+
+    if problem.autograde_problem:#these operatons are only required for autograding
+
+      #add grader libraries
+      for lib in GraderLib.objects.all():
+        name = lib.lib_upload.name.split("/")[-1]
+        files.append({"localFile" : name, "destFile": name})
+
+      #getting all the grader files
+      grading = problem.grade_script
+      name = grading.name.split("/")[-1]
       files.append({"localFile" : name, "destFile": name})
 
-    #getting all the grader files
-    grading = problem.grade_script
-    name = grading.name.split("/")[-1]
-    files.append({"localFile" : name, "destFile": name})
+      for psfile in ProblemSolutionFile.objects.filter(problem=problem):
+        name = psfile.file_upload.name.split("/")[-1]
+        files.append({"localFile" : name, "destFile": name})
 
-    for psfile in ProblemSolutionFile.objects.filter(problem=problem):
-      name = psfile.file_upload.name.split("/")[-1]
-      files.append({"localFile" : name, "destFile": name})
+      #upload the json data object
+      tango_data = json.dumps({"attempts": student_psol.attempt_num, "timedelta": student_psol.is_late()})
+      data_name = "data.json" + "-" + request.user.username
+      tango.upload(problem, ps, data_name, tango_data)
+      files.append({"localFile" : data_name, "destFile": "data.json"})
 
-    #upload the json data object
-    tango_data = json.dumps({"attempts": student_psol.attempt_num, "timedelta": student_psol.is_late()})
-    data_name = "data.json" + "-" + request.user.username
-    tango.upload(problem, ps, data_name, tango_data)
-    files.append({"localFile" : data_name, "destFile": "data.json"})
+      #making Tango run the files
+      jobName = slugify(ps.title) + "_" + slugify(problem.title) + "-" + request.user.username
+      r = tango.addJob(problem, ps, files, jobName, jobName)
 
-    #making Tango run the files
-    jobName = slugify(ps.title) + "_" + slugify(problem.title) + "-" + request.user.username
-    r = tango.addJob(problem, ps, files, jobName, jobName)
-
-    if r.status_code is not 200:
-      return redirect('500.html')
-    else:
-      response = r.json()
-      student_psol.job_id = response["jobId"]
-      prob_result.job_id = response["jobId"]
-      student_psol.save()
-      prob_result.save()
+      if r.status_code is not 200:
+        return redirect('500.html')
+      else:
+        response = r.json()
+        student_psol.job_id = response["jobId"]
+        prob_result.job_id = response["jobId"]
+        student_psol.save()
+        prob_result.save()
     return redirect('course:submit_success', ps_id, p_id)
     
   else:
@@ -157,28 +167,34 @@ def results_detail(request, ps_id):
   for solution in student_ps.studentproblemsolution_set.all():
     if solution.submitted:
       prob_result = ProblemResult.objects.filter(sp_sol = solution, job_id=solution.job_id).latest('timestamp')
-        #poll the tango server
-      outputFile = slugify(ps.title) + "_" +slugify(solution.problem.title) + "-" + request.user.username
-      r = tango.poll(solution.problem, ps, outputFile)
-      line = r.text.split("\n")[-2]#theres a line with an empty string after the last actual output line
-      if "Autodriver: Job timed out after " in line: #thats the text that Tango outputs when a job times out
-        prob_result.score = 0
-        prob_result.external_log = ["Program timed out after " + line.split(" ")[-2] + " seconds."]
-        prob_result.timestamp = timezone.now()
-        prob_result.save()
-      else:
-        try:
-          log_data = json.loads(line)
-          #create the result object
-          prob_result.score = log_data["score_sum"]
-          prob_result.internal_log = log_data["internal_log"]
-          prob_result.sanity_log = log_data["sanity_compare"]
-          prob_result.external_log = log_data["external_log"]
-          prob_result.raw_log = log_data
+      
+      #poll the tango server
+      if solution.problem.autograde_problem:
+        outputFile = slugify(ps.title) + "_" +slugify(solution.problem.title) + "-" + request.user.username
+        r = tango.poll(solution.problem, ps, outputFile)
+        line = r.text.split("\n")[-2]#theres a line with an empty string after the last actual output line
+        if "Autodriver: Job timed out after " in line: #thats the text that Tango outputs when a job times out
+          prob_result.score = 0
+          prob_result.external_log = ["Program timed out after " + line.split(" ")[-2] + " seconds."]
           prob_result.timestamp = timezone.now()
           prob_result.save()
-        except ValueError: #if the json isn't there, something went wrong when running the job, or the grader file messed up
-          raise Http404("Something went wrong. Make sure your code is bug free and resubmit. \nIf the problem persists, contact your professor or TA")
+        else:
+          try:
+            log_data = json.loads(line)
+            #create the result object
+            prob_result.score = log_data["score_sum"]
+            prob_result.internal_log = log_data["internal_log"]
+            prob_result.sanity_log = log_data["sanity_compare"]
+            prob_result.external_log = log_data["external_log"]
+            prob_result.raw_log = log_data
+            prob_result.timestamp = timezone.now()
+            prob_result.save()
+          except ValueError: #if the json isn't there, something went wrong when running the job, or the grader file messed up
+            raise Http404("Something went wrong. Make sure your code is bug free and resubmit. \nIf the problem persists, contact your professor or TA")
+      
+      else:
+        prob_result.external_log = ast.literal_eval(prob_result.external_log)
+
     else:
       prob_result = None
     results_dict[solution] = prob_result

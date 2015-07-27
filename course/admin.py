@@ -65,21 +65,22 @@ class ProblemAdmin(admin.ModelAdmin):
     upload files to Tango
     I only need to do this when a problem is changed, because when a problem is added, it doesn't have a problem set yet
     """
-    for ps in obj.problemset_set.all():
+    if obj.autograde_problem:
+      for ps in obj.problemset_set.all():
 
-      #upload the grading script
-      grading = obj.grade_script
-      grading_name = grading.name.split("/")[-1]
-      tango.upload(obj, ps, grading_name, grading.read())
+        #upload the grading script
+        grading = obj.grade_script
+        grading_name = grading.name.split("/")[-1]
+        tango.upload(obj, ps, grading_name, grading.read())
 
-      #upload the makefile that will run the grading script
-      makefile = 'autograde:\n	@python3 ' + grading_name
-      tango.upload(obj, ps, vrfy.settings.MAKEFILE_NAME, makefile)
-      
-      #upload problemsolutionfiles
-      for psfile in models.ProblemSolutionFile.objects.filter(problem=obj):
-        f = psfile.file_upload
-        tango.upload(obj, ps, f.name.split("/")[-1], f.read())
+        #upload the makefile that will run the grading script
+        makefile = 'autograde:\n	@python3 ' + grading_name
+        tango.upload(obj, ps, vrfy.settings.MAKEFILE_NAME, makefile)
+        
+        #upload problemsolutionfiles
+        for psfile in models.ProblemSolutionFile.objects.filter(problem=obj):
+          f = psfile.file_upload
+          tango.upload(obj, ps, f.name.split("/")[-1], f.read())
     
     return super(ProblemAdmin, self).response_change(request, obj)
 
@@ -126,7 +127,7 @@ class ProblemSetAdmin(admin.ModelAdmin):
     Helper function that gets called for response change and response add
     It opens a new courselab and then uploads the grading files
     """
-    for problem in obj.problems.all():
+    for problem in obj.problems.all().filter(autograde_problem=True):
       #open (make) the courselab on tango server with the callback _upload_ps_files
       tango.open(problem, obj)
       
