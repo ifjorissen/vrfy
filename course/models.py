@@ -50,6 +50,7 @@ class Problem(models.Model):
   many_attempts = models.BooleanField(default=True)
   autograde_problem = models.BooleanField(default=True)
   grade_script = models.FileField(upload_to=grade_script_upload_path, null=True, blank=True)
+  #one_force_rename = models.BooleanField(editable=False)#used to validate that one of the inlines is being renamed
   
   def get_upload_folder(self):
     course = self.cs_course.num
@@ -57,8 +58,20 @@ class Problem(models.Model):
     return file_path
   
   def clean(self):
-    if self.autograde_problem and (self.grade_script == None or self.grade_script == ""):
-      raise ValidationError({'grade_script': ["This field is required.",]})
+    if self.autograde_problem:
+      if (self.grade_script == None or self.grade_script == ""):
+        raise ValidationError({'grade_script': ["This field is required.",]})
+    
+    #self.one_force_rename = False
+    """one_force_rename = False #one idea for making sure one of the student files is renamed; doesn't work
+      print(RequiredProblemFilename.objects.filter(problem=self))
+      for f in RequiredProblemFilename.objects.filter(problem=self):
+        print(f.force_rename)
+        if f.force_rename:
+          one_force_rename = True
+      if not one_force_rename:
+        raise ValidationError('At least one of the student files needs to be renamed. Check what student files your grading script imports.')
+    """
 
   def __str__(self): 
     return self.title
@@ -71,10 +84,19 @@ class ProblemSolutionFile(models.Model):
 class RequiredProblemFilename(models.Model):
   file_title = models.CharField(max_length=200)
   problem = models.ForeignKey(Problem, null=True)
+  force_rename = models.BooleanField(default=True)
   #add field for extension
   def __str__(self):
     return self.file_title
 
+"""
+  def clean(self): #the other idea for making sure one of the student files is renamed; doesn't work
+    if self.problem != None and not self.problem.one_force_rename:
+      if self.force_rename:
+        self.problem.one_force_rename = True
+      else:
+        raise ValidationError("you need to rename")
+"""
 class ProblemSet(models.Model):
   title = models.CharField(max_length=200)
   description = models.TextField(default='')

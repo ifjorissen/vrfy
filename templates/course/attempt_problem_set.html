@@ -35,6 +35,9 @@
               <div class="form-group">
                 <label class="col-sm-2" for="{{ file.file_title }}">{{ file.file_title }}</label>
                 <input class="col-sm-8" type="file" name="{{ file.file_title }}" id="{{ file.file_title }}">
+                {% if file.force_rename %}
+                  <label for="{{ file.file_title }}" class="text-warning">WARNING: this file will be renamed to {{ file.file_title }}.</span>
+                {% endif %}
               </div>
             {% endfor %}
             <button type="submit" class="btn btn-default">Submit {{problem.title}}</button>

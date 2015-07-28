@@ -104,12 +104,27 @@ def problem_submit(request, ps_id, p_id):
     files = []#for the addJob
     #getting all the submitted files
     for name, f in request.FILES.items():
+
+      required_pf = RequiredProblemFilename.objects.get(problem=problem, file_title=name)
+      if not required_pf.force_rename: 
+        name = f.name#if the file should not be renamed, give it the name as it was uploaded
+        #we also need to check if it has the same name as any of the grader files
+        for psfile in problem.problemsolutionfile_set.all():
+          if name == psfile.file_upload.name.split("/")[-1]:
+            raise Http404("HEY! You can't name your file " + name + ". Because.... reasons.")
+        
+        if name == problem.grade_script.name.split("/")[-1]:
+          raise Http404("HEY! You can't name your file " + name + ". Because.... reasons.")
+        
+        for lib in GraderLib.objects.all():
+          if name == lib.lib_upload.name.split("/")[-1]:
+            raise Http404("HEY! You can't name your file " + name + ". Because.... reasons.")
+        
       localfile = name + "-"+ request.user.username
       if problem.autograde_problem:
         r = tango.upload(problem, ps, localfile, f.read())
         files.append({"localFile" : localfile, "destFile":name})#for the addJob command
-
-      required_pf = RequiredProblemFilename.objects.get(problem=problem, file_title=name)
+      
       try:
         prob_file = StudentProblemFile.objects.filter(required_problem_filename=required_pf, student_problem_solution = student_psol).latest('attempt_num')
         attempts = prob_file.attempt_num + 1
