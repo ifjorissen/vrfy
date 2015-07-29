@@ -54,10 +54,11 @@ def delete(problem, problemset, filename=""):
   """
   deletes a courselab or file in a courselab
   """
-  path = TANGO_COURSELAB_DIR + _get_courselab(problem, problemset)
+  path = TANGO_COURSELAB_DIR + TANGO_KEY + "-" + _get_courselab(problem, problemset)
   if filename == "":
     shutil.rmtree(path)
   else:
     path += "/" + filename
+    print(path)
     os.remove(path)
 

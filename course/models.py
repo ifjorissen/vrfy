@@ -4,11 +4,13 @@ from catalog.models import Section, Course
 from django.contrib.auth.models import User
 from django.utils.text import slugify
 from django.core.exceptions import ValidationError
+from django.core.files import File
 from jsonfield import JSONField
 import os
 import os.path
 import vrfy.settings
 from django.utils import timezone
+from util import tango
 
 def student_file_upload_path(instance, filename):
   #filepath should be of the form: course/folio/user/problem_set/problem/filename  (maybe add attempt number)
@@ -22,20 +24,22 @@ def student_file_upload_path(instance, filename):
 def solution_file_upload_path(instance, filename):
   #filepath should be of the form: course/solutions/problem_set/problem/filename 
   problem = instance.problem
-  course = problem.cs_course.num
-  file_path = '{0}/solutions/{1}_files/{2}'.format(slugify(course), slugify(problem.title), filename)
+  file_path = problem.get_upload_folder() + filename
+  if os.path.isfile(vrfy.settings.MEDIA_ROOT + file_path):
+    os.remove(vrfy.settings.MEDIA_ROOT + file_path)
   return file_path
 
 def grader_lib_upload_path(instance, filename):
   file_path = 'lib/{0}'.format(filename)
+  if os.path.isfile(vrfy.settings.MEDIA_ROOT + file_path):
+    os.remove(vrfy.settings.MEDIA_ROOT + file_path)
   return file_path
-
 
 def grade_script_upload_path(instance, filename):
   #filepath should be of the form: course/solutions/problem_set/problem/filename 
-  title = instance.title
-  course = instance.cs_course.num
-  file_path = '{0}/solutions/{1}_files/{2}'.format(slugify(course), slugify(title), filename)
+  file_path = instance.get_upload_folder() + filename
+  if os.path.isfile(vrfy.settings.MEDIA_ROOT + file_path):
+    os.remove(vrfy.settings.MEDIA_ROOT + file_path)
   return file_path
 
 class Problem(models.Model):
@@ -46,6 +50,11 @@ class Problem(models.Model):
   many_attempts = models.BooleanField(default=True)
   autograde_problem = models.BooleanField(default=True)
   grade_script = models.FileField(upload_to=grade_script_upload_path, null=True, blank=True)
+  
+  def get_upload_folder(self):
+    course = self.cs_course.num
+    file_path = '{0}/solutions/{1}_files/'.format(slugify(course), slugify(self.title))
+    return file_path
   
   def clean(self):
     if self.autograde_problem and (self.grade_script == None or self.grade_script == ""):
@@ -76,6 +85,10 @@ class ProblemSet(models.Model):
 
   def is_already_due(self):
     return self.due_date < timezone.now()
+
+  def clean(self):
+    if self.due_date < self.pub_date:
+      raise ValidationError({'pub_date': ["",], 'due_date' : ["Probelem Set cannot be due before it is assigned!",]})
   
   def __str__(self): 
     return self.title
@@ -136,18 +149,46 @@ class ProblemResult(models.Model):
   user = models.ForeignKey('generic.CSUser', null=True)
 
   #general data about the actual results
-  timestamp = models.DateTimeField('date received', null=True)
+  timestamp = models.DateTimeField('date received', null=True, editable=False)
   score = models.IntegerField(default=-1)
-  external_log = models.TextField(null=True)
-  internal_log = models.TextField(null=True)
-  sanity_log = models.TextField(null=True)
-  raw_log = JSONField()
+  json_log = JSONField(null=True, blank=True)
+  raw_output = models.TextField(null=True, blank=True)
+
+  def external_log(self):
+    return self.json_log["external_log"]
+
+  def internal_log(self):
+    return self.json_log["internal_log"]
+
+  def sanity_log(self):
+    return self.json_log["sanity_compare"]
+
+  # def score(self):
+  #   return self.json_log["score"]
+
 
 #for testrunner files like session.py or sanity.py
 class GraderLib(models.Model):
   lib_upload = models.FileField(upload_to=grader_lib_upload_path)
   comment = models.CharField(max_length=200, null=True, blank=True)
   
+  def save(self, *args, **kwargs):
+    super(GraderLib, self).save(*args, **kwargs)
+    name = self.lib_upload.name.split("/")[-1]
+    f = self.lib_upload.read()
+    for ps in ProblemSet.objects.all():
+      for problem in ps.problems.all().filter(autograde_problem=True):
+        tango.upload(problem, ps, name, f)
+  """
+  def delete(self):
+    os.remove(self.lib_upload.name)
+    name = self.lib_upload.name.split("/")[-1]
+    for ps in ProblemSet.objects.all():
+      for problem in ps.problems.all():
+        tango.delete(problem, ps, name)
+    super(GraderLib, self).delete()
+"""
+
   def __str__(self):
     return self.lib_upload.name.split("/")[-1]
 
