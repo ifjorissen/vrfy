@@ -19,6 +19,7 @@ import sys
 sys.path.append("../")
 import vrfy.settings
 
+#the name the form field gives to additional files
 ADDITIONAL_FILE_NAME = "additional"
 
 def index(request):
@@ -35,8 +36,8 @@ def attempt_problem_set(request, ps_id):
     #try to get the student solution
     student_psol, s_created = StudentProblemSolution.objects.get_or_create(problem=problem, student_problem_set=sps_sol)
     problem_solution_dict[problem] = student_psol
-
-  return render(request, 'course/attempt_problem_set.html', {'problem_set': ps, 'problem_set_dict':problem_solution_dict})
+  context = {'problem_set': ps, 'problem_set_dict':problem_solution_dict, 'additional_file_name':ADDITIONAL_FILE_NAME, 'max_additional_files':7}
+  return render(request, 'course/attempt_problem_set.html', context)
 
 def submit_success(request, ps_id, p_id):
   authenticate(request)

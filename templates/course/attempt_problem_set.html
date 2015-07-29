@@ -3,12 +3,18 @@
 {% block content %}
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
 <script>
+numFiles=0
+
 $(document).ready(function(){
   $("[name=add]").click(function(){
-    input='<div class="form-group"><label class="col-sm-2" for="additional">Additional File</label><input class="col-sm-8" name="additional"type="file"></div>';
-    $(input).insertBefore($(this).parent());
+    if(numFiles < {{ max_additional_files }}) {
+      input='<div class="form-group"><label class="col-sm-2" for="additional">Additional File</label><input class="col-sm-8" name="additional"type="file"></div>';
+      $(input).insertBefore($(this).parent());
+      numFiles++;
+    }
   });
 });
+
 </script>
 <section class="problem-set">
 <section class="ps-info page-header">
