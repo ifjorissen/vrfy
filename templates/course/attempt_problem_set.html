@@ -3,14 +3,15 @@
 {% block content %}
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
 <script>
-numFiles=0
 
 $(document).ready(function(){
+  //adds an additional file when the add button is presses
   $("[name=add]").click(function(){
+    numFiles = parseInt($(this).attr("num-files"))
     if(numFiles < {{ max_additional_files }}) {
       input='<div class="form-group"><label class="col-sm-2" for="additional">Additonal File</label><input class="col-sm-3" name="additional"type="file"></div>';
       $(input).insertBefore($(this).parent().parent());
-      numFiles++;
+      $(this).attr("num-files",numFiles+1);
     }
   });
 });
@@ -57,7 +58,7 @@ $(document).ready(function(){
             {% endfor %}
             <div class="form-group">
               <div class="col-sm-2">
-                <button name="add" type="button" class="btn btn-default btn-sm">
+                <button name="add" type="button" class="btn btn-default btn-sm" num-files=0>
                   <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
                 </button>
               </div>
