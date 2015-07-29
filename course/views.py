@@ -21,6 +21,7 @@ import vrfy.settings
 
 #the name the form field gives to additional files
 ADDITIONAL_FILE_NAME = "additional"
+MAX_ADDITIONAL_FILES = 7
 
 def index(request):
   authenticate(request)
@@ -36,7 +37,7 @@ def attempt_problem_set(request, ps_id):
     #try to get the student solution
     student_psol, s_created = StudentProblemSolution.objects.get_or_create(problem=problem, student_problem_set=sps_sol)
     problem_solution_dict[problem] = student_psol
-  context = {'problem_set': ps, 'problem_set_dict':problem_solution_dict, 'additional_file_name':ADDITIONAL_FILE_NAME, 'max_additional_files':7}
+  context = {'problem_set': ps, 'problem_set_dict':problem_solution_dict, 'additional_file_name':ADDITIONAL_FILE_NAME, 'max_additional_files':MAX_ADDITIONAL_FILES}
   return render(request, 'course/attempt_problem_set.html', context)
 
 def submit_success(request, ps_id, p_id):
@@ -104,12 +105,19 @@ def problem_submit(request, ps_id, p_id):
       mytimestamp = timezone.now()
     prob_result = ProblemResult.objects.create(sp_sol=student_psol, result_set=result_set, user=request.user, problem=problem, timestamp=mytimestamp)
     
+    additional_files = 0
     files = []#for the addJob
     #getting all the submitted files
     for name, f in request.FILES.items():
-
-      if name == ADDITIONAL_FILE_NAME:
+      print(name, ADDITIONAL_FILE_NAME)
+      if ADDITIONAL_FILE_NAME in name:
         required_pf = None
+        print(additional_files)
+        if additional_files < MAX_ADDITIONAL_FILES:
+          additional_files += 1
+        else:
+          raise Http404("You can't upload more than " + str(MAX_ADDITIONAL_FILES) + " additional files.")
+        
       else:
         required_pf = RequiredProblemFilename.objects.get(problem=problem, file_title=name)
 

@@ -9,7 +9,7 @@ $(document).ready(function(){
   $("[name=add]").click(function(){
     numFiles = parseInt($(this).attr("num-files"))
     if(numFiles < {{ max_additional_files }}) {
-      input='<div class="form-group"><label class="col-sm-2" for="additional">Additonal File</label><input class="col-sm-3" name="additional"type="file"></div>';
+      input='<div class="form-group"><label class="col-sm-2" for="additional-'+ numFiles +'">Additonal File</label><input class="col-sm-3" name="additional-' + numFiles + '"type="file"></div>';
       $(input).insertBefore($(this).parent().parent());
       $(this).attr("num-files",numFiles+1);
     }
