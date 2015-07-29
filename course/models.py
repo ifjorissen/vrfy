@@ -75,6 +75,25 @@ class Problem(models.Model):
 
   def __str__(self): 
     return self.title
+  """
+  #iterator that goes over the grading script, problem solution files and grader libs
+  class _grader_files_iterator:
+  
+    def __init__(self, problem):
+      self.problem = problem
+  
+    def __iter__(self):
+      return self
+
+    def next(self):
+      yield self.problem.grade_script
+      for psfile in self.problemsolutionfile_set.all():
+        yield psfile.file_upload
+      for lib in GraderLib.objects.all():
+        yield lib.lib_upload
+      
+      raise StopIteration()"""
+  
 
 class ProblemSolutionFile(models.Model):
   problem = models.ForeignKey(Problem, null=True)

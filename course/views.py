@@ -19,6 +19,8 @@ import sys
 sys.path.append("../")
 import vrfy.settings
 
+ADDITIONAL_FILE_NAME = "additional"
+
 def index(request):
   authenticate(request)
   return render(request, 'course/index.html')
@@ -100,13 +102,17 @@ def problem_submit(request, ps_id, p_id):
     if not problem.autograde_problem: #if its not being autograded, we should set the timestamp here; if it is, tango will set it
       mytimestamp = timezone.now()
     prob_result = ProblemResult.objects.create(sp_sol=student_psol, result_set=result_set, user=request.user, problem=problem, timestamp=mytimestamp)
-
+    
     files = []#for the addJob
     #getting all the submitted files
     for name, f in request.FILES.items():
 
-      required_pf = RequiredProblemFilename.objects.get(problem=problem, file_title=name)
-      if not required_pf.force_rename: 
+      if name == ADDITIONAL_FILE_NAME:
+        required_pf = None
+      else:
+        required_pf = RequiredProblemFilename.objects.get(problem=problem, file_title=name)
+
+      if required_pf == None or not required_pf.force_rename: 
         name = f.name#if the file should not be renamed, give it the name as it was uploaded
         #we also need to check if it has the same name as any of the grader files
         for psfile in problem.problemsolutionfile_set.all():
