@@ -2,9 +2,9 @@
 {% block content %}
 <section class="problem-set">
 <section class="ps-info page-header">
-<p class="h1">{{ sps.problem_set.title }} </p>
-<p class="h2" style="margin-top:0;"><small><span class="glyphicon glyphicon-time"></span> Due {{ sps.problem_set.due_date }}</small></p>
-<p class="lead">If the results aren't there or haven't changed since your last submission, try refreshing the page in 30 seconds</p>
+<h1>{{ sps.problem_set.title }} <small><span class="glyphicon glyphicon-time"></span> Due {{ps.due_date}}</p>
+Due {{ sps.problem_set.due_date }} )</small></h1>
+<p>If the results aren't there or haven't changed since your last submission, try refreshing the page in 30 seconds</p>
 </section>
 
 {% for solution, result in ps_results.items %}
@@ -12,7 +12,7 @@
   <section id="solution-{{solution.id}}" class="panel panel-default">
     <div class="panel-heading">
       <h3><span role="button" data-toggle="collapse" data-parent="#solution-{{solution.id}}" href="#collapse-solution-{{solution.id}}" aria-expanded="true">
-        {{ solution.problem.title }}</span><span class="pull-right small">Score: {{result.score}}/10</span></h3>
+        {{ solution.problem.title }}</span><span class="pull-right badge">{{result.score}}</span></h3>
     </div>
     <div id="collapse-solution-{{solution.id}}" class="panel-body panel-collapse collapse in" role="tabpanel">
       <h4>Attempts: {{solution.attempt_num}}</h4>

@@ -4,10 +4,12 @@ from django.http import Http404
 from . import models #Problem, ProblemSet, RequiredProblemFilename, ProblemSolutionFile
 import requests
 import shutil
+import os
 
 import sys
 sys.path.append("../")
 import vrfy.settings
+from util import tango
 
 admin.site.site_header = "Homework Administration"
 admin.site.site_title = "Homework Administration"
@@ -19,7 +21,9 @@ class RequiredProblemFilenameInline(admin.TabularInline):
 
 class ProblemSolutionFileInline(admin.TabularInline):
   model = models.ProblemSolutionFile
-  extra = 5
+  extra = 3
+  fields = ['file_upload', 'comment']
+  
 
 class StudentProblemSetInline(admin.TabularInline):
   model = models.StudentProblemSet
@@ -35,28 +39,55 @@ class StudentProblemFileInline(admin.TabularInline):
   model = models.StudentProblemFile
   extra = 0
 
-
-# class ProblemSolutionAdmin(admin.ModelAdmin):
-#   class Meta:
-#     model = ProblemSolution
-    
-#   inlines = [ProblemSolutionFileInline]
-
-
 class ProblemAdmin(admin.ModelAdmin):
   class Meta:
     model = models.Problem
 
   fieldsets = [
-    ('Problem Info', {'fields': ['title', 'description', 'statement', 'many_attempts', 'course']}),
+    ('Problem Info', {'fields': ['title', 'description', 'statement', 'many_attempts', 'autograde_problem', 'cs_course']}),
     ('Grading Script', {'fields': ['grade_script']}),
   ]
   inlines = [RequiredProblemFilenameInline, ProblemSolutionFileInline]
-  list_display = ('title', 'course', 'submissions')
+  list_display = ('title', 'cs_course', 'submissions', 'assigned_to')
+
+  def assigned_to(self, obj):
+    problem_sets = obj.problemset_set.all()
+    return ", ".join([ps.title for ps in problem_sets]) 
+
+  def get_readonly_fields(self, request, obj=None):
+    if obj: # obj is not None, so this is an edit
+        return ['title',]
+    else: # This is an addition
+        return []
+
+  def response_change(self, request, obj):
+    """
+    upload files to Tango
+    I only need to do this when a problem is changed, because when a problem is added, it doesn't have a problem set yet
+    """
+    if obj.autograde_problem:
+      for ps in obj.problemset_set.all():
+
+        #upload the grading script
+        grading = obj.grade_script
+        grading_name = grading.name.split("/")[-1]
+        tango.upload(obj, ps, grading_name, grading.read())
+
+        #upload the makefile that will run the grading script
+        makefile = 'autograde:\n	@python3 ' + grading_name
+        tango.upload(obj, ps, vrfy.settings.MAKEFILE_NAME, makefile)
+        
+        #upload problemsolutionfiles
+        for psfile in models.ProblemSolutionFile.objects.filter(problem=obj):
+          f = psfile.file_upload
+          tango.upload(obj, ps, f.name.split("/")[-1], f.read())
+    
+    return super(ProblemAdmin, self).response_change(request, obj)
 
   def submissions(self, obj):
     student_solutions = obj.studentproblemsolution_set.all()
     return len(student_solutions)
+
 
 class ProblemSetAdmin(admin.ModelAdmin):
   fieldsets = [
@@ -71,6 +102,12 @@ class ProblemSetAdmin(admin.ModelAdmin):
   def problems_included(self, obj):
     return ", ".join([problem.title for problem in obj.problems.all()])    
   
+  def get_readonly_fields(self, request, obj=None):
+    if obj: # obj is not None, so this is an edit
+        return ['title',]
+    else: # This is an addition
+        return []
+  
   #add a courselab and files to Tango when Problem Set is added and saved for the first time
   def response_add(self, request, obj, post_url_continue=None):
     self._open_and_upload(obj)
@@ -82,7 +119,7 @@ class ProblemSetAdmin(admin.ModelAdmin):
     return super(ProblemSetAdmin, self).response_change(request, obj)
 
   def response_delete(self, request, obj_display, obj_id):
-    shutil.rmtree(vrfy.settings.TANGO_COURSELAB_DIR + vrfy.settings.TANGO_KEY + "-" + slugify(obj_display))
+    
     return super(ProblemSetAdmin, self).response_delete(request, obj_display, obj_id)
 
   def _open_and_upload(self, obj):
@@ -90,38 +127,28 @@ class ProblemSetAdmin(admin.ModelAdmin):
     Helper function that gets called for response change and response add
     It opens a new courselab and then uploads the grading files
     """
-    for problem in obj.problems.all():
+    for problem in obj.problems.all().filter(autograde_problem=True):
       #open (make) the courselab on tango server with the callback _upload_ps_files
-      open_url = vrfy.settings.TANGO_ADDRESS + "open/" + vrfy.settings.TANGO_KEY + "/" + slugify(obj.title) + "_" + \
-      slugify(problem.title) + "/" 
-      r = requests.get(open_url)
+      tango.open(problem, obj)
       
-      #upload the files
-      upload_url = vrfy.settings.TANGO_ADDRESS + "upload/" + vrfy.settings.TANGO_KEY + "/" + slugify(obj.title) + "_" + \
-      slugify(problem.title) + "/"
-
       #upload the grader librarires
       for lib in models.GraderLib.objects.all():
         f = lib.lib_upload
-        header = {'Filename': f.name.split("/")[-1]}
-        r = requests.post(upload_url, data=f.read(), headers=header)
+        tango.upload(problem, obj, f.name.split("/")[-1], f.read())
 
       #upload the grading script
       grading = problem.grade_script
       grading_name = grading.name.split("/")[-1]
-      header = {'Filename': grading_name}
-      r = requests.post(upload_url, data=grading.read(), headers=header)
+      tango.upload(problem, obj, grading_name, grading.read())
 
       #upload the makefile that will run the grading script
-      header = {'Filename': "autograde-Makefile"}
       makefile = 'autograde:\n	@python3 ' + grading_name
-      r = requests.post(upload_url, data=makefile, headers=header)
+      tango.upload(problem, obj, vrfy.settings.MAKEFILE_NAME, makefile)
 
       #upload all the other files
       for psfile in models.ProblemSolutionFile.objects.filter(problem=problem):
         f = psfile.file_upload
-        header = {'Filename': f.name.split("/")[-1]}
-        r = requests.post(upload_url, data=f.read(), headers=header)
+        tango.upload(problem, obj, f.name.split("/")[-1], f.read())
 
 class StudentProblemSetAdmin(admin.ModelAdmin):
   inlines = [StudentProblemSolutionInline]
@@ -140,9 +167,31 @@ class StudentProblemSolutionAdmin(admin.ModelAdmin):
     return score
 
 
+class GraderLibAdmin(admin.ModelAdmin):
+  #readonly_fields=('lib_upload',)
+  fields = ('lib_upload', 'comment')
+
+  def get_readonly_fields(self, request, obj=None):
+    if obj: # obj is not None, so this is an edit
+        return ['lib_upload',] # Return a list or tuple of readonly fields' names
+    else: # This is an addition
+        return []
+
+class ProblemResultAdmin(admin.ModelAdmin):
+  list_display = ('problem_title', 'problem_set', 'user', 'score', 'timestamp')
+  readonly_fields = ('timestamp',)
+
+  def problem_set(self, obj):
+    return obj.result_set.problem_set.title
+    
+  def problem_title(self, obj):
+    return obj.problem.title
+
 
 admin.site.register(models.Problem, ProblemAdmin)
 admin.site.register(models.ProblemSet, ProblemSetAdmin)
 admin.site.register(models.StudentProblemSet, StudentProblemSetAdmin)
 admin.site.register(models.StudentProblemSolution, StudentProblemSolutionAdmin)
-admin.site.register(models.GraderLib)
+admin.site.register(models.GraderLib, GraderLibAdmin)
+admin.site.register(models.ProblemResultSet)
+admin.site.register(models.ProblemResult, ProblemResultAdmin)

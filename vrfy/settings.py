@@ -32,19 +32,18 @@ GRAPPELLI_INDEX_DASHBOARD = "vrfy.dashboard.CustomIndexDashboard"
 ALLOWED_HOSTS = ["localhost"]
 INTERNAL_IPS = ['127.0.0.1','localhost']
 
-
-
 # Application definition
 
 INSTALLED_APPS = (
+    'django.contrib.contenttypes',
     'grappelli.dashboard',
     'grappelli',
     'django.contrib.admin',
     'django.contrib.auth',
-    'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'catalog',
     'generic',
     'course',
     'vrfy',
@@ -121,7 +120,6 @@ STATIC_URL = '/static/'
 MEDIA_ROOT = 'problem_assets/'
 MEDIA_URL = '/problem_assets/'
 STATICFILES_DIRS = (
-    # 'webapps_assets/',
     # os.path.join(BASE_DIR, "static"),
     'bower_components/',
 )
@@ -133,4 +131,5 @@ TANGO_KEY = "test"
 #location of the tango courselabs folder
 TANGO_COURSELAB_DIR = "/home/alex/verify_project/courselabs/"
 
-
+#name of the makefile to be called in Tango
+MAKEFILE_NAME="autograde-Makefile"
