@@ -8,8 +8,8 @@ from generic.views import *
 from generic.models import CSUser
 import requests
 import json
-import ast
 import time
+import datetime
 from util import tango
 
 from django.forms.models import modelformset_factory
@@ -25,7 +25,12 @@ MAX_ADDITIONAL_FILES = 7
 
 def index(request):
   authenticate(request)
-  return render(request, 'course/index.html')
+  #problems due in the next week
+  ps_set = ProblemSet.objects.filter(pub_date__lte=timezone.now(), due_date__lte=(timezone.now()+datetime.timedelta(days=7)), due_date__gte=(timezone.now())).order_by('due_date')
+  #student problems submitted in the last 24hrs
+  stu_sol_set = StudentProblemSolution.objects.filter(submitted__gte=(timezone.now()-datetime.timedelta(days=1)))
+  context = {'upcoming_problem_sets': ps_set, 'recently_submitted_solutions': stu_sol_set}
+  return render(request, 'course/index.html', context)
 
 def attempt_problem_set(request, ps_id):
   authenticate(request)
@@ -139,7 +144,6 @@ def problem_submit(request, ps_id, p_id):
       if problem.autograde_problem:
         r = tango.upload(problem, ps, localfile, f.read())
         files.append({"localFile" : localfile, "destFile":name})#for the addJob command
-      
       try:
         prob_file = StudentProblemFile.objects.filter(required_problem_filename=required_pf, student_problem_solution = student_psol).latest('attempt_num')
         attempts = prob_file.attempt_num + 1
@@ -151,7 +155,6 @@ def problem_submit(request, ps_id, p_id):
         prob_file.save()
 
     if problem.autograde_problem:#these operatons are only required for autograding
-
       #add grader libraries
       for lib in GraderLib.objects.all():
         name = lib.lib_upload.name.split("/")[-1]
@@ -175,7 +178,6 @@ def problem_submit(request, ps_id, p_id):
       #making Tango run the files
       jobName = slugify(ps.title) + "_" + slugify(problem.title) + "-" + request.user.username
       r = tango.addJob(problem, ps, files, jobName, jobName)
-
       if r.status_code is not 200:
         return redirect('500.html')
       else:
@@ -206,6 +208,7 @@ def results_detail(request, ps_id):
       if solution.problem.autograde_problem:
         outputFile = slugify(ps.title) + "_" +slugify(solution.problem.title) + "-" + request.user.username
         r = tango.poll(solution.problem, ps, outputFile)
+        raw_output = r.text
         line = r.text.split("\n")[-2]#theres a line with an empty string after the last actual output line
         tango_time = r.text.split("\n")[0].split("[")[1].split("]")[0] #the time is on the first line surrounded by brackets
         tango_time = time.strftime("%Y-%m-%d %H:%M:%S", time.strptime(tango_time, '%a %b %d %H:%M:%S %Y'))
@@ -223,10 +226,8 @@ def results_detail(request, ps_id):
               log_data = json.loads(line)
               #create the result object
               prob_result.score = log_data["score_sum"]
-              prob_result.internal_log = log_data["internal_log"]
-              prob_result.sanity_log = log_data["sanity_compare"]
-              prob_result.external_log = log_data["external_log"]
-              prob_result.raw_log = log_data
+              prob_result.raw_output = raw_output
+              prob_result.json_log = log_data
               prob_result.timestamp = tango_time
               prob_result.save()
             except ValueError: #if the json isn't there, something went wrong when running the job, or the grader file messed up
