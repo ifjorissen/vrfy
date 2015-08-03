@@ -1,22 +1,6 @@
 {% extends 'course/base.html' %}
 {% load staticfiles %}
 {% block content %}
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
-<script>
-
-$(document).ready(function(){
-  //adds an additional file when the add button is presses
-  $("[name=add]").click(function(){
-    numFiles = parseInt($(this).attr("num-files"))
-    if(numFiles < {{ max_additional_files }}) {
-      input='<div class="form-group"><label class="col-sm-2" for="additional-'+ numFiles +'">Additonal File</label><input class="col-sm-3" name="additional-' + numFiles + '"type="file"></div>';
-      $(input).insertBefore($(this).parent().parent());
-      $(this).attr("num-files",numFiles+1);
-    }
-  });
-});
-
-</script>
 <section class="problem-set">
 <section class="ps-info page-header">
 <p class="h1">{{ problem_set.title }} </p>
@@ -100,7 +84,9 @@ $(document).ready(function(){
 {% endif %}
 {% endfor %}
 {% endblock content %}
-
 {% block otherscripts %}
-<script src="{% static 'course/js/problem_sets.js' %}"></script>
+<script type="text/javascript"> 
+   var max_files = {{ max_additional_files }}
+</script>
+<script src="{% static 'course/js/attempt_problem_set.js' %}"></script>
 {% endblock %}
