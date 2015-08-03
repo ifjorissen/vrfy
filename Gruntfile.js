@@ -16,7 +16,7 @@ module.exports = function(grunt) {
         '<%= course.app %>/static/course/css'
       ],
       buildjs: [
-        '<%= course.app %>/static/course/js'
+        '<%= course.app %>/static/'
       ]
     },
     sass: {
@@ -26,21 +26,32 @@ module.exports = function(grunt) {
             }
           },
     },
-    concat: {
-            dev: {
+    copy: {
+       dev: {
+              expand: true,
               src: ['<%= course.jsDir %>/**'],
-              dest: '<%= course.buildjs %>/app.min.js',
-            },
-    }, 
+              dest: '<%= course.buildjs %>/',
+            },   
+    },
+    // concat: {
+    //         dev: {
+    //           src: ['<%= course.jsDir %>/**'],
+    //           dest: '<%= course.buildjs %>/app.min.js',
+    //         },
+    // }, 
     watch: {
             options: {livereload: true},
             sass: {
                 files: ['<%= course.sassDir %>/**'],
                 tasks: ['sass']
             },
+            // javascript: {
+            //     files: ['<%= course.jsDir %>/**'],
+            //     tasks: ['concat:dev']
+            // }
             javascript: {
                 files: ['<%= course.jsDir %>/**'],
-                tasks: ['concat:dev']
+                tasks: ['copy:dev']
             }
             // sass: {
             //     files: ['<%= course.sassDir %>'],
@@ -52,12 +63,13 @@ module.exports = function(grunt) {
   });
 
   // Load plugins here.
-  grunt.loadNpmTasks('grunt-contrib-concat');
+  // grunt.loadNpmTasks('grunt-contrib-concat');
+  grunt.loadNpmTasks('grunt-contrib-copy');
   // grunt.loadNpmTasks('grunt-contrib-uglify');
   grunt.loadNpmTasks('grunt-sass');
   grunt.loadNpmTasks('grunt-contrib-watch');
 
   // Register tasks here.
-  grunt.registerTask('default', ['sass', 'concat']);
+  grunt.registerTask('default', ['sass', 'copy']);
 
 };
