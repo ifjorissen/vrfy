@@ -228,7 +228,7 @@ def _get_problem_result(solution,request):
   ps = solution.student_problem_set.problem_set
   if solution.submitted:
     prob_result = ProblemResult.objects.filter(sp_sol = solution, job_id=solution.job_id).latest('timestamp')
-    
+    print(prob_result.timestamp)
     #poll the tango server
     if solution.problem.autograde_problem:
       outputFile = slugify(ps.title) + "_" +slugify(solution.problem.title) + "-" + request.user.username
@@ -237,10 +237,9 @@ def _get_problem_result(solution,request):
       line = r.text.split("\n")[-2]#theres a line with an empty string after the last actual output line
       tango_time = r.text.split("\n")[0].split("[")[1].split("]")[0] #the time is on the first line surrounded by brackets
       tango_time = time.strftime("%Y-%m-%d %H:%M:%S", time.strptime(tango_time, '%a %b %d %H:%M:%S %Y'))
-      print(tango_time)
-      print(prob_result.timestamp)
       
       if tango_time != str(prob_result.timestamp).split("+")[0]:
+        print("hello")
         if "Autodriver: Job timed out after " in line: #thats the text that Tango outputs when a job times out
           prob_result.score = 0
           prob_result.json_log = {'score_sum':'0','external_log':["Program timed out after " + line.split(" ")[-2] + " seconds."]}
