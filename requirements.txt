@@ -1,6 +1,7 @@
 Django==1.8.3
 ldap3==0.9.8.4
 psycopg2==2.6
+jsonfield==1.0.3
 pyasn1==0.1.7
 requests==2.7.0
 django-grappelli==2.6.5

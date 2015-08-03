@@ -22,6 +22,7 @@
 * only add a courselab & grading file _if_ the problem is meant to be autograded
 * django-json (or django-pgjson) to hold the raw json object for results
 * make most fields on Student (& Result) admin fields read-only
+* bug in the results where you've attempted the set but the results arent ready... what if the job isnt done
 
 
 ###Cool stuff
