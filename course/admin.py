@@ -89,7 +89,7 @@ class ProblemAdmin(admin.ModelAdmin):
 
 class ProblemSetAdmin(admin.ModelAdmin):
   fieldsets = [
-    ('Problem Set Info', {'fields': ['title', 'description']}),
+    ('Problem Set Info', {'fields': ['title', 'description', 'cs_section']}),
     ('Problems', {'fields':['problems']}),
     ('Release & Due Dates', {'fields': ['pub_date', 'due_date']}),
   ]
@@ -160,7 +160,7 @@ class StudentProblemSolutionAdmin(admin.ModelAdmin):
     return obj.student_problem_set.user
 
   def latest_result(self, obj):
-    result_obj = obj.problemresult_set.all().order_by('timestamp')[0]
+    result_obj = obj.problemresult_set.all().get(job_id=obj.job_id)
     score = result_obj.score
     return score
 
@@ -180,7 +180,7 @@ class ProblemResultAdmin(admin.ModelAdmin):
   readonly_fields = ('timestamp',)
 
   def problem_set(self, obj):
-    return obj.result_set.problem_set.title
+    return obj.sp_set.problem_set.title
     
   def problem_title(self, obj):
     return obj.problem.title
@@ -191,5 +191,4 @@ admin.site.register(models.ProblemSet, ProblemSetAdmin)
 admin.site.register(models.StudentProblemSet, StudentProblemSetAdmin)
 admin.site.register(models.StudentProblemSolution, StudentProblemSolutionAdmin)
 admin.site.register(models.GraderLib, GraderLibAdmin)
-# admin.site.register(models.ProblemResultSet)
 admin.site.register(models.ProblemResult, ProblemResultAdmin)

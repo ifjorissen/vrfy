@@ -198,6 +198,9 @@ class ProblemResult(models.Model):
   def sanity_log(self):
     return self.json_log["sanity_compare"]
 
+  def __str__(self):
+    return self.problem.title + "_" + self.user.username + "_jID" + str(self.job_id)
+
 #for testrunner files like session.py or sanity.py
 class GraderLib(models.Model):
   lib_upload = models.FileField(upload_to=grader_lib_upload_path)
