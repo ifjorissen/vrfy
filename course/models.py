@@ -178,9 +178,9 @@ class ProblemResult(models.Model):
   #tango jobid
   job_id = models.IntegerField(default=-1)
 
-  sp_sol = models.ForeignKey(StudentProblemSolution)
+  sp_sol = models.ForeignKey(StudentProblemSolution, verbose_name="Student Problem Solution")
   problem = models.ForeignKey(Problem)
-  sp_set = models.ForeignKey(StudentProblemSet, null=True)
+  sp_set = models.ForeignKey(StudentProblemSet, null=True, verbose_name="Student Problem Set")
   user = models.ForeignKey('generic.CSUser', null=True)
 
   #general data about the actual results

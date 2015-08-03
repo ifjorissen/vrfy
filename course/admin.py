@@ -24,16 +24,19 @@ class ProblemSolutionFileInline(admin.TabularInline):
   fields = ['file_upload', 'comment']
 
 class StudentProblemSetInline(admin.TabularInline):
+  readonly_fields = ('user', 'submitted')
   model = models.StudentProblemSet
   extra = 0
   show_change_link = True
 
 class StudentProblemSolutionInline(admin.TabularInline):
+  readonly_fields = ('problem', 'submitted', 'student_problem_set', 'attempt_num', 'job_id')
   model = models.StudentProblemSolution
   extra = 0
   show_change_link = True
 
 class StudentProblemFileInline(admin.TabularInline):
+  readonly_fields = ('required_problem_filename',  'submitted_file', 'attempt_num')
   model = models.StudentProblemFile
   extra = 0
 
@@ -149,17 +152,27 @@ class ProblemSetAdmin(admin.ModelAdmin):
         tango.upload(problem, obj, f.name.split("/")[-1], f.read())
 
 class StudentProblemSetAdmin(admin.ModelAdmin):
+  readonly_fields = ('problem_set', 'user', 'submitted')
   inlines = [StudentProblemSolutionInline]
-  list_display = ('problem_set','user','submitted',)
+  list_display = ('problem_set','user','submitted', 'problems_completed')
+
+  def problems_completed(self, obj):
+    solutions = obj.studentproblemsolution_set.all()
+    problems = obj.problem_set.problems.all()
+    return str(len(solutions)) + " of " + str(len(problems))
 
 class StudentProblemSolutionAdmin(admin.ModelAdmin):
-  inlines = [StudentProblemFileInline]
-  list_display = ('problem', 'student_problem_set', 'attempt_num', 'submitted', 'latest_result')
+  readonly_fields = ('problem', 'job_id', 'submitted', 'student_problem_set')
 
-  def get_user(self, obj):
+  inlines = [StudentProblemFileInline]
+  list_display = ('problem', 'user', 'student_problem_set', 'attempt_num', 'submitted', 'latest_score')
+  list_filter = ('student_problem_set__user__username', 'student_problem_set')
+  search_fields = ['student_problem_set__user__username']
+
+  def user(self, obj):
     return obj.student_problem_set.user
 
-  def latest_result(self, obj):
+  def latest_score(self, obj):
     result_obj = obj.problemresult_set.all().get(job_id=obj.job_id)
     score = result_obj.score
     return score
@@ -177,7 +190,7 @@ class GraderLibAdmin(admin.ModelAdmin):
 
 class ProblemResultAdmin(admin.ModelAdmin):
   list_display = ('problem_title', 'problem_set', 'user', 'score', 'timestamp')
-  readonly_fields = ('timestamp',)
+  readonly_fields = ('problem', 'user', 'sp_set', 'sp_sol', 'score', 'timestamp', 'json_log', 'raw_output', 'job_id')
 
   def problem_set(self, obj):
     return obj.sp_set.problem_set.title
