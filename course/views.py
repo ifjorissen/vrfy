@@ -47,22 +47,23 @@ def attempt_problem_set(request, ps_id):
 
 def submit_success(request, ps_id, p_id):
   authenticate(request)
-  
+  ps = get_object_or_404(ProblemSet, pk=ps_id)
   problem = get_object_or_404(Problem, pk=p_id)
 
   if problem.autograde_problem:#if it is running in Tango
+    #get running jobs
     job_url = vrfy.settings.TANGO_ADDRESS + "jobs/" + vrfy.settings.TANGO_KEY + "/0/"
-    dead_job_url = vrfy.settings.TANGO_ADDRESS + "jobs/" + vrfy.settings.TANGO_KEY + "/1/"
-    info_url = vrfy.settings.TANGO_ADDRESS + "info/" + vrfy.settings.TANGO_KEY +"/"
-
     running_jobs = requests.get(job_url)
-    dead_jobs = requests.get(dead_job_url)
-    info = requests.get(info_url)
-
-    dj_json = dead_jobs.json()
     rj_json = running_jobs.json()
-    info_json = info.json()
-    context = {"info":info_json["info"], "jobs":rj_json, "dead_jobs":dj_json}
+    
+    
+    jobName = tango.get_jobName(problem, ps, request.user.username)
+    job_running=False
+    for job in rj_json["jobs"]:
+      if job["name"] == jobName:
+        job_running=True
+    
+    context = {"num_jobs":len(rj_json["jobs"]), "job_running":job_running, 'ps_id':ps_id, 'p_id':p_id}
     #make sure the job is in the queue
     return render(request, 'course/submit_success.html', context)
 
@@ -176,7 +177,7 @@ def problem_submit(request, ps_id, p_id):
       files.append({"localFile" : data_name, "destFile": "data.json"})
 
       #making Tango run the files
-      jobName = slugify(ps.title) + "_" + slugify(problem.title) + "-" + request.user.username
+      jobName = tango.get_jobName(problem, ps, request.user.username)
       r = tango.addJob(problem, ps, files, jobName, jobName)
       if r.status_code is not 200:
         return redirect('500.html')
@@ -201,7 +202,7 @@ def results_detail(request, ps_id):
   results_dict = {}
 
   for solution in student_ps.studentproblemsolution_set.all():
-    results_dict[solution] = _get_problem_result(solution, request).json_log
+    results_dict[solution] = _get_problem_result(solution, request)
     
   #make a result object
   #only send the data that the student should see
@@ -218,7 +219,7 @@ def results_problem_detail(request, ps_id, p_id):
   result_set, created = ProblemResultSet.objects.get_or_create(sp_set = student_ps, user=request.user, problem_set=ps)
   solution = student_ps.studentproblemsolution_set.get(problem=problem)
 
-  result = _get_problem_result(solution, request).json_log
+  result = _get_problem_result(solution, request)
   
   context = {'solution': solution, "result" : result}
   return render(request, 'course/results_problem_detail.html', context)
@@ -242,8 +243,8 @@ def _get_problem_result(solution,request):
       if tango_time != str(prob_result.timestamp).split("+")[0]:
         if "Autodriver: Job timed out after " in line: #thats the text that Tango outputs when a job times out
           prob_result.score = 0
-          prob_result.external_log = ["Program timed out after " + line.split(" ")[-2] + " seconds."]
-          prob_result.timestamp = timezone.now()
+          prob_result.json_log = {'score_sum':'0','external_log':["Program timed out after " + line.split(" ")[-2] + " seconds."]}
+          prob_result.timestamp = tango_time
           prob_result.save()
         else:
           try:
