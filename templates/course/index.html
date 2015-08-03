@@ -41,7 +41,7 @@
           </p>
         </div>
         <div>
-          <a role="button" type="button" href="{% url 'course:results_detail' sol.student_problem_set.problem_set.id %}" class="btn btn-default">
+          <a role="button" type="button" href="{% url 'course:results_problem_detail' sol.student_problem_set.problem_set.id sol.problem.id %}" class="btn btn-default">
             <span class="glyphicon glyphicon-eye-open"></span> results
           </a>
         </div>

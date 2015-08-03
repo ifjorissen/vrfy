@@ -201,82 +201,67 @@ def results_detail(request, ps_id):
   results_dict = {}
 
   for solution in student_ps.studentproblemsolution_set.all():
-    if solution.submitted:
-      prob_result = ProblemResult.objects.filter(sp_sol = solution, job_id=solution.job_id).latest('timestamp')
-      
-      #poll the tango server
-      if solution.problem.autograde_problem:
-        outputFile = slugify(ps.title) + "_" +slugify(solution.problem.title) + "-" + request.user.username
-        r = tango.poll(solution.problem, ps, outputFile)
-        raw_output = r.text
-        line = r.text.split("\n")[-2]#theres a line with an empty string after the last actual output line
-        tango_time = r.text.split("\n")[0].split("[")[1].split("]")[0] #the time is on the first line surrounded by brackets
-        tango_time = time.strftime("%Y-%m-%d %H:%M:%S", time.strptime(tango_time, '%a %b %d %H:%M:%S %Y'))
-        print(tango_time)
-        print(prob_result.timestamp)
-        
-        if tango_time != str(prob_result.timestamp).split("+")[0]:
-          if "Autodriver: Job timed out after " in line: #thats the text that Tango outputs when a job times out
-            prob_result.score = 0
-            prob_result.external_log = ["Program timed out after " + line.split(" ")[-2] + " seconds."]
-            prob_result.timestamp = timezone.now()
-            prob_result.save()
-          else:
-            try:
-              log_data = json.loads(line)
-              #create the result object
-              prob_result.score = log_data["score_sum"]
-              prob_result.raw_output = raw_output
-              prob_result.json_log = log_data
-              prob_result.timestamp = tango_time
-              prob_result.save()
-            except ValueError: #if the json isn't there, something went wrong when running the job, or the grader file messed up
-              raise Http404("Something went wrong. Make sure your code is bug free and resubmit. \nIf the problem persists, contact your professor or TA")
-      
-      else:
-        #special not-autograded stuff goes here
-        pass
-
-    else:
-      prob_result = None
-    results_dict[solution] = prob_result
+    results_dict[solution] = _get_problem_result(solution, request).json_log
     
-    #make a result object
-    #only send the data that the student should see
-    context = {'sps': student_ps, "ps_results" : results_dict}
+  #make a result object
+  #only send the data that the student should see
+  context = {'sps': student_ps, "ps_results" : results_dict}
   return render(request, 'course/results_detail.html', context)
 
 def results_problem_detail(request, ps_id, p_id):
   authenticate(request)
   # logic to figure out if the results are availiable and if so, get them
   ps = get_object_or_404(ProblemSet, pk=ps_id, pub_date__lte=timezone.now())
+  problem = get_object_or_404(Problem, pk=p_id)
   student_ps = get_object_or_404(StudentProblemSet, problem_set=ps, user=request.user)
   results_dict = {}
   result_set, created = ProblemResultSet.objects.get_or_create(sp_set = student_ps, user=request.user, problem_set=ps)
+  solution = student_ps.studentproblemsolution_set.get(problem=problem)
 
-  for solution in student_ps.studentproblemsolution_set.all():
-    if solution.submitted:
-      result_obj = ProblemResult.objects.create(sp_sol = solution, result_set=result_set, user=request.user, problem=solution.problem)
-  #poll the tango server
+  results_dict[solution] = _get_problem_result(solution, request).json_log
+  
+  context = {'sps': student_ps, "ps_results" : results_dict}
+  return render(request, 'course/results_detail.html', context)
+
+def _get_problem_result(solution,request):
+  ps = solution.student_problem_set.problem_set
+  if solution.submitted:
+    prob_result = ProblemResult.objects.filter(sp_sol = solution, job_id=solution.job_id).latest('timestamp')
+    
+    #poll the tango server
+    if solution.problem.autograde_problem:
       outputFile = slugify(ps.title) + "_" +slugify(solution.problem.title) + "-" + request.user.username
       r = tango.poll(solution.problem, ps, outputFile)
-      try:
-        log_data = json.loads(r.text.split("\n")[-2])#theres a line with an empty string after the last actual output line
-        #create the result object
-        # result_obj.score = log_data["score_sum"]
-        result_obj.score = 10
-        result_obj.internal_log = log_data["internal_log"]
-        result_obj.sanity_log = log_data["sanity_compare"]
-        result_obj.external_log = log_data["external_log"]
-        result_obj.raw_log = json.dumps(log_data, indent=4)
-        result_obj.timestamp = timezone.now()
-        result_obj.save()
-      except ValueError: #if the json isn't there, something went wrong when running the job, or the grader file messed up
-        raise Http404("Something went wrong. Make sure your code is bug free and resubmit. \nIf the problem persists, contact your professor or TA")
+      raw_output = r.text
+      line = r.text.split("\n")[-2]#theres a line with an empty string after the last actual output line
+      tango_time = r.text.split("\n")[0].split("[")[1].split("]")[0] #the time is on the first line surrounded by brackets
+      tango_time = time.strftime("%Y-%m-%d %H:%M:%S", time.strptime(tango_time, '%a %b %d %H:%M:%S %Y'))
+      print(tango_time)
+      print(prob_result.timestamp)
+      
+      if tango_time != str(prob_result.timestamp).split("+")[0]:
+        if "Autodriver: Job timed out after " in line: #thats the text that Tango outputs when a job times out
+          prob_result.score = 0
+          prob_result.external_log = ["Program timed out after " + line.split(" ")[-2] + " seconds."]
+          prob_result.timestamp = timezone.now()
+          prob_result.save()
+        else:
+          try:
+            log_data = json.loads(line)
+            #create the result object
+            prob_result.score = log_data["score_sum"]
+            prob_result.raw_output = raw_output
+            prob_result.json_log = log_data
+            prob_result.timestamp = tango_time
+            prob_result.save()
+          except ValueError: #if the json isn't there, something went wrong when running the job, or the grader file messed up
+            raise Http404("Something went wrong. Make sure your code is bug free and resubmit. \nIf the problem persists, contact your professor or TA")
     
     else:
-      result_obj = None
-    results_dict[solution] = result_obj
-    #only send the data that the student should see
-    context = {'sps': student_ps, "ps_results" : results_dict}
-  return render(request, 'course/results_detail.html', context)
+      #special not-autograded stuff goes here
+      pass
+
+  else:
+    prob_result = None
+
+  return prob_result
