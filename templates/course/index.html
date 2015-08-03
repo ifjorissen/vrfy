@@ -2,7 +2,9 @@
 
 {% block content %}
 <section>
-  <h2>Due Soon:</h2>
+  {% if upcoming_problem_sets %}
+    <h2>Due Soon:</h2>
+  {% endif %}
   {% for ps in upcoming_problem_sets %}
     <div class="panel panel-default">
       <div class="panel-heading" role="tab">
@@ -24,7 +26,9 @@
     </div>
   {% endfor %}
 </section>
-<h2>Recently Submitted:</h2>
+{% if recently_submitted_solutions %}
+  <h2>Recently Submitted:</h2>
+{% endif %}
 <ul class="list-group">
   {% for sol in recently_submitted_solutions %}
     <li class="list-group-item">
