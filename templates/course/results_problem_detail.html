@@ -1,13 +1,9 @@
 {% extends 'course/base.html' %}
 {% block content %}
 <section class="problem-set">
-<section class="ps-info page-header">
-<h1>{{ sps.problem_set.title }} <small><span class="glyphicon glyphicon-time"></span> Due {{ps.due_date}}</p>
-Due {{ sps.problem_set.due_date }} )</small></h1>
 <p>If the results aren't there or haven't changed since your last submission, try refreshing the page in 30 seconds</p>
-</section>
 
-{% for solution, result in ps_results.items %}
+
 {% if result %}
   <section id="solution-{{solution.id}}" class="panel panel-default">
     <div class="panel-heading">
@@ -37,5 +33,4 @@ Due {{ sps.problem_set.due_date }} )</small></h1>
     </div>
   </section>
 {% endif %}
-{% endfor %}
 {% endblock content %}

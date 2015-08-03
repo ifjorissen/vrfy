@@ -8,7 +8,7 @@
 </section>
 
 {% for solution, result in ps_results.items %}
-{% if result %}
+{% if result and solution.problem.autograde_problem %}
   <section id="solution-{{solution.id}}" class="panel panel-default">
     <div class="panel-heading">
       <h3><span role="button" data-toggle="collapse" data-parent="#solution-{{solution.id}}" href="#collapse-solution-{{solution.id}}" aria-expanded="true">

@@ -18,12 +18,10 @@ class RequiredProblemFilenameInline(admin.TabularInline):
   model = models.RequiredProblemFilename
   extra = 2
 
-
 class ProblemSolutionFileInline(admin.TabularInline):
   model = models.ProblemSolutionFile
   extra = 3
   fields = ['file_upload', 'comment']
-  
 
 class StudentProblemSetInline(admin.TabularInline):
   model = models.StudentProblemSet

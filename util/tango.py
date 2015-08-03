@@ -62,3 +62,6 @@ def delete(problem, problemset, filename=""):
     print(path)
     os.remove(path)
 
+def get_jobName(problem, ps, username):
+  return slugify(ps.title) + "_" + slugify(problem.title) + "-" + username
+

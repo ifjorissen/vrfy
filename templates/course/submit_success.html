@@ -3,8 +3,15 @@
 {% block content %}
 <section>
   <h1>Submission Successful!</h1>
-  <p>{{info}}</p>
-  <p>{{jobs}}</p>
-  <p>{{dead_jobs}}</p>
+  <p> Your submission has {% if job_running %} not {% endif %} been graded.</p>
+  <p> There are currently {{ num_jobs }} assignments being graded. </p>
+  {% if num_jobs > 40 %}
+    <p> it'll probably be a few minutes before you homework gets graded</p>
+  {% endif %}
+  <div>
+    <a role="button" type="button" href="{% url 'course:results_problem_detail' ps_id p_id %}" class="btn btn-default">
+      <span class="glyphicon glyphicon-eye-open"></span> results
+    </a>
+  </div>
 </section>
 {% endblock %}

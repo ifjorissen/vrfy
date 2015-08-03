@@ -2,6 +2,51 @@
 
 {% block content %}
 <section>
-	<h1>CS@Reed</h1>
+  {% if upcoming_problem_sets %}
+    <h2>Due Soon:</h2>
+  {% endif %}
+  {% for ps in upcoming_problem_sets %}
+    <div class="panel panel-default">
+      <div class="panel-heading" role="tab">
+        <div class="flex-panel-wrapper">
+          <div>
+            <p class = "h4">{{ ps.title }}</p>
+            <p class="h5">
+              {% if ps.is_already_due %} <span class="glyphicon glyphicon-bell">
+              {% else %} <span class="glyphicon glyphicon-time"> {% endif %}
+              </span> 
+              Due {{ps.due_date}}
+            </p>
+          </div>
+          <div class="btn-group" role="group" aria-label="...">
+            <a role="button" href="{% url 'course:attempt_problem_set' ps.id %}" type="button" class="btn btn-default">attempt problems</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  {% endfor %}
 </section>
+{% if recently_submitted_solutions %}
+  <h2>Recently Submitted:</h2>
+{% endif %}
+<ul class="list-group">
+  {% for sol in recently_submitted_solutions %}
+    <li class="list-group-item">
+      <div class="flex-panel-wrapper">
+        <div>
+          <p class = "h4">{{ sol.problem.title }}</p>
+          <p class="h5"> 
+            <span class="glyphicon glyphicon-time"></span>
+            Submitted {{sol.submitted}}
+          </p>
+        </div>
+        <div>
+          <a role="button" type="button" href="{% url 'course:results_problem_detail' sol.student_problem_set.problem_set.id sol.problem.id %}" class="btn btn-default">
+            <span class="glyphicon glyphicon-eye-open"></span> results
+          </a>
+        </div>
+      </div>
+    </li>
+  {% endfor %}
+</ul>
 {% endblock %}
