@@ -138,7 +138,6 @@ class StudentProblemSet(models.Model):
   problem_set = models.ForeignKey(ProblemSet)
   user = models.ForeignKey('generic.CSUser', null=True)
   submitted = models.DateTimeField('date submitted', null=True)
-  # comments = models.TextField(), 
   
   def all_submitted(self):
     for s_prob in self.studentproblemsolution_set.all():
@@ -175,18 +174,13 @@ class StudentProblemFile(models.Model):
   submitted_file = models.FileField(upload_to=student_file_upload_path)
   attempt_num = models.IntegerField(default=0)
 
-class ProblemResultSet(models.Model):
-  sp_set = models.ForeignKey(StudentProblemSet)
-  problem_set = models.ForeignKey(ProblemSet)
-  user = models.ForeignKey('generic.CSUser', null=True)
-
 class ProblemResult(models.Model):
   #tango jobid
   job_id = models.IntegerField(default=-1)
 
   sp_sol = models.ForeignKey(StudentProblemSolution)
   problem = models.ForeignKey(Problem)
-  result_set = models.ForeignKey(ProblemResultSet)
+  sp_set = models.ForeignKey(StudentProblemSet, null=True)
   user = models.ForeignKey('generic.CSUser', null=True)
 
   #general data about the actual results
@@ -203,10 +197,6 @@ class ProblemResult(models.Model):
 
   def sanity_log(self):
     return self.json_log["sanity_compare"]
-
-  # def score(self):
-  #   return self.json_log["score"]
-
 
 #for testrunner files like session.py or sanity.py
 class GraderLib(models.Model):
