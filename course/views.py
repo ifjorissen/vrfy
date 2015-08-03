@@ -218,10 +218,10 @@ def results_problem_detail(request, ps_id, p_id):
   result_set, created = ProblemResultSet.objects.get_or_create(sp_set = student_ps, user=request.user, problem_set=ps)
   solution = student_ps.studentproblemsolution_set.get(problem=problem)
 
-  results_dict[solution] = _get_problem_result(solution, request).json_log
+  result = _get_problem_result(solution, request).json_log
   
-  context = {'sps': student_ps, "ps_results" : results_dict}
-  return render(request, 'course/results_detail.html', context)
+  context = {'solution': solution, "result" : result}
+  return render(request, 'course/results_problem_detail.html', context)
 
 def _get_problem_result(solution,request):
   ps = solution.student_problem_set.problem_set
