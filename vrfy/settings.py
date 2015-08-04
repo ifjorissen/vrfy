@@ -118,7 +118,7 @@ SERVER_EMAIL = 'isjoriss@reed.edu'
 STATIC_ROOT = 'staticfiles/'
 STATIC_URL = '/static/'
 MEDIA_ROOT = 'problem_assets/'
-MEDIA_URL = '/problem_assets/'
+MEDIA_URL = 'problem_assets/'
 STATICFILES_DIRS = (
     # os.path.join(BASE_DIR, "static"),
     'bower_components/',
