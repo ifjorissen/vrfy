@@ -23,10 +23,17 @@ import vrfy.settings
 ADDITIONAL_FILE_NAME = "additional"
 MAX_ADDITIONAL_FILES = 7
 
+#these helper functions enforce the universal restrictions on what problemsets a user can get
+def _get_problem_set(pk, user): #if you want one problem set
+  return get_object_or_404(ProblemSet, pk=pk, pub_date__lte=timezone.now(), cs_section__in=user.section_set.all())
+
+def _query_problem_sets(user):#if you want a queryset
+  return ProblemSet.objects.filter(pub_date__lte=timezone.now(), cs_section__in=user.section_set.all() )
+
 def index(request):
   authenticate(request)
   #problems due in the next week
-  ps_set = ProblemSet.objects.filter(pub_date__lte=timezone.now(), due_date__lte=(timezone.now()+datetime.timedelta(days=7)), due_date__gte=(timezone.now())).order_by('due_date')
+  ps_set = _query_problem_sets(request.user).filter(due_date__range=(timezone.now(), (timezone.now()+datetime.timedelta(days=7)))).order_by('due_date')
   #student problems submitted in the last 24hrs
   stu_sol_set = StudentProblemSolution.objects.filter(submitted__gte=(timezone.now()-datetime.timedelta(days=1)))
   context = {'upcoming_problem_sets': ps_set, 'recently_submitted_solutions': stu_sol_set}
@@ -34,7 +41,7 @@ def index(request):
 
 def attempt_problem_set(request, ps_id):
   authenticate(request)
-  ps = get_object_or_404(ProblemSet, pk=ps_id, pub_date__lte=timezone.now())
+  ps = _get_problem_set(ps_id, request.user)
   sps_sol, sps_created = StudentProblemSet.objects.get_or_create(problem_set=ps, user=request.user)
 
   problem_solution_dict = {}
@@ -47,7 +54,7 @@ def attempt_problem_set(request, ps_id):
 
 def submit_success(request, ps_id, p_id):
   authenticate(request)
-  ps = get_object_or_404(ProblemSet, pk=ps_id)
+  ps = _get_problem_set(ps_id, request.user)
   problem = get_object_or_404(Problem, pk=p_id)
 
   if problem.autograde_problem:#if it is running in Tango
@@ -76,7 +83,7 @@ def problem_set_index(request):
   '''
   authenticate(request)
   ps_sol_dict = {}
-  latest_problem_sets = ProblemSet.objects.filter(pub_date__lte=timezone.now()).order_by('due_date')
+  latest_problem_sets = _query_problem_sets(request.user).order_by('due_date')
   for ps in latest_problem_sets:
     try:
       student_ps_sol = StudentProblemSet.objects.get(problem_set=ps, user=request.user)
@@ -91,7 +98,7 @@ def problem_set_index(request):
 def problem_submit(request, ps_id, p_id):
   authenticate(request)
   if request.method == 'POST':#make sure the user doesn't type this into the address bar
-    ps = get_object_or_404(ProblemSet, pk=ps_id, pub_date__lte=timezone.now())
+    ps = _get_problem_set(ps_id, request.user)
     problem = get_object_or_404(Problem, pk=p_id)
 
     #create / get the student problem set and update the submission time (reflects latest attempt)
@@ -196,7 +203,7 @@ def problem_submit(request, ps_id, p_id):
 def results_detail(request, ps_id):
   authenticate(request)
   # logic to figure out if the results are availiable and if so, get them
-  ps = get_object_or_404(ProblemSet, pk=ps_id, pub_date__lte=timezone.now())
+  ps = _get_problem_set(ps_id, request.user)
   student_ps = get_object_or_404(StudentProblemSet, problem_set=ps, user=request.user)
   result_set = get_object_or_404(ProblemResultSet, user=request.user, sp_set=student_ps, problem_set=ps)
   results_dict = {}
@@ -212,7 +219,7 @@ def results_detail(request, ps_id):
 def results_problem_detail(request, ps_id, p_id):
   authenticate(request)
   # logic to figure out if the results are availiable and if so, get them
-  ps = get_object_or_404(ProblemSet, pk=ps_id, pub_date__lte=timezone.now())
+  ps = _get_problem_set(ps_id, request.user)
   problem = get_object_or_404(Problem, pk=p_id)
   student_ps = get_object_or_404(StudentProblemSet, problem_set=ps, user=request.user)
   results_dict = {}
