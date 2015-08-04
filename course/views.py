@@ -112,11 +112,11 @@ def problem_submit(request, ps_id, p_id):
     student_psol.save()
 
     #create the student result set & problem
-    result_set, prs_created = ProblemResultSet.objects.get_or_create(sp_set = student_ps_sol, user=request.user, problem_set=ps)
+    # result_set, prs_created = ProblemResultSet.objects.get_or_create(sp_set = student_ps_sol, user=request.user, problem_set=ps)
     mytimestamp = None
     if not problem.autograde_problem: #if its not being autograded, we should set the timestamp here; if it is, tango will set it
       mytimestamp = timezone.now()
-    prob_result = ProblemResult.objects.create(sp_sol=student_psol, result_set=result_set, user=request.user, problem=problem, timestamp=mytimestamp)
+    prob_result = ProblemResult.objects.create(sp_sol=student_psol, sp_set=student_ps_sol, user=request.user, problem=problem, timestamp=mytimestamp)
     
     additional_files = 0
     files = []#for the addJob
@@ -205,7 +205,7 @@ def results_detail(request, ps_id):
   # logic to figure out if the results are availiable and if so, get them
   ps = _get_problem_set(ps_id, request.user)
   student_ps = get_object_or_404(StudentProblemSet, problem_set=ps, user=request.user)
-  result_set = get_object_or_404(ProblemResultSet, user=request.user, sp_set=student_ps, problem_set=ps)
+  # result_set = get_object_or_404(ProblemResultSet, user=request.user, sp_set=student_ps, problem_set=ps)
   results_dict = {}
 
   for solution in student_ps.studentproblemsolution_set.all():
@@ -223,7 +223,7 @@ def results_problem_detail(request, ps_id, p_id):
   problem = get_object_or_404(Problem, pk=p_id)
   student_ps = get_object_or_404(StudentProblemSet, problem_set=ps, user=request.user)
   results_dict = {}
-  result_set, created = ProblemResultSet.objects.get_or_create(sp_set = student_ps, user=request.user, problem_set=ps)
+  # result_set, created = ProblemResultSet.objects.get_or_create(sp_set = student_ps, user=request.user, problem_set=ps)
   solution = student_ps.studentproblemsolution_set.get(problem=problem)
 
   result = _get_problem_result(solution, request)
@@ -234,8 +234,9 @@ def results_problem_detail(request, ps_id, p_id):
 def _get_problem_result(solution,request):
   ps = solution.student_problem_set.problem_set
   if solution.submitted:
+
     prob_result = ProblemResult.objects.filter(sp_sol = solution, job_id=solution.job_id).latest('timestamp')
-    print(prob_result.timestamp)
+
     #poll the tango server
     if solution.problem.autograde_problem:
       outputFile = slugify(ps.title) + "_" +slugify(solution.problem.title) + "-" + request.user.username
