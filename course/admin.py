@@ -5,6 +5,7 @@ from . import models #Problem, ProblemSet, RequiredProblemFilename, ProblemSolut
 import requests
 import shutil
 import os
+import json
 
 import sys
 sys.path.append("../")
@@ -14,6 +15,7 @@ from util import tango
 admin.site.site_header = "Homework Administration"
 admin.site.site_title = "Homework Administration"
 
+#Inlines
 class RequiredProblemFilenameInline(admin.TabularInline):
   model = models.RequiredProblemFilename
   extra = 2
@@ -30,17 +32,34 @@ class StudentProblemSetInline(admin.TabularInline):
   show_change_link = True
 
 class StudentProblemSolutionInline(admin.TabularInline):
+  can_delete = False
   readonly_fields = ('problem', 'submitted', 'student_problem_set', 'attempt_num', 'job_id')
   model = models.StudentProblemSolution
   extra = 0
   show_change_link = True
 
 class StudentProblemFileInline(admin.TabularInline):
-  readonly_fields = ('required_problem_filename',  'submitted_file')
+  can_delete = False
+  readonly_fields = ('required_problem_filename',  'submitted_file', 'file_content')
   exclude = ('attempt_num',)
   model = models.StudentProblemFile
   extra = 0
 
+  def file_content(self, obj):
+    print(obj)
+    f = '%s' % obj.submitted_file
+    return f
+
+# class ProblemResultInline(admin.StackedInline):
+#   # show_change_link = True
+#   fieldsets = [
+#    ('Result Info', {'fields': ('timestamp', 'score', 'json_log')}),
+#    ('Raw Autograder Output', {'classes':('grp-collapse grp-open',), 'fields': ('raw_output',)}),
+#   ]
+#   model = models.ProblemResult
+#   extra = 0
+
+@admin.register(models.Problem)
 class ProblemAdmin(admin.ModelAdmin):
   class Meta:
     model = models.Problem
@@ -91,13 +110,14 @@ class ProblemAdmin(admin.ModelAdmin):
     
     return super(ProblemAdmin, self).response_change(request, obj)
 
-
+@admin.register(models.ProblemSet)
 class ProblemSetAdmin(admin.ModelAdmin):
   fieldsets = [
-    ('Problem Set Info', {'fields': ['title', 'description', 'cs_section']}),
-    ('Problems', {'fields':['problems']}),
-    ('Release & Due Dates', {'fields': ['pub_date', 'due_date']}),
+    ('Problem Set Info', {'fields': ('title', 'description', 'cs_section',)}),
+    ('Problems', {"classes": ('grp-collapse grp-open',), 'fields':('problems',)}),
+    ('Release & Due Dates', {'fields': ('pub_date', 'due_date',)}),
   ]
+
   filter_vertical = ['problems']
   # inlines = [StudentProblemSetInline]
   list_display = ('title', 'cs_section', 'pub_date', 'due_date', 'problems_included', 'submissions')
@@ -127,7 +147,6 @@ class ProblemSetAdmin(admin.ModelAdmin):
     return super(ProblemSetAdmin, self).response_change(request, obj)
 
   def response_delete(self, request, obj_display, obj_id):
-    
     return super(ProblemSetAdmin, self).response_delete(request, obj_display, obj_id)
 
   def _open_and_upload(self, obj):
@@ -158,6 +177,7 @@ class ProblemSetAdmin(admin.ModelAdmin):
         f = psfile.file_upload
         tango.upload(problem, obj, f.name.split("/")[-1], f.read())
 
+@admin.register(models.StudentProblemSet)
 class StudentProblemSetAdmin(admin.ModelAdmin):
   readonly_fields = ('problem_set', 'user', 'submitted')
   inlines = [StudentProblemSolutionInline]
@@ -175,13 +195,32 @@ class StudentProblemSetAdmin(admin.ModelAdmin):
     problems = obj.problem_set.problems.all()
     return "{!r} of {!r}".format(len(solutions), len(problems))
 
+@admin.register(models.StudentProblemSolution)
 class StudentProblemSolutionAdmin(admin.ModelAdmin):
-  readonly_fields = ('problem', 'job_id', 'submitted', 'student_problem_set')
+  can_delete = False
+  exclude = ('job_id',)
+  readonly_fields = ('problem', 'job_id', 'attempt_num', 'submitted', 'cs_section', 'user', 'problem_set', 'result_json', 'result_raw_output', 'latest_score', 'late')
+  fieldsets = [
+    ('Solution Info', {'classes':('grp-collapse grp-open',), 'fields': ('problem', 'problem_set', 'latest_score', 'user',)}),
+    ('Solution Detail', {'classes':('grp-collapse grp-closed',), 'fields': ('cs_section', 'attempt_num', 'submitted', 'late', 'job_id',)}),
+    ('Most Recent Result', {'classes':('grp-collapse grp-open',), 'fields': ('result_json', 'result_raw_output')}),
+  ]
 
   inlines = [StudentProblemFileInline]
   list_display = ('problem', 'cs_section', 'user', 'student_problem_set', 'attempt_num', 'submitted', 'latest_score', 'late')
   list_filter = ('student_problem_set__user__username', 'student_problem_set')
-  search_fields = ['student_problem_set__user__username']
+  # search_fields = ('student_problem_set__user__username',)
+
+  def result_json(self, obj):
+    result = obj.problemresult_set.get(job_id=obj.job_id)
+    return json.dumps(result.json_log, indent=2)
+
+  def result_raw_output(self, obj):
+    result = obj.problemresult_set.get(job_id=obj.job_id)
+    return result.raw_output
+
+  def problem_set(self, obj):
+    return obj.student_problem_set.problem_set
 
   def cs_section(self, obj):
     return obj.student_problem_set.problem_set.cs_section
@@ -190,7 +229,7 @@ class StudentProblemSolutionAdmin(admin.ModelAdmin):
     return obj.student_problem_set.user
 
   def latest_score(self, obj):
-    result_obj = obj.problemresult_set.all().get(job_id=obj.job_id)
+    result_obj = obj.problemresult_set.get(job_id=obj.job_id)
     score = result_obj.score
     return score
 
@@ -203,7 +242,7 @@ class StudentProblemSolutionAdmin(admin.ModelAdmin):
     else:
       return 'N/A'
 
-
+@admin.register(models.GraderLib)
 class GraderLibAdmin(admin.ModelAdmin):
   #readonly_fields=('lib_upload',)
   fields = ('lib_upload', 'comment')
@@ -214,20 +253,35 @@ class GraderLibAdmin(admin.ModelAdmin):
     else: # This is an addition
         return []
 
+@admin.register(models.ProblemResult)
 class ProblemResultAdmin(admin.ModelAdmin):
-  list_display = ('problem_title', 'problem_set', 'user', 'score', 'timestamp')
-  readonly_fields = ('problem', 'user', 'sp_set', 'sp_sol', 'score', 'timestamp', 'json_log', 'raw_output', 'job_id')
+  readonly_fields = ('problem', 'problem_set', 'user', 'score', 'attempt', 'late', 'timestamp', 'session_log', 'raw_output', 'job_id')
+  fieldsets = [
+    ('Problem Info', {'classes':('grp-collapse grp-open',), 'fields': ('problem', 'problem_set', 'user', 'timestamp', 'job_id')}),
+    ('Result Info', {'classes':('grp-collapse grp-open',), 'fields': ('score', 'attempt', 'late', 'session_log',)}),
+    ('Raw Autograder Output', {'classes':('grp-collapse grp-closed',), 'fields': ('raw_output',)}),
+  ]
+  list_display = ('problem', 'problem_set', 'cs_section', 'user', 'attempt', 'late', 'score', 'timestamp')
+  list_filter = ('user__username', 'problem')
+
+  def cs_section(self, obj):
+    return obj.sp_set.problem_set.cs_section
+
+  def attempt(self, obj):
+    return obj.attempt()
+
+  def late(self, obj):
+    if obj.sp_sol.submitted is not None:
+      if obj.sp_sol.is_late():
+        return 'Yes'
+      else:
+        return 'No'
+    else:
+      return 'N/A'
 
   def problem_set(self, obj):
     return obj.sp_set.problem_set.title
-    
-  def problem_title(self, obj):
-    return obj.problem.title
 
-
-admin.site.register(models.Problem, ProblemAdmin)
-admin.site.register(models.ProblemSet, ProblemSetAdmin)
-admin.site.register(models.StudentProblemSet, StudentProblemSetAdmin)
-admin.site.register(models.StudentProblemSolution, StudentProblemSolutionAdmin)
-admin.site.register(models.GraderLib, GraderLibAdmin)
-admin.site.register(models.ProblemResult, ProblemResultAdmin)
+  def session_log(self, obj):
+    log = json.dumps(obj.json_log, sort_keys=True, indent=2)
+    return log

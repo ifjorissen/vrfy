@@ -103,7 +103,7 @@ class ProblemSolutionFile(models.Model):
 class RequiredProblemFilename(models.Model):
   file_title = models.CharField(max_length=200, help_text="Use the name of the python file the grader script imports as a module. E.g: main.py if the script imports main")
   problem = models.ForeignKey(Problem, null=True)
-  force_rename = models.BooleanField(default=True, help_text="Uncheck this box if the student must upload another file, but the name does not matter. Only do this if the grade script doesn't import this file.")
+  force_rename = models.BooleanField(default=True, help_text="Uncheck if file name does not matter")
   #add field for extension
   def __str__(self):
     return self.file_title
@@ -168,7 +168,7 @@ class StudentProblemSolution(models.Model):
         return 1
     else:
       return 0
-    
+
   
 class StudentProblemFile(models.Model):
   required_problem_filename = models.ForeignKey(RequiredProblemFilename, null=True)
@@ -186,7 +186,7 @@ class ProblemResult(models.Model):
   user = models.ForeignKey('generic.CSUser', null=True)
 
   #general data about the actual results
-  timestamp = models.DateTimeField('date received', null=True, editable=False)
+  timestamp = models.DateTimeField('date received', null=True) #, editable=False)
   score = models.IntegerField(default=-1)
   json_log = JSONField(null=True, blank=True, verbose_name="Session Log")
   raw_output = models.TextField(null=True, blank=True, verbose_name="Raw Autograder Output")
@@ -199,6 +199,12 @@ class ProblemResult(models.Model):
 
   def sanity_log(self):
     return self.json_log["sanity_compare"]
+
+  def attempt(self):
+    if self.json_log is not None:
+      return self.json_log["info"]["attempts"]
+    else:
+      return "N/A"
 
   def __str__(self):
     return self.problem.title + "_" + self.user.username + "_jID" + str(self.job_id)
