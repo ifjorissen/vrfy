@@ -91,9 +91,11 @@ class ProblemSetAdmin(admin.ModelAdmin):
   fieldsets = [
     ('Problem Set Info', {'fields': ['title', 'description']}),
     ('Problems', {'fields':['problems']}),
+    ('Sections', {'fields':['cs_section']}),
     ('Release & Due Dates', {'fields': ['pub_date', 'due_date']}),
   ]
   filter_vertical = ['problems']
+  filter_horizontal = ['cs_section']
   inlines = [StudentProblemSetInline]
   list_display = ('title', 'pub_date', 'due_date', 'problems_included',)
 
