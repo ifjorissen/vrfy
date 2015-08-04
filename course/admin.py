@@ -36,7 +36,8 @@ class StudentProblemSolutionInline(admin.TabularInline):
   show_change_link = True
 
 class StudentProblemFileInline(admin.TabularInline):
-  readonly_fields = ('required_problem_filename',  'submitted_file', 'attempt_num')
+  readonly_fields = ('required_problem_filename',  'submitted_file')
+  exclude = ('attempt_num',)
   model = models.StudentProblemFile
   extra = 0
 
@@ -49,11 +50,16 @@ class ProblemAdmin(admin.ModelAdmin):
     ('Grading Script', {'fields': ['grade_script']}),
   ]
   inlines = [RequiredProblemFilenameInline, ProblemSolutionFileInline]
-  list_display = ('title', 'cs_course', 'submissions', 'assigned_to')
+  list_display = ('title', 'cs_course', 'assigned_to', 'submissions')
+  list_filter = ('cs_course',)
 
   def assigned_to(self, obj):
     problem_sets = obj.problemset_set.all()
     return ", ".join([ps.title for ps in problem_sets]) 
+
+  def submissions(self, obj):
+    student_solutions = obj.studentproblemsolution_set.all()
+    return len(student_solutions)
 
   def get_readonly_fields(self, request, obj=None):
     if obj: # obj is not None, so this is an edit
@@ -85,10 +91,6 @@ class ProblemAdmin(admin.ModelAdmin):
     
     return super(ProblemAdmin, self).response_change(request, obj)
 
-  def submissions(self, obj):
-    student_solutions = obj.studentproblemsolution_set.all()
-    return len(student_solutions)
-
 
 class ProblemSetAdmin(admin.ModelAdmin):
   fieldsets = [
@@ -97,8 +99,13 @@ class ProblemSetAdmin(admin.ModelAdmin):
     ('Release & Due Dates', {'fields': ['pub_date', 'due_date']}),
   ]
   filter_vertical = ['problems']
-  inlines = [StudentProblemSetInline]
-  list_display = ('title', 'pub_date', 'due_date', 'problems_included',)
+  # inlines = [StudentProblemSetInline]
+  list_display = ('title', 'cs_section', 'pub_date', 'due_date', 'problems_included', 'submissions')
+  list_filter = ('cs_section',)
+
+  def submissions(self, obj):
+    student_solutions = obj.studentproblemset_set.all()
+    return len(student_solutions)
 
   def problems_included(self, obj):
     return ", ".join([problem.title for problem in obj.problems.all()])    
@@ -154,20 +161,30 @@ class ProblemSetAdmin(admin.ModelAdmin):
 class StudentProblemSetAdmin(admin.ModelAdmin):
   readonly_fields = ('problem_set', 'user', 'submitted')
   inlines = [StudentProblemSolutionInline]
-  list_display = ('problem_set','user','submitted', 'problems_completed')
+  list_display = ('problem_set','cs_section', 'user','submitted', 'date_due', 'problems_completed',)
+  list_filter = ('user__username', 'problem_set')
+
+  def cs_section(self, obj):
+    return obj.problem_set.cs_section
+
+  def date_due(self, obj):
+    return obj.problem_set.due_date
 
   def problems_completed(self, obj):
     solutions = obj.studentproblemsolution_set.all()
     problems = obj.problem_set.problems.all()
-    return str(len(solutions)) + " of " + str(len(problems))
+    return "{!r} of {!r}".format(len(solutions), len(problems))
 
 class StudentProblemSolutionAdmin(admin.ModelAdmin):
   readonly_fields = ('problem', 'job_id', 'submitted', 'student_problem_set')
 
   inlines = [StudentProblemFileInline]
-  list_display = ('problem', 'user', 'student_problem_set', 'attempt_num', 'submitted', 'latest_score')
+  list_display = ('problem', 'cs_section', 'user', 'student_problem_set', 'attempt_num', 'submitted', 'latest_score', 'late')
   list_filter = ('student_problem_set__user__username', 'student_problem_set')
   search_fields = ['student_problem_set__user__username']
+
+  def cs_section(self, obj):
+    return obj.student_problem_set.problem_set.cs_section
 
   def user(self, obj):
     return obj.student_problem_set.user
@@ -176,6 +193,15 @@ class StudentProblemSolutionAdmin(admin.ModelAdmin):
     result_obj = obj.problemresult_set.all().get(job_id=obj.job_id)
     score = result_obj.score
     return score
+
+  def late(self, obj):
+    if obj.submitted is not None:
+      if obj.is_late():
+        return 'Yes'
+      else:
+        return 'No'
+    else:
+      return 'N/A'
 
 
 class GraderLibAdmin(admin.ModelAdmin):
