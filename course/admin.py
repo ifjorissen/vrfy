@@ -113,13 +113,15 @@ class ProblemAdmin(admin.ModelAdmin):
 @admin.register(models.ProblemSet)
 class ProblemSetAdmin(admin.ModelAdmin):
   fieldsets = [
-    ('Problem Set Info', {'fields': ('title', 'description', 'cs_section',)}),
-    ('Problems', {"classes": ('grp-collapse grp-open',), 'fields':('problems',)}),
-    ('Release & Due Dates', {'fields': ('pub_date', 'due_date',)}),
+    ('Problem Set Info', {'fields': ['title', 'description']}),
+    ('Problems', {"classes": ('grp-collapse grp-open',), 'fields':['problems']}),
+    ('Sections', {'fields':['cs_section']}),
+    ('Release & Due Dates', {'fields': ['pub_date', 'due_date']}),
   ]
 
   filter_vertical = ['problems']
   # inlines = [StudentProblemSetInline]
+  filter_horizontal = ['cs_section']
   list_display = ('title', 'cs_section', 'pub_date', 'due_date', 'problems_included', 'submissions')
   list_filter = ('cs_section',)
 

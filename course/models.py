@@ -120,7 +120,7 @@ class ProblemSet(models.Model):
   title = models.CharField(max_length=200)
   description = models.TextField(default='', help_text="Provide some additional information about this problem set.")
   problems = models.ManyToManyField(Problem)
-  cs_section = models.ForeignKey('catalog.Section', null=True, verbose_name="course Section")
+  cs_section = models.ManyToManyField('catalog.Section', verbose_name="course Section")
   pub_date = models.DateTimeField('date assigned')
   due_date = models.DateTimeField('date due')
 
