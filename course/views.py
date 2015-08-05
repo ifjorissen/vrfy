@@ -116,7 +116,7 @@ def problem_submit(request, ps_id, p_id):
     mytimestamp = None
     if not problem.autograde_problem: #if its not being autograded, we should set the timestamp here; if it is, tango will set it
       mytimestamp = timezone.now()
-    prob_result = ProblemResult.objects.create(sp_sol=student_psol, sp_set=student_ps_sol, user=request.user, problem=problem, timestamp=mytimestamp)
+    prob_result = ProblemResult.objects.create(attempt_num=student_psol.attempt_num, sp_sol=student_psol, sp_set=student_ps_sol, user=request.user, problem=problem, timestamp=mytimestamp)
     
     additional_files = 0
     files = []#for the addJob
@@ -235,7 +235,7 @@ def _get_problem_result(solution,request):
   ps = solution.student_problem_set.problem_set
   if solution.submitted:
 
-    prob_result = ProblemResult.objects.filter(sp_sol = solution, job_id=solution.job_id).latest('timestamp')
+    prob_result = ProblemResult.objects.get(sp_sol = solution, job_id=solution.job_id, attempt_num=solution.attempt_num)
 
     #poll the tango server
     if solution.problem.autograde_problem:

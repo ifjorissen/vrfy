@@ -9,7 +9,7 @@ class CourseAdmin(admin.ModelAdmin):
     if len(sections) is 0:
       return None
     else:
-      return obj.section_set.all()
+      return ", ".join([str(section) for section in obj.section_set.all()]) 
 
 class SectionAdmin(admin.ModelAdmin):
     fieldsets = [

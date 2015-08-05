@@ -179,7 +179,7 @@ class StudentProblemFile(models.Model):
 class ProblemResult(models.Model):
   #tango jobid
   job_id = models.IntegerField(default=-1, verbose_name="Tango Job ID")
-
+  attempt_num = models.IntegerField(default=-1)
   sp_sol = models.ForeignKey(StudentProblemSolution, verbose_name="Student Problem Solution")
   problem = models.ForeignKey(Problem)
   sp_set = models.ForeignKey(StudentProblemSet, null=True, verbose_name="Student Problem Set")
@@ -200,11 +200,11 @@ class ProblemResult(models.Model):
   def sanity_log(self):
     return self.json_log["sanity_compare"]
 
-  def attempt(self):
-    if self.json_log is not None:
-      return self.json_log["info"]["attempts"]
-    else:
-      return "N/A"
+  # def attempt(self):
+  #   if self.json_log is not None:
+  #     return self.json_log["info"]["attempts"]
+  #   else:
+  #     return "N/A"
 
   def __str__(self):
     return self.problem.title + "_" + self.user.username + "_jID" + str(self.job_id)
