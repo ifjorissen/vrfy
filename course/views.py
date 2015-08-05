@@ -28,7 +28,7 @@ def _get_problem_set(pk, user): #if you want one problem set
   return get_object_or_404(ProblemSet, pk=pk, pub_date__lte=timezone.now(), cs_section__in=user.section_set.all())
 
 def _query_problem_sets(user):#if you want a queryset
-  return ProblemSet.objects.filter(pub_date__lte=timezone.now(), cs_section__in=user.section_set.all() )
+  return ProblemSet.objects.filter(pub_date__lte=timezone.now(), cs_section__in=user.section_set.all())
 
 def index(request):
   authenticate(request)

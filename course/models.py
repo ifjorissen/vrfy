@@ -200,12 +200,6 @@ class ProblemResult(models.Model):
   def sanity_log(self):
     return self.json_log["sanity_compare"]
 
-  # def attempt(self):
-  #   if self.json_log is not None:
-  #     return self.json_log["info"]["attempts"]
-  #   else:
-  #     return "N/A"
-
   def __str__(self):
     return self.problem.title + "_" + self.user.username + "_jID" + str(self.job_id)
 

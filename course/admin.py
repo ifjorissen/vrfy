@@ -45,7 +45,7 @@ class StudentProblemFileInline(admin.TabularInline):
   exclude = ('attempt_num',)
   model = models.StudentProblemFile
   extra = 0
-  
+
   def file_content(self, obj):
     f = File(obj.submitted_file)
     data = f.read()
@@ -127,7 +127,7 @@ class ProblemSetAdmin(admin.ModelAdmin):
 
 
   def cs_sections(self, obj):
-    return ", ".join([section for section in obj.cs_section.all()]) 
+    return ", ".join([str(section) for section in obj.cs_section.all()]) 
  
   def submissions(self, obj):
     student_solutions = obj.studentproblemset_set.all()
@@ -191,7 +191,7 @@ class StudentProblemSetAdmin(admin.ModelAdmin):
   list_filter = ('user__username', 'problem_set')
 
   def cs_sections(self, obj):
-    return ", ".join([section for section in obj.problem_set.cs_section_set.all()])  
+    return ", ".join([str(section) for section in obj.problem_set.cs_section_set.all()])  
 
   def date_due(self, obj):
     return obj.problem_set.due_date
@@ -229,7 +229,7 @@ class StudentProblemSolutionAdmin(admin.ModelAdmin):
     return obj.student_problem_set.problem_set
 
   def cs_sections(self, obj):
-    return ", ".join([section for section in obj.student_problem_set.problem_set.cs_section.all()])  
+    return ", ".join([str(section) for section in obj.student_problem_set.problem_set.cs_section.all()])  
 
   def user(self, obj):
     return obj.student_problem_set.user
@@ -271,7 +271,7 @@ class ProblemResultAdmin(admin.ModelAdmin):
   list_filter = ('user__username', 'problem')
 
   def cs_sections(self, obj):
-    return ", ".join([section for section in obj.sp_set.problem_set.cs_section.all()])  
+    return ", ".join([str(section) for section in obj.sp_set.problem_set.cs_section.all()])  
 
   # def attempt(self, obj):
   #   return obj.attempt()
