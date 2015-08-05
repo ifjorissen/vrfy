@@ -12,6 +12,12 @@ import sys
 sys.path.append("../")
 import vrfy.settings
 from util import tango
+from django.utils.html import format_html
+from django.utils.safestring import mark_safe
+
+from pygments import highlight
+from pygments.lexers import PythonLexer
+from pygments.formatters import HtmlFormatter
 
 admin.site.site_header = "Homework Administration"
 admin.site.site_title = "Homework Administration"
@@ -203,6 +209,11 @@ class StudentProblemSetAdmin(admin.ModelAdmin):
 
 @admin.register(models.StudentProblemSolution)
 class StudentProblemSolutionAdmin(admin.ModelAdmin):
+  class Media:
+    css = {
+        "all": ("course/css/pygments.css",)
+    }
+
   can_delete = False
   exclude = ('job_id',)
   readonly_fields = ('problem', 'job_id', 'attempt_num', 'submitted', 'cs_sections', 'user', 'problem_set', 'result_json', 'result_raw_output', 'submitted_code','latest_score', 'late')
@@ -219,14 +230,18 @@ class StudentProblemSolutionAdmin(admin.ModelAdmin):
 
   def submitted_code(self, obj):
     attempt = obj.attempt_num - 1
-    f = obj.studentproblemfile_set.filter(attempt_num=attempt)
-    print(f)
-    #get file content
-    code = []
-    for submission in f:
-      content = File(submission.submitted_file)
-      code = content.read()
-    return code
+    files = obj.studentproblemfile_set.filter(attempt_num=attempt)[0]
+    #get file content (assumes only one file submission)
+    submission = File(files.submitted_file)
+    code = submission.read()
+    submission.close()
+    pretty_code = highlight(code, PythonLexer(), HtmlFormatter(linenos="table"))
+    print(pretty_code)
+      # res = pretty_code
+    # return mark_safe(pretty_code)
+    return format_html('{}', mark_safe(pretty_code))
+
+  submitted_code.allow_tags=True
 
   def result_json(self, obj):
     result = obj.problemresult_set.get(job_id=obj.job_id)
