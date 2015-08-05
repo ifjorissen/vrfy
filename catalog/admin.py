@@ -1,6 +1,8 @@
 from django.contrib import admin
 from catalog.models import Course, Section
 # Register your models here.
+
+@admin.register(Course)
 class CourseAdmin(admin.ModelAdmin):
   list_display = ('title', 'sections')
 
@@ -11,11 +13,10 @@ class CourseAdmin(admin.ModelAdmin):
     else:
       return ", ".join([str(section) for section in obj.section_set.all()]) 
 
+@admin.register(Section)
 class SectionAdmin(admin.ModelAdmin):
-    fieldsets = [
+  fieldsets = [
     ('Course Info', {'fields': ['course', 'prof', 'start_date', 'end_date']}),
-    ('Enrolled Students', {'fields': ['enrolled', 'due_date']}),
+    ('Enrolled Students', {'fields': ['enrolled']}),
   ]
-
-admin.site.register(Course, CourseAdmin)
-admin.site.register(Section)
+  filter_vertical = ['enrolled']

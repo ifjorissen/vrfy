@@ -42,7 +42,7 @@ class StudentProblemSolutionInline(admin.TabularInline):
 class StudentProblemFileInline(admin.TabularInline):
   can_delete = False
   readonly_fields = ('required_problem_filename',  'submitted_file', 'file_content')
-  exclude = ('attempt_num',)
+  # exclude = ('attempt_num',)
   model = models.StudentProblemFile
   extra = 0
 
@@ -205,17 +205,28 @@ class StudentProblemSetAdmin(admin.ModelAdmin):
 class StudentProblemSolutionAdmin(admin.ModelAdmin):
   can_delete = False
   exclude = ('job_id',)
-  readonly_fields = ('problem', 'job_id', 'attempt_num', 'submitted', 'cs_sections', 'user', 'problem_set', 'result_json', 'result_raw_output', 'latest_score', 'late')
+  readonly_fields = ('problem', 'job_id', 'attempt_num', 'submitted', 'cs_sections', 'user', 'problem_set', 'result_json', 'result_raw_output', 'submitted_code','latest_score', 'late')
   fieldsets = [
     ('Solution Info', {'classes':('grp-collapse grp-open',), 'fields': ('problem', 'problem_set', 'latest_score', 'user',)}),
     ('Solution Detail', {'classes':('grp-collapse grp-closed',), 'fields': ('cs_sections', 'attempt_num', 'submitted', 'late', 'job_id',)}),
-    ('Most Recent Result', {'classes':('grp-collapse grp-open',), 'fields': ('result_json', 'result_raw_output')}),
+    ('Most Recent Result', {'classes':('grp-collapse grp-open',), 'fields': ('result_json', 'result_raw_output', 'submitted_code')}),
   ]
 
-  inlines = [StudentProblemFileInline]
+  # inlines = [StudentProblemFileInline]
   list_display = ('problem', 'cs_sections', 'user', 'student_problem_set', 'attempt_num', 'submitted', 'latest_score', 'late')
   list_filter = ('student_problem_set__user__username', 'student_problem_set')
   # search_fields = ('student_problem_set__user__username',)
+
+  def submitted_code(self, obj):
+    attempt = obj.attempt_num - 1
+    f = obj.studentproblemfile_set.filter(attempt_num=attempt)
+    print(f)
+    #get file content
+    code = []
+    for submission in f:
+      content = File(submission.submitted_file)
+      code = content.read()
+    return code
 
   def result_json(self, obj):
     result = obj.problemresult_set.get(job_id=obj.job_id)
