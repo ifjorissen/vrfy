@@ -35,7 +35,7 @@ def index(request):
   #problems due in the next week
   ps_set = _query_problem_sets(request.user).filter(due_date__range=(timezone.now(), (timezone.now()+datetime.timedelta(days=7)))).order_by('due_date')
   #student problems submitted in the last 24hrs
-  stu_sol_set = StudentProblemSolution.objects.filter(submitted__gte=(timezone.now()-datetime.timedelta(days=1)))
+  stu_sol_set = StudentProblemSolution.objects.filter(submitted__gte=(timezone.now()-datetime.timedelta(days=2)))
   context = {'upcoming_problem_sets': ps_set, 'recently_submitted_solutions': stu_sol_set}
   return render(request, 'course/index.html', context)
 

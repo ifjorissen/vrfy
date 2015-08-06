@@ -10,7 +10,7 @@ import os
 import os.path
 import vrfy.settings
 from django.utils import timezone
-from util import tango
+from util import tango, pretty_code
 
 def student_file_upload_path(instance, filename):
   #filepath should be of the form: course/folio/user/problem_set/problem/filename  (maybe add attempt number)
@@ -169,6 +169,31 @@ class StudentProblemSolution(models.Model):
     else:
       return 0
 
+  def get_user(self):
+    return self.student_problem_set.user
+  get_user.short_description = "user"
+
+  def get_problemset(self):
+    return self.student_problem_set.problem_set
+  get_problemset.short_description = "Problem Set"
+
+
+  def latest_score(self):
+    result_obj = self.problemresult_set.get(job_id=self.job_id)
+    score = result_obj.get_score()
+    return score
+
+  def submitted_code(self):
+    attempt = self.attempt_num - 1
+    files = self.studentproblemfile_set.filter(attempt_num=attempt)[0]
+    #get file content (assumes only one file submission)
+    submission = File(files.submitted_file)
+    code = submission.read()
+    submission.close()
+    code = pretty_code.python_prettify(code)
+    return code
+
+
   
 class StudentProblemFile(models.Model):
   required_problem_filename = models.ForeignKey(RequiredProblemFilename, null=True)
@@ -199,6 +224,12 @@ class ProblemResult(models.Model):
 
   def sanity_log(self):
     return self.json_log["sanity_compare"]
+
+  def get_score(self):
+    if self.problem.autograde_problem:
+      return self.score
+    else:
+      return "Not Autograded"
 
   def __str__(self):
     return self.problem.title + "_" + self.user.username + "_jID" + str(self.job_id)
