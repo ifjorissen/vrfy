@@ -24,8 +24,8 @@ def get_user(request):
     user = CSUser.get_ldap_user(username = name)
 
   # If that fails, raise an error
-  except Exception:
-  	return HttpResponse('Unauthorized', status=401)
+  #except Exception:
+  #  return HttpResponse('Unauthorized', status=401)
       # raise Http401('Something went wrong getting the user named %s' % name)
   return user
 
