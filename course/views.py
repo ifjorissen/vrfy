@@ -25,10 +25,10 @@ MAX_ADDITIONAL_FILES = 7
 
 #these helper functions enforce the universal restrictions on what problemsets a user can get
 def _get_problem_set(pk, user): #if you want one problem set
-  return get_object_or_404(ProblemSet, pk=pk, pub_date__lte=timezone.now(), cs_section__in=user.section_set.all())
+  return get_object_or_404(ProblemSet, pk=pk, pub_date__lte=timezone.now(), cs_section__in=user.enrolled.all())
 
 def _query_problem_sets(user):#if you want a queryset
-  return ProblemSet.objects.filter(pub_date__lte=timezone.now(), cs_section__in=user.section_set.all() )
+  return ProblemSet.objects.filter(pub_date__lte=timezone.now(), cs_section__in=user.enrolled.all())
 
 def index(request):
   authenticate(request)
@@ -116,7 +116,7 @@ def problem_submit(request, ps_id, p_id):
     mytimestamp = None
     if not problem.autograde_problem: #if its not being autograded, we should set the timestamp here; if it is, tango will set it
       mytimestamp = timezone.now()
-    prob_result = ProblemResult.objects.create(sp_sol=student_psol, sp_set=student_ps_sol, user=request.user, problem=problem, timestamp=mytimestamp)
+    prob_result = ProblemResult.objects.create(attempt_num=student_psol.attempt_num, sp_sol=student_psol, sp_set=student_ps_sol, user=request.user, problem=problem, timestamp=mytimestamp)
     
     additional_files = 0
     files = []#for the addJob
@@ -235,7 +235,7 @@ def _get_problem_result(solution,request):
   ps = solution.student_problem_set.problem_set
   if solution.submitted:
 
-    prob_result = ProblemResult.objects.filter(sp_sol = solution, job_id=solution.job_id).latest('timestamp')
+    prob_result = ProblemResult.objects.get(sp_sol = solution, job_id=solution.job_id, attempt_num=solution.attempt_num)
 
     #poll the tango server
     if solution.problem.autograde_problem:
