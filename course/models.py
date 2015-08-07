@@ -138,12 +138,19 @@ class StudentProblemSet(models.Model):
   problem_set = models.ForeignKey(ProblemSet)
   user = models.ForeignKey('generic.CSUser', null=True)
   submitted = models.DateTimeField('date submitted', null=True)
+
+  def problems_completed(self):
+    solutions = self.studentproblemsolution_set.all()
+    problems = self.problem_set.problems.all()
+    return "{!r} of {!r}".format(len(solutions), len(problems))
   
   def all_submitted(self):
-    for s_prob in self.studentproblemsolution_set.all():
-      if not s_prob.submitted:
-        return False
-    return True
+    problems = self.problem_set.problems.all()
+    solutions = self.studentproblemsolution_set.all()
+    if len(problems) == len(solutions):
+      return True
+    else:
+      return False
   
   def __str__(self): 
     return self.problem_set.title + " - " + self.user.username
@@ -163,9 +170,8 @@ class StudentProblemSolution(models.Model):
   def is_late(self):
     ps_due_date = self.student_problem_set.problem_set.due_date
     submit_date = self.submitted
-    if submit_date is not None:
-      if submit_date > ps_due_date:
-        return 1
+    if submit_date > ps_due_date:
+      return 1
     else:
       return 0
 
@@ -193,7 +199,13 @@ class StudentProblemSolution(models.Model):
     code = pretty_code.python_prettify(code)
     return code
 
-
+  def cs_section(self):
+    user = self.get_user()
+    cs_sections = self.get_problemset().cs_section.all()
+    print(user.enrolled.all())
+    print(cs_sections)
+    section = set(user.enrolled.all()).intersection(cs_sections)
+    return section.pop()
   
 class StudentProblemFile(models.Model):
   required_problem_filename = models.ForeignKey(RequiredProblemFilename, null=True)
@@ -232,7 +244,7 @@ class ProblemResult(models.Model):
       return "Not Autograded"
 
   def __str__(self):
-    return self.problem.title + "_" + self.user.username + "_jID" + str(self.job_id)
+    return self.problem.title + "_" + self.user.username + "_jobID" + str(self.job_id)
 
 #for testrunner files like session.py or sanity.py
 class GraderLib(models.Model):

@@ -8,7 +8,7 @@ import shutil
 import os
 import json
 from django.core.files import File
-
+import datetime
 import sys
 sys.path.append("../")
 import vrfy.settings
@@ -188,15 +188,11 @@ class StudentProblemSetAdmin(admin.ModelAdmin):
   list_filter = ('user__username', 'problem_set')
 
   def cs_sections(self, obj):
-    return ", ".join([str(section) for section in obj.problem_set.cs_section_set.all()])  
+    return ", ".join([str(section) for section in obj.problem_set.cs_section.all()])  
 
   def date_due(self, obj):
     return obj.problem_set.due_date
 
-  def problems_completed(self, obj):
-    solutions = obj.studentproblemsolution_set.all()
-    problems = obj.problem_set.problems.all()
-    return "{!r} of {!r}".format(len(solutions), len(problems))
 
 @admin.register(models.StudentProblemSolution)
 class StudentProblemSolutionAdmin(admin.ModelAdmin):
@@ -208,26 +204,27 @@ class StudentProblemSolutionAdmin(admin.ModelAdmin):
 
   can_delete = False
   exclude = ('job_id',)
-  readonly_fields = ('problem', 'job_id', 'attempt_num', 'submitted', 'cs_sections', 'get_user', 'get_problemset', 'result_json', 'result_raw_output', 'submitted_code','latest_score', 'late')
+  readonly_fields = ('problem', 'job_id', 'attempt_num', 'submitted', 'cs_section', 'get_user', 'get_problemset', 'result_json', 'result_raw_output', 'submitted_code','latest_score', 'late')
   fieldsets = [
     ('Solution Info', {'classes':('grp-collapse grp-open',), 'fields': ('problem', 'get_problemset', 'latest_score', 'get_user',)}),
-    ('Solution Detail', {'classes':('grp-collapse grp-closed',), 'fields': ('cs_sections', 'attempt_num', 'submitted', 'late', 'job_id',)}),
+    ('Solution Detail', {'classes':('grp-collapse grp-closed',), 'fields': ('cs_section', 'attempt_num', 'submitted', 'late', 'job_id',)}),
     ('Most Recent Result', {'classes':('grp-collapse grp-open',), 'fields': ('result_json', 'result_raw_output', 'submitted_code')}),
   ]
 
   # inlines = [StudentProblemFileInline]
-  list_display = ('problem', 'cs_sections', 'get_user', 'get_problemset', 'attempt_num', 'submitted', 'latest_score', 'late')
+  list_display = ('problem', 'cs_section', 'get_user', 'get_problemset', 'attempt_num', 'submitted', 'latest_score', 'late')
   list_filter = ('student_problem_set__user__username', 'student_problem_set__problem_set')
   # search_fields = ('student_problem_set__user__username',)
 
   def export_csv(self, request, queryset):
-    print("exporting to csv ...")
+    date = datetime.datetime.now()
+    filename = "studentsolutions-{}".format(date.strftime("%d_%m_%y"))
     response = HttpResponse(content_type="text/csv")
-    response['Content-Disposition'] = 'attachment; filename="somefilename.csv"'
+    response['Content-Disposition'] = 'attachment; filename="{}.csv"'.format(filename)
     writer = csv.writer(response)
-    writer.writerow(['Problem Name', 'Problem Set', 'Attempts Made', 'Latest Score', 'Submitted On', 'User',])
+    writer.writerow(['Problem Name', 'Problem Set', 'Course:Section', 'Attempts Made', 'Latest Score', 'User', 'Submitted On', 'Late'])
     for obj in queryset:
-      writer.writerow([obj.problem, obj.get_problemset(), obj.attempt_num, obj.latest_score(), obj.submitted])
+      writer.writerow([obj.problem, obj.get_problemset(), obj.cs_section(), obj.attempt_num, obj.latest_score(), obj.get_user(), obj.submitted, self.late(obj)])
     # writer.writerow(['Second row', 'A', 'B', 'C', '"Testing"', "Here's a quote"])
     return response
 
@@ -245,18 +242,14 @@ class StudentProblemSolutionAdmin(admin.ModelAdmin):
 
   # def problem_set(self, obj):
   #   return obj.student_problem_set.problem_set
-
-  def cs_sections(self, obj):
-    return ", ".join([str(section) for section in obj.student_problem_set.problem_set.cs_section.all()])  
+  # def cs_sections(self, obj):
+  #   return ", ".join([str(section) for section in obj.student_problem_set.problem_set.cs_section.all()])  
 
   def late(self, obj):
-    if obj.submitted is not None:
-      if obj.is_late():
-        return 'Yes'
-      else:
-        return 'No'
+    if obj.is_late():
+      return 'Yes'
     else:
-      return 'N/A'
+      return 'No'
 
 @admin.register(models.GraderLib)
 class GraderLibAdmin(admin.ModelAdmin):
@@ -282,9 +275,6 @@ class ProblemResultAdmin(admin.ModelAdmin):
 
   def cs_sections(self, obj):
     return ", ".join([str(section) for section in obj.sp_set.problem_set.cs_section.all()])  
-
-  # def attempt(self, obj):
-  #   return obj.attempt()
 
   def late(self, obj):
     if obj.sp_sol.submitted is not None:

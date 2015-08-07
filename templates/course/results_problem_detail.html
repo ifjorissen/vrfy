@@ -3,15 +3,14 @@
 <section class="problem-set">
 <p>If the results aren't there or haven't changed since your last submission, try refreshing the page in 30 seconds</p>
 
-
 {% if result %}
-  <section id="solution-{{solution.id}}" class="panel panel-default">
+  <section id="result-{{result.id}}" class="panel panel-default">
     <div class="panel-heading">
-      <h3><span role="button" data-toggle="collapse" data-parent="#solution-{{solution.id}}" href="#collapse-solution-{{solution.id}}" aria-expanded="true">
+      <h3><span role="button" data-toggle="collapse" data-parent="#result-{{result.id}}" href="#collapse-result-{{result.id}}" aria-expanded="true">
         {{ solution.problem.title }}</span><span class="pull-right badge">{{result.score}}</span></h3>
     </div>
-    <div id="collapse-solution-{{solution.id}}" class="panel-body panel-collapse collapse in" role="tabpanel">
-      <h4>Attempts: {{solution.attempt_num}}</h4>
+    <div id="collapse-result-{{result.id}}" class="panel-body panel-collapse collapse in" role="tabpanel">
+      <h4>Attempts: {{result.attempt_num}}</h4>
       <h4>Score: {{result.score}}</h4>
       {% if result.external_log %}
       <h4>Comments:</h4>
