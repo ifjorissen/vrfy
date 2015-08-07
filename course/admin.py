@@ -204,11 +204,11 @@ class StudentProblemSolutionAdmin(admin.ModelAdmin):
 
   can_delete = False
   exclude = ('job_id',)
-  readonly_fields = ('problem', 'job_id', 'attempt_num', 'submitted', 'cs_section', 'get_user', 'get_problemset', 'result_json', 'result_raw_output', 'submitted_code','latest_score', 'late')
+  readonly_fields = ('problem', 'job_id', 'attempt_num', 'submitted', 'cs_section', 'get_user', 'get_problemset', 'result_json', 'result_raw_output', 'submitted_code_table','latest_score', 'late')
   fieldsets = [
     ('Solution Info', {'classes':('grp-collapse grp-open',), 'fields': ('problem', 'get_problemset', 'latest_score', 'get_user',)}),
-    ('Solution Detail', {'classes':('grp-collapse grp-closed',), 'fields': ('cs_section', 'attempt_num', 'submitted', 'late', 'job_id',)}),
-    ('Most Recent Result', {'classes':('grp-collapse grp-open',), 'fields': ('result_json', 'result_raw_output', 'submitted_code')}),
+    ('Solution Detail', {'classes':('grp-collapse grp-open',), 'fields': ('cs_section', 'attempt_num', 'submitted', 'late', 'job_id',)}),
+    ('Most Recent Result', {'classes':('grp-collapse grp-open',), 'fields': (('submitted_code_table','result_json'), 'result_raw_output',)}),
   ]
 
   # inlines = [StudentProblemFileInline]
@@ -225,12 +225,9 @@ class StudentProblemSolutionAdmin(admin.ModelAdmin):
     writer.writerow(['Problem Name', 'Problem Set', 'Course:Section', 'Attempts Made', 'Latest Score', 'User', 'Submitted On', 'Late'])
     for obj in queryset:
       writer.writerow([obj.problem, obj.get_problemset(), obj.cs_section(), obj.attempt_num, obj.latest_score(), obj.get_user(), obj.submitted, self.late(obj)])
-    # writer.writerow(['Second row', 'A', 'B', 'C', '"Testing"', "Here's a quote"])
     return response
 
   export_csv.short_description = "Export Selected to CSV"
-
-  # submitted_code.allow_tags=True
 
   def result_json(self, obj):
     result = obj.problemresult_set.get(job_id=obj.job_id)

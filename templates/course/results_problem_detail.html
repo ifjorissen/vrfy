@@ -1,35 +1,49 @@
 {% extends 'course/base.html' %}
+{% load static %}
+{% block stylesheets %}
+  <link href="{% static 'course/css/pygments.css' %}" rel="stylesheet">
+{% endblock %}
 {% block content %}
-<section class="problem-set">
-<p>If the results aren't there or haven't changed since your last submission, try refreshing the page in 30 seconds</p>
+<section class="col-sm-12 result-wrapper">
+  <div class="row">
+  <p class="col-sm-12 lead">If the results aren't there or haven't changed since your last submission, try refreshing the page in 30 seconds</p>
+  </div>
+  <section class="row">
+    <section class="col-sm-12 col-md-6 col-lg-8 problem-set">
+    {% if result %}
+      <section id="result-{{result.id}}" class="panel panel-default">
+        <div class="panel-heading">
+          <h3><span role="button" data-toggle="collapse" data-parent="#result-{{result.id}}" href="#collapse-result-{{result.id}}" aria-expanded="true">
+            {{ solution.problem.title }}</span><span class="pull-right small">Score: {{result.score}}/10</span></h3>
+        </div>
+        <div id="collapse-result-{{result.id}}" class="panel-body panel-collapse collapse in" role="tabpanel">
+          <h4>Attempts: {{result.attempt_num}}</h4>
+          <h4>Score: {{result.score}}</h4>
+          {% if result.external_log %}
+          <h4>Comments:</h4>
+          <ul class="list-group">
+          {% for msg in result.external_log %}
+            <li class="list-group-item">{{ msg }}</li>
+          {% endfor %}
+          </ul>
+          {% endif %}
+        </div>
+      </section>
+    {% else %}
+      <section id="solution-{{solution.id}}" class="panel panel-default">
+        <div class="panel-heading">
+          <h3><span>You have not attempted {{ solution.problem.title }} yet </span></h3>
+        </div>
+        <div class="panel-body" >
+          <p>No results Available -- try the problem! </p>
+        </div>
+      </section>
+    {% endif %}
+    </section>
 
-{% if result %}
-  <section id="result-{{result.id}}" class="panel panel-default">
-    <div class="panel-heading">
-      <h3><span role="button" data-toggle="collapse" data-parent="#result-{{result.id}}" href="#collapse-result-{{result.id}}" aria-expanded="true">
-        {{ solution.problem.title }}</span><span class="pull-right badge">{{result.score}}</span></h3>
-    </div>
-    <div id="collapse-result-{{result.id}}" class="panel-body panel-collapse collapse in" role="tabpanel">
-      <h4>Attempts: {{result.attempt_num}}</h4>
-      <h4>Score: {{result.score}}</h4>
-      {% if result.external_log %}
-      <h4>Comments:</h4>
-      <ul class="list-group">
-      {% for msg in result.external_log %}
-        <li class="list-group-item">{{ msg }}</li>
-      {% endfor %}
-      </ul>
-      {% endif %}
-    </div>
+    <section class="code col-sm-12 col-md-6 col-lg-4">
+      {{solution.submitted_code}}
+    </section>
   </section>
-{% else %}
-  <section id="solution-{{solution.id}}" class="panel panel-default">
-    <div class="panel-heading">
-      <h3><span>You have not attempted {{ solution.problem.title }} yet </span></h3>
-    </div>
-    <div class="panel-body" >
-      <p>No results Available -- try the problem! </p>
-    </div>
-  </section>
-{% endif %}
+</section>
 {% endblock content %}

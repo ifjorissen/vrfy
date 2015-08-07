@@ -34,9 +34,17 @@ def index(request):
   authenticate(request)
   #problems due in the next week
   ps_set = _query_problem_sets(request.user).filter(due_date__range=(timezone.now(), (timezone.now()+datetime.timedelta(days=7)))).order_by('due_date')
+  ps_rs_dict = {}
+  for ps in ps_set:
+    try:
+      sp_set = StudentProblemSet.objects.get(problem_set=ps, user=request.user)
+      ps_rs_dict[ps] = sp_set
+    except StudentProblemSet.DoesNotExist:
+      ps_rs_dict[ps] = None
+
   #student problems submitted in the last 24hrs
-  stu_sol_set = StudentProblemSolution.objects.filter(submitted__gte=(timezone.now()-datetime.timedelta(days=2)))
-  context = {'upcoming_problem_sets': ps_set, 'recently_submitted_solutions': stu_sol_set}
+  recent_solutions = StudentProblemSolution.objects.filter(submitted__gte=(timezone.now()-datetime.timedelta(days=1)))
+  context = {'upcoming_sets_results_dict': ps_rs_dict, 'recently_submitted_solutions': recent_solutions}
   return render(request, 'course/index.html', context)
 
 def attempt_problem_set(request, ps_id):

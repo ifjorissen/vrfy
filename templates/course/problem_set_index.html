@@ -2,57 +2,18 @@
 {% block content %}
 <section class="col-sm-12">
 <div class="panel-group" role="tablist" aria-multiselectable="true">
-  {% for ps, s_sol in ps_dict.items %}
-  {% if ps.is_already_due and not s_sol or s_sol.all_submitted %} 
+  {% for ps, sp_set in ps_dict.items %}
+  {% if ps.is_already_due and not sp_set or sp_set.all_submitted %} 
   <div class="panel panel-danger" id="problemset-{{ps.id}}"> 
   {% else %}
   <div class="panel panel-default" id="problemset-{{ps.id}}">
   {% endif %}
-    <div class="panel-heading" role="tab">
-      <div class="flex-panel-wrapper">
-        <div>
-        <p class = "h4">
-          {{ ps.title }} 
-        </p>
-        {% if s_sol %}
-        <p class="h5">
-         Attempted {{ s_sol.problems_completed}}
-        </p>
-        {% endif %}
-        <p class="h5">
-          {% if ps.is_already_due %} 
-          <span class="glyphicon glyphicon-bell">
-          {% else %} 
-          <span class="glyphicon glyphicon-time"> 
-          {% endif %}
-          </span> Due {{ps.due_date}}
-        </p>
-        </div>
-        {% if s_sol and s_sol.all_submitted %}
-          <div class="btn-group" role="group" aria-label="...">
-            <a role="button" href="{% url 'course:attempt_problem_set' ps.id %}" type="button" class="btn btn-default"><span class="glyphicon glyphicon-repeat"></span> re-attempt </a>
-            <a role="button" type="button" href="{% url 'course:results_detail' ps.id %}" class="btn btn-default">
-              <span class="glyphicon glyphicon-eye-open"></span> results
-            </a>
-          </div>
-          {% elif s_sol and not s_sol.all_submitted %}
-          <div class="btn-group" role="group" aria-label="...">
-            <a role="button" href="{% url 'course:attempt_problem_set' ps.id %}" type="button" class="btn btn-default"><span class="glyphicon glyphicon-repeat"></span> finish this problem set </a>
-            <a role="button" type="button" href="{% url 'course:results_detail' ps.id %}" class="btn btn-default">
-              <span class="glyphicon glyphicon-eye-open"></span> results
-            </a>
-          </div>
-          {% else %}
-          <div class="btn-group" role="group" aria-label="...">
-            <a role="button" href="{% url 'course:attempt_problem_set' ps.id %}" type="button" class="btn btn-default">attempt problems</a>
-          </div>
-        {% endif %}
-        </div>
-      </div>
-    </div>
+  {% include 'course/includes/problemset_panel_header.html' %}
+  </div>
+
 <!--     <div id="collapse-problemset-{{ps.id}}" class="panel-collapse collapse" role="tabpanel" aria-labelledby="problemset-{{ps.id}}">
       <div class="list-group">
-      {% if s_sol %}
+      {% if sp_set %}
         {% for solution in s_sol.studentproblemsolution_set.all %}
         {% if solution.submitted %}
           <li class="list-group-item"><span>{{ solution.problem.title }}</span><span class="small pull-right">attempted on {{solution.submitted}}</span></li>

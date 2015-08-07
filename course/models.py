@@ -189,6 +189,18 @@ class StudentProblemSolution(models.Model):
     score = result_obj.get_score()
     return score
 
+  def submitted_code_table(self):
+    attempt = self.attempt_num - 1
+    files = self.studentproblemfile_set.filter(attempt_num=attempt)[0]
+    #get file content (assumes only one file submission)
+    submission = File(files.submitted_file)
+    code = submission.read()
+    submission.close()
+    code = pretty_code.python_prettify(code, "table")
+    return code
+
+  submitted_code_table.short_description = "Submitted Code"
+
   def submitted_code(self):
     attempt = self.attempt_num - 1
     files = self.studentproblemfile_set.filter(attempt_num=attempt)[0]
@@ -196,14 +208,12 @@ class StudentProblemSolution(models.Model):
     submission = File(files.submitted_file)
     code = submission.read()
     submission.close()
-    code = pretty_code.python_prettify(code)
+    code = pretty_code.python_prettify(code, "inline")
     return code
 
   def cs_section(self):
     user = self.get_user()
     cs_sections = self.get_problemset().cs_section.all()
-    print(user.enrolled.all())
-    print(cs_sections)
     section = set(user.enrolled.all()).intersection(cs_sections)
     return section.pop()
   

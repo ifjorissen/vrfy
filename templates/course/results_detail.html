@@ -1,6 +1,6 @@
 {% extends 'course/base.html' %}
 {% block content %}
-<section class="problem-set">
+<section class="problem-set col-sm-12">
 <section class="ps-info page-header">
 <p class="h1">{{ sps.problem_set.title }} </p>
 <p class="h2" style="margin-top:0;"><small><span class="glyphicon glyphicon-time"></span> Due {{ sps.problem_set.due_date }}</small></p>
@@ -35,7 +35,7 @@
     <div class="panel-body" >
       <p>Check in with your professor to recieve feedback </p>
     </div>
-  </section>
+</section>
 {% else %}
   <section id="problem-{{problem.id}}" class="panel panel-default">
     <div class="panel-heading">
@@ -47,4 +47,5 @@
   </section>
 {% endif %}
 {% endfor %}
+</section>
 {% endblock content %}

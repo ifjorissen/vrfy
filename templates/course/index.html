@@ -1,52 +1,58 @@
 {% extends 'course/base.html' %}
 
 {% block content %}
-<section>
-  {% if upcoming_problem_sets %}
-    <h2>Due Soon:</h2>
-  {% endif %}
-  {% for ps in upcoming_problem_sets %}
-    <div class="panel panel-default" id="problemset-{{ps.id}}">
-      <div class="panel-heading" role="tab">
-        <div class="flex-panel-wrapper">
-          <div>
-            <p class = "h4">{{ ps.title }}</p>
-            <p class="h5">
-              {% if ps.is_already_due %} <span class="glyphicon glyphicon-bell">
-              {% else %} <span class="glyphicon glyphicon-time"> {% endif %}
-              </span> 
-              Due {{ps.due_date}}
-            </p>
-          </div>
-          <div class="btn-group" role="group" aria-label="...">
-            <a role="button" href="{% url 'course:attempt_problem_set' ps.id %}" type="button" class="btn btn-default">attempt problems</a>
+<section class="col-sm-12">
+  <section class = "row">
+    <section class = "col-sm-12 col-md-8">
+      <h2>Due Soon:</h2>
+      <div class="panel-group" role="tablist" aria-multiselectable="true">
+      {% for ps, sp_set in upcoming_sets_results_dict.items %}
+        <div class="panel panel-default" id="problemset-{{ps.id}}">
+          {% include 'course/includes/problemset_panel_header.html' %}
+        </div>
+      {% empty %}
+        <div class="panel panel-default">
+          <div class="panel-heading" role="tab">
+            <div class="flex-panel-wrapper">
+              <p class = "h4">No Upcoming Problem Sets</p>
+            </div>
           </div>
         </div>
+      {% endfor %}
       </div>
-    </div>
-  {% endfor %}
+    </section>
+    <section class="col-sm-12 col-md-4">
+      <h2>Recently Submitted:</h2>
+      <ul class="list-group">
+        {% for sol in recently_submitted_solutions %}
+          <li class="list-group-item">
+            <div class="flex-panel-wrapper">
+              <div>
+                <p class = "h4">{{ sol.problem.title }}</p>
+                <p class="h5"> 
+                  Latest Score {{sol.latest_score}}/10
+                </p>
+                <p class="h5"> 
+                  <span class="glyphicon glyphicon-time"></span>
+                  Submitted {{sol.submitted}}
+                </p>
+              </div>
+              <div>
+                <a role="button" type="button" href="{% url 'course:results_problem_detail' sol.student_problem_set.problem_set.id sol.problem.id %}" class="btn btn-default">
+                  <span class="glyphicon glyphicon-eye-open"></span> results
+                </a>
+              </div>
+            </div>
+          </li>
+        {% empty %}
+        <li class="list-group-item">
+            <div class="flex-panel-wrapper">
+                <p class = "h4">You haven't submitted anything in the last 24 hours! </p>
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+    </section>
+  </section>
 </section>
-{% if recently_submitted_solutions %}
-  <h2>Recently Submitted:</h2>
-{% endif %}
-<ul class="list-group">
-  {% for sol in recently_submitted_solutions %}
-    <li class="list-group-item">
-      <div class="flex-panel-wrapper">
-        <div>
-          <p class = "h4">{{ sol.problem.title }}</p>
-          <p class="h5"> 
-            <span class="glyphicon glyphicon-time"></span>
-            Submitted {{sol.submitted}}
-          </p>
-        </div>
-        <div>
-          <a role="button" type="button" href="{% url 'course:results_problem_detail' sol.student_problem_set.problem_set.id sol.problem.id %}" class="btn btn-default">
-            <span class="glyphicon glyphicon-eye-open"></span> results
-          </a>
-        </div>
-      </div>
-    </li>
-  {% endfor %}
-</ul>
 {% endblock %}
