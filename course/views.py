@@ -175,15 +175,10 @@ def problem_submit(request, ps_id, p_id):
       if problem.autograde_problem:
         r = tango.upload(problem, ps, localfile, f.read())
         files.append({"localFile" : localfile, "destFile":name})#for the addJob command
-      try:
-        prob_file = StudentProblemFile.objects.filter(required_problem_filename=required_pf, student_problem_solution = student_psol).latest('attempt_num')
-        attempts = prob_file.attempt_num + 1
+
+        attempts = student_psol.attempt_num
         new_prob_file = StudentProblemFile.objects.create(required_problem_filename=required_pf, student_problem_solution = student_psol, submitted_file=f, attempt_num = attempts)
         new_prob_file.save()
-
-      except StudentProblemFile.DoesNotExist:
-        prob_file = StudentProblemFile.objects.create(required_problem_filename=required_pf, student_problem_solution = student_psol, submitted_file=f)
-        prob_file.save()
 
     if problem.autograde_problem:#these operatons are only required for autograding
       #add grader libraries

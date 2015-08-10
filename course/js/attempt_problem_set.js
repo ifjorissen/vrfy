@@ -13,6 +13,7 @@ $(document).ready(function(){
 $('#soln_form').submit(function () {
   returnval = true
   $("input[type=file]").each(function(index, element){
+    //checking for not uploaded files
     if (element.value === '') {
       alert('You forgot to upload a file!');
       returnval = false;
