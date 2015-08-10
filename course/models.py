@@ -10,7 +10,7 @@ import os
 import os.path
 import vrfy.settings
 from django.utils import timezone
-from util import tango
+from util import tango, pretty_code
 
 def student_file_upload_path(instance, filename):
   #filepath should be of the form: course/folio/user/problem_set/problem/filename  (maybe add attempt number)
@@ -138,12 +138,19 @@ class StudentProblemSet(models.Model):
   problem_set = models.ForeignKey(ProblemSet)
   user = models.ForeignKey('generic.CSUser', null=True)
   submitted = models.DateTimeField('date submitted', null=True)
+
+  def problems_completed(self):
+    solutions = self.studentproblemsolution_set.all()
+    problems = self.problem_set.problems.all()
+    return "{!r} of {!r}".format(len(solutions), len(problems))
   
   def all_submitted(self):
-    for s_prob in self.studentproblemsolution_set.all():
-      if not s_prob.submitted:
-        return False
-    return True
+    problems = self.problem_set.problems.all()
+    solutions = self.studentproblemsolution_set.all()
+    if len(problems) == len(solutions):
+      return True
+    else:
+      return False
   
   def __str__(self): 
     return self.problem_set.title + " - " + self.user.username
@@ -163,12 +170,54 @@ class StudentProblemSolution(models.Model):
   def is_late(self):
     ps_due_date = self.student_problem_set.problem_set.due_date
     submit_date = self.submitted
-    if submit_date is not None:
-      if submit_date > ps_due_date:
-        return 1
+    if submit_date == None:
+      return 0
+    if submit_date > ps_due_date:
+      return 1
     else:
       return 0
 
+  def get_user(self):
+    return self.student_problem_set.user
+  get_user.short_description = "user"
+
+  def get_problemset(self):
+    return self.student_problem_set.problem_set
+  get_problemset.short_description = "Problem Set"
+
+
+  def latest_score(self):
+    result_obj = self.problemresult_set.get(job_id=self.job_id)
+    score = result_obj.get_score()
+    return score
+
+  def submitted_code_table(self):
+    attempt = self.attempt_num - 1
+    files = self.studentproblemfile_set.filter(attempt_num=attempt)[0]
+    #get file content (assumes only one file submission)
+    submission = File(files.submitted_file)
+    code = submission.read()
+    submission.close()
+    code = pretty_code.python_prettify(code, "table")
+    return code
+
+  submitted_code_table.short_description = "Submitted Code"
+
+  def submitted_code(self):
+    attempt = self.attempt_num - 1
+    files = self.studentproblemfile_set.filter(attempt_num=attempt)[0]
+    #get file content (assumes only one file submission)
+    submission = File(files.submitted_file)
+    code = submission.read()
+    submission.close()
+    code = pretty_code.python_prettify(code, "inline")
+    return code
+
+  def cs_section(self):
+    user = self.get_user()
+    cs_sections = self.get_problemset().cs_section.all()
+    section = set(user.enrolled.all()).intersection(cs_sections)
+    return section.pop()
   
 class StudentProblemFile(models.Model):
   required_problem_filename = models.ForeignKey(RequiredProblemFilename, null=True)
@@ -200,8 +249,14 @@ class ProblemResult(models.Model):
   def sanity_log(self):
     return self.json_log["sanity_compare"]
 
+  def get_score(self):
+    if self.problem.autograde_problem:
+      return self.score
+    else:
+      return "Not Autograded"
+
   def __str__(self):
-    return self.problem.title + "_" + self.user.username + "_jID" + str(self.job_id)
+    return self.problem.title + "_" + self.user.username + "_jobID" + str(self.job_id)
 
 #for testrunner files like session.py or sanity.py
 class GraderLib(models.Model):

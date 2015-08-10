@@ -34,22 +34,45 @@ def index(request):
   authenticate(request)
   #problems due in the next week
   ps_set = _query_problem_sets(request.user).filter(due_date__range=(timezone.now(), (timezone.now()+datetime.timedelta(days=7)))).order_by('due_date')
+  ps_rs_dict = {}
+  for ps in ps_set:
+    try:
+      sp_set = StudentProblemSet.objects.get(problem_set=ps, user=request.user)
+      ps_rs_dict[ps] = sp_set
+    except StudentProblemSet.DoesNotExist:
+      ps_rs_dict[ps] = None
+
   #student problems submitted in the last 24hrs
-  stu_sol_set = StudentProblemSolution.objects.filter(submitted__gte=(timezone.now()-datetime.timedelta(days=1)))
-  context = {'upcoming_problem_sets': ps_set, 'recently_submitted_solutions': stu_sol_set}
+  recent_solutions = StudentProblemSolution.objects.filter(submitted__gte=(timezone.now()-datetime.timedelta(days=1)))
+  context = {'upcoming_sets_results_dict': ps_rs_dict, 'recently_submitted_solutions': recent_solutions}
   return render(request, 'course/index.html', context)
 
 def attempt_problem_set(request, ps_id):
+  '''
+  when a student attempts a problem set, try to get their solution set & solutions if they exist
+  '''
   authenticate(request)
   ps = _get_problem_set(ps_id, request.user)
-  sps_sol, sps_created = StudentProblemSet.objects.get_or_create(problem_set=ps, user=request.user)
-
   problem_solution_dict = {}
-  for problem in ps.problems.all():
-    #try to get the student solution
-    student_psol, s_created = StudentProblemSolution.objects.get_or_create(problem=problem, student_problem_set=sps_sol)
-    problem_solution_dict[problem] = student_psol
-  context = {'problem_set': ps, 'problem_set_dict':problem_solution_dict, 'additional_file_name':ADDITIONAL_FILE_NAME, 'max_additional_files':MAX_ADDITIONAL_FILES}
+  try: 
+    sp_set = StudentProblemSet.objects.get(problem_set=ps, user=request.user)
+    for problem in ps.problems.all():
+      try: 
+        student_psol = StudentProblemSolution.objects.get(problem=problem, student_problem_set=sp_set)
+      except StudentProblemSolution.DoesNotExist:
+        student_psol = None
+      problem_solution_dict[problem] = student_psol
+  except StudentProblemSet.DoesNotExist:
+    problem_solution_dict = {problem: None for problem in ps.problems.all()}
+
+  # for problem in ps.problems.all():
+  #   #try to get the student solution
+  #   try: 
+  #     student_psol = StudentProblemSolution.objects.get(problem=problem, student_problem_set=sp_set)
+  #   except StudentProblemSolution.DoesNotExist:
+  #     student_psol = None
+  #   problem_solution_dict[problem] = student_psol
+  context = {'problem_set': ps, 'problem_solution_dict':problem_solution_dict, 'additional_file_name':ADDITIONAL_FILE_NAME, 'max_additional_files':MAX_ADDITIONAL_FILES}
   return render(request, 'course/attempt_problem_set.html', context)
 
 def submit_success(request, ps_id, p_id):
@@ -102,11 +125,11 @@ def problem_submit(request, ps_id, p_id):
     problem = get_object_or_404(Problem, pk=p_id)
 
     #create / get the student problem set and update the submission time (reflects latest attempt)
-    student_ps_sol= StudentProblemSet.objects.get(problem_set=ps, user=request.user)
+    student_ps_sol, sp_set_created = StudentProblemSet.objects.get_or_create(problem_set=ps, user=request.user)
     student_ps_sol.submitted = timezone.now()
     student_ps_sol.save()
 
-    student_psol = StudentProblemSolution.objects.get(problem=problem, student_problem_set=student_ps_sol)
+    student_psol, sp_sol_created = StudentProblemSolution.objects.get_or_create(problem=problem, student_problem_set=student_ps_sol)
     student_psol.submitted = timezone.now()
     student_psol.attempt_num += 1 
     student_psol.save()
@@ -204,16 +227,22 @@ def results_detail(request, ps_id):
   authenticate(request)
   # logic to figure out if the results are availiable and if so, get them
   ps = _get_problem_set(ps_id, request.user)
-  student_ps = get_object_or_404(StudentProblemSet, problem_set=ps, user=request.user)
+  sp_set = get_object_or_404(StudentProblemSet, problem_set=ps, user=request.user)
   # result_set = get_object_or_404(ProblemResultSet, user=request.user, sp_set=student_ps, problem_set=ps)
   results_dict = {}
 
-  for solution in student_ps.studentproblemsolution_set.all():
-    results_dict[solution] = _get_problem_result(solution, request)
-    
+  # for solution in student_ps.studentproblemsolution_set.all():
+  #   results_dict[solution] = _get_problem_result(solution, request)
+  for problem in ps.problems.all():
+    try:
+      sp_sol = StudentProblemSolution.objects.get(student_problem_set=sp_set, problem=problem)
+      results_dict[problem] = _get_problem_result(sp_sol, request)
+    except StudentProblemSolution.DoesNotExist:
+      results_dict[problem] = None
+
   #make a result object
   #only send the data that the student should see
-  context = {'sps': student_ps, "ps_results" : results_dict}
+  context = {'sps': sp_set, "ps_results" : results_dict}
   return render(request, 'course/results_detail.html', context)
 
 def results_problem_detail(request, ps_id, p_id):
@@ -221,55 +250,54 @@ def results_problem_detail(request, ps_id, p_id):
   # logic to figure out if the results are availiable and if so, get them
   ps = _get_problem_set(ps_id, request.user)
   problem = get_object_or_404(Problem, pk=p_id)
-  student_ps = get_object_or_404(StudentProblemSet, problem_set=ps, user=request.user)
+  sp_set = get_object_or_404(StudentProblemSet, problem_set=ps, user=request.user)
   results_dict = {}
   # result_set, created = ProblemResultSet.objects.get_or_create(sp_set = student_ps, user=request.user, problem_set=ps)
-  solution = student_ps.studentproblemsolution_set.get(problem=problem)
+  sp_sol = get_object_or_404(StudentProblemSolution, student_problem_set=sp_set, problem=problem)
 
-  result = _get_problem_result(solution, request)
+  result = _get_problem_result(sp_sol, request)
   
-  context = {'solution': solution, "result" : result}
+  context = {'solution': sp_sol, "result" : result}
   return render(request, 'course/results_problem_detail.html', context)
 
 def _get_problem_result(solution,request):
+  '''
+  attempt to get the problem from tango if it's been autograded
+  if not, get the normal result
+  if the result doesn't exist, return none
+  '''
   ps = solution.student_problem_set.problem_set
-  if solution.submitted:
-
+  #poll the tango server
+  if solution.problem.autograde_problem:
     prob_result = ProblemResult.objects.get(sp_sol = solution, job_id=solution.job_id, attempt_num=solution.attempt_num)
-
-    #poll the tango server
-    if solution.problem.autograde_problem:
-      outputFile = slugify(ps.title) + "_" +slugify(solution.problem.title) + "-" + request.user.username
-      r = tango.poll(solution.problem, ps, outputFile)
-      raw_output = r.text
-      line = r.text.split("\n")[-2]#theres a line with an empty string after the last actual output line
-      tango_time = r.text.split("\n")[0].split("[")[1].split("]")[0] #the time is on the first line surrounded by brackets
-      tango_time = time.strftime("%Y-%m-%d %H:%M:%S", time.strptime(tango_time, '%a %b %d %H:%M:%S %Y'))
-      
-      if tango_time != str(prob_result.timestamp).split("+")[0]:
-        print("hello")
-        if "Autodriver: Job timed out after " in line: #thats the text that Tango outputs when a job times out
-          prob_result.score = 0
-          prob_result.json_log = {'score_sum':'0','external_log':["Program timed out after " + line.split(" ")[-2] + " seconds."]}
+    outputFile = slugify(ps.title) + "_" +slugify(solution.problem.title) + "-" + request.user.username
+    r = tango.poll(solution.problem, ps, outputFile)
+    raw_output = r.text
+    line = r.text.split("\n")[-2]#theres a line with an empty string after the last actual output line
+    tango_time = r.text.split("\n")[0].split("[")[1].split("]")[0] #the time is on the first line surrounded by brackets
+    tango_time = time.strftime("%Y-%m-%d %H:%M:%S", time.strptime(tango_time, '%a %b %d %H:%M:%S %Y'))
+    
+    if tango_time != str(prob_result.timestamp).split("+")[0]:
+      print("hello")
+      if "Autodriver: Job timed out after " in line: #thats the text that Tango outputs when a job times out
+        prob_result.score = 0
+        prob_result.json_log = {'score_sum':'0','external_log':["Program timed out after " + line.split(" ")[-2] + " seconds."]}
+        prob_result.timestamp = tango_time
+        prob_result.save()
+      else:
+        try:
+          log_data = json.loads(line)
+          #create the result object
+          prob_result.score = log_data["score_sum"]
+          prob_result.raw_output = raw_output
+          prob_result.json_log = log_data
           prob_result.timestamp = tango_time
           prob_result.save()
-        else:
-          try:
-            log_data = json.loads(line)
-            #create the result object
-            prob_result.score = log_data["score_sum"]
-            prob_result.raw_output = raw_output
-            prob_result.json_log = log_data
-            prob_result.timestamp = tango_time
-            prob_result.save()
-          except ValueError: #if the json isn't there, something went wrong when running the job, or the grader file messed up
-            raise Http404("Something went wrong. Make sure your code is bug free and resubmit. \nIf the problem persists, contact your professor or TA")
-    
-    else:
-      #special not-autograded stuff goes here
-      pass
-
+        except ValueError: #if the json isn't there, something went wrong when running the job, or the grader file messed up
+          raise Http404("Something went wrong. Make sure your code is bug free and resubmit. \nIf the problem persists, contact your professor or TA")
+  
   else:
-    prob_result = None
+    #special not-autograded stuff goes here
+    prob_result = ProblemResult.objects.get(sp_sol = solution, attempt_num=solution.attempt_num)
 
   return prob_result

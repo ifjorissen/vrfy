@@ -1,0 +1,40 @@
+<div class="panel-heading" role="tab">
+  <div class="flex-panel-wrapper">
+    <div>
+      <p class = "h4">{{ ps.title }}</p>
+      {% if sp_set %}
+      <p class="h5">
+       Attempted {{ sp_set.problems_completed}}
+      </p>
+      {% endif %}
+      <p class="h5">
+        {% if ps.is_already_due %}
+        <span class="glyphicon glyphicon-bell">
+        {% else %} 
+        <span class="glyphicon glyphicon-time"> 
+        {% endif %}
+        </span> 
+        Due {{ps.due_date}}
+      </p>
+    </div>
+{% if sp_set and sp_set.all_submitted %}
+  <div class="btn-group" role="group" aria-label="...">
+    <a role="button" href="{% url 'course:attempt_problem_set' ps.id %}" type="button" class="btn btn-default"><span class="glyphicon glyphicon-repeat"></span> re-attempt </a>
+    <a role="button" type="button" href="{% url 'course:results_detail' ps.id %}" class="btn btn-default">
+      <span class="glyphicon glyphicon-eye-open"></span> results
+    </a>
+  </div>
+  {% elif sp_set and not sp_set.all_submitted %}
+  <div class="btn-group" role="group" aria-label="...">
+    <a role="button" href="{% url 'course:attempt_problem_set' ps.id %}" type="button" class="btn btn-default"><span class="glyphicon glyphicon-repeat"></span> finish this problem set </a>
+    <a role="button" type="button" href="{% url 'course:results_detail' ps.id %}" class="btn btn-default">
+      <span class="glyphicon glyphicon-eye-open"></span> results
+    </a>
+  </div>
+  {% else %}
+  <div class="btn-group" role="group" aria-label="...">
+    <a role="button" href="{% url 'course:attempt_problem_set' ps.id %}" type="button" class="btn btn-default">attempt problems</a>
+  </div>
+{% endif %}
+  </div>
+</div>
