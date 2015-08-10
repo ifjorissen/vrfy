@@ -3,7 +3,9 @@
 <section class="col-sm-12">
 <div class="panel-group" role="tablist" aria-multiselectable="true">
   {% for ps, sp_set in ps_dict.items %}
-  {% if ps.is_already_due and not sp_set or sp_set.all_submitted %} 
+  {# this looks like it will throw an error if sp_set does not exist, but it doesnt so #}
+  {# don't try to add additional logic to check for sp_set exist because django templates don't allow parentheses #}
+  {% if ps.is_already_due and not sp_set.all_submitted %} 
   <div class="panel panel-danger" id="problemset-{{ps.id}}"> 
   {% else %}
   <div class="panel panel-default" id="problemset-{{ps.id}}">
