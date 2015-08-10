@@ -4,8 +4,9 @@ from django.http import HttpResponse, Http404, HttpResponseRedirect
 from django.utils import timezone
 from django.utils.text import slugify
 from .models import *
-from generic.views import *
-from generic.models import CSUser
+# from generic.views import *
+# from generic.models import CSUser
+from django.contrib.auth.decorators import login_required, user_passes_test
 import requests
 import json
 import time
@@ -30,8 +31,8 @@ def _get_problem_set(pk, user): #if you want one problem set
 def _query_problem_sets(user):#if you want a queryset
   return ProblemSet.objects.filter(pub_date__lte=timezone.now(), cs_section__in=user.enrolled.all())
 
+@login_required
 def index(request):
-  authenticate(request)
   #problems due in the next week
   ps_set = _query_problem_sets(request.user).filter(due_date__range=(timezone.now(), (timezone.now()+datetime.timedelta(days=7)))).order_by('due_date')
   ps_rs_dict = {}
@@ -47,11 +48,11 @@ def index(request):
   context = {'upcoming_sets_results_dict': ps_rs_dict, 'recently_submitted_solutions': recent_solutions}
   return render(request, 'course/index.html', context)
 
+@login_required
 def attempt_problem_set(request, ps_id):
   '''
   when a student attempts a problem set, try to get their solution set & solutions if they exist
   '''
-  authenticate(request)
   ps = _get_problem_set(ps_id, request.user)
   problem_solution_dict = {}
   try: 
@@ -75,8 +76,8 @@ def attempt_problem_set(request, ps_id):
   context = {'problem_set': ps, 'problem_solution_dict':problem_solution_dict, 'additional_file_name':ADDITIONAL_FILE_NAME, 'max_additional_files':MAX_ADDITIONAL_FILES}
   return render(request, 'course/attempt_problem_set.html', context)
 
+@login_required
 def submit_success(request, ps_id, p_id):
-  authenticate(request)
   ps = _get_problem_set(ps_id, request.user)
   problem = get_object_or_404(Problem, pk=p_id)
 
@@ -100,11 +101,11 @@ def submit_success(request, ps_id, p_id):
   else:#if it's a human graded problem
     return redirect('course:problem_set_index')
 
+@login_required
 def problem_set_index(request):
   '''
-  authenticate the request, return a dict of the (problem sets : student problem set solutions)
+  return a dict of the (problem sets : student problem set solutions)
   '''
-  authenticate(request)
   ps_sol_dict = {}
   latest_problem_sets = _query_problem_sets(request.user).order_by('due_date')
   for ps in latest_problem_sets:
@@ -118,8 +119,8 @@ def problem_set_index(request):
   context = {'ps_dict': ps_sol_dict}
   return render(request, 'course/problem_set_index.html', context)
 
+@login_required
 def problem_submit(request, ps_id, p_id):
-  authenticate(request)
   if request.method == 'POST':#make sure the user doesn't type this into the address bar
     ps = _get_problem_set(ps_id, request.user)
     problem = get_object_or_404(Problem, pk=p_id)
@@ -222,9 +223,9 @@ def problem_submit(request, ps_id, p_id):
   else:
     raise Http404("Don't do that")
 
-#returns the results of a given problem set (and all attempts)
+@login_required
 def results_detail(request, ps_id):
-  authenticate(request)
+  #returns the results of a given problem set (and all attempts)
   # logic to figure out if the results are availiable and if so, get them
   ps = _get_problem_set(ps_id, request.user)
   sp_set = get_object_or_404(StudentProblemSet, problem_set=ps, user=request.user)
@@ -245,8 +246,8 @@ def results_detail(request, ps_id):
   context = {'sps': sp_set, "ps_results" : results_dict}
   return render(request, 'course/results_detail.html', context)
 
+@login_required
 def results_problem_detail(request, ps_id, p_id):
-  authenticate(request)
   # logic to figure out if the results are availiable and if so, get them
   ps = _get_problem_set(ps_id, request.user)
   problem = get_object_or_404(Problem, pk=p_id)
