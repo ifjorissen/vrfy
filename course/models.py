@@ -170,6 +170,8 @@ class StudentProblemSolution(models.Model):
   def is_late(self):
     ps_due_date = self.student_problem_set.problem_set.due_date
     submit_date = self.submitted
+    if submit_date == None:
+      return 0
     if submit_date > ps_due_date:
       return 1
     else:
