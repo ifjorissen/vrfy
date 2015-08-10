@@ -21,6 +21,7 @@ def get_user(request):
 
   # Otherwise, try to create a new CSUser object
   except CSUser.DoesNotExist:
+    print("hello")
     user = CSUser.get_ldap_user(username = name)
 
   # If that fails, raise an error

@@ -78,7 +78,7 @@ class CSUser(User):
 
   @classmethod
   def get_ldap_user(self, username):
-
+    print(username)
     u = CSUser()
     user_dict = CSUser.ldap_lookup_user(username)
 

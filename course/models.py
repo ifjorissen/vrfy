@@ -44,12 +44,12 @@ def grade_script_upload_path(instance, filename):
 
 class Problem(models.Model):
   title = models.CharField(max_length=200)
-  cs_course = models.ForeignKey('catalog.Course', null=True)
-  description = models.TextField(default='') #a short tl;dr of the problem, what to read
-  statement = models.TextField(default='') #markdown compatible
-  many_attempts = models.BooleanField(default=True)
-  autograde_problem = models.BooleanField(default=True)
-  grade_script = models.FileField(upload_to=grade_script_upload_path, null=True, blank=True)
+  cs_course = models.ForeignKey('catalog.Course', null=True, verbose_name="Course Name")
+  description = models.TextField(default='', help_text="You can use plain text, markdown, or html for your problem description") #markdown compatible
+  statement = models.TextField(default='', verbose_name='TL;DR') #short statement, optional(?)
+  many_attempts = models.BooleanField(default=True, verbose_name="allow multiple attempts")
+  autograde_problem = models.BooleanField(default=True, verbose_name="autograde this problem")
+  grade_script = models.FileField(upload_to=grade_script_upload_path, null=True, blank=True, help_text="Upload the script that grades the student submission here")
   #one_force_rename = models.BooleanField(editable=False)#used to validate that one of the inlines is being renamed
   
   def get_upload_folder(self):
@@ -97,13 +97,13 @@ class Problem(models.Model):
 
 class ProblemSolutionFile(models.Model):
   problem = models.ForeignKey(Problem, null=True)
-  file_upload = models.FileField(upload_to=solution_file_upload_path)
+  file_upload = models.FileField(upload_to=solution_file_upload_path, help_text="Upload a solution file here")
   comment = models.CharField(max_length=200, null=True, blank=True)
 
 class RequiredProblemFilename(models.Model):
-  file_title = models.CharField(max_length=200)
+  file_title = models.CharField(max_length=200, help_text="Use the name of the python file the grader script imports as a module. E.g: main.py if the script imports main")
   problem = models.ForeignKey(Problem, null=True)
-  force_rename = models.BooleanField(default=True)
+  force_rename = models.BooleanField(default=True, help_text="Uncheck if file name does not matter")
   #add field for extension
   def __str__(self):
     return self.file_title
@@ -118,9 +118,9 @@ class RequiredProblemFilename(models.Model):
 """
 class ProblemSet(models.Model):
   title = models.CharField(max_length=200)
-  description = models.TextField(default='')
+  description = models.TextField(default='', help_text="Provide some additional information about this problem set.")
   problems = models.ManyToManyField(Problem)
-  cs_section = models.ManyToManyField('catalog.Section')
+  cs_section = models.ManyToManyField('catalog.Section', verbose_name="course Section")
   pub_date = models.DateTimeField('date assigned')
   due_date = models.DateTimeField('date due')
 
@@ -151,11 +151,11 @@ class StudentProblemSet(models.Model):
 class StudentProblemSolution(models.Model):
   problem = models.ForeignKey(Problem)
   student_problem_set = models.ForeignKey(StudentProblemSet, null=True)
-  attempt_num = models.IntegerField(default=0)
+  attempt_num = models.IntegerField(default=0, verbose_name='attempts made')
   submitted = models.DateTimeField('date submitted', null=True)
 
   #tango jobid
-  job_id = models.IntegerField(default=-1)
+  job_id = models.IntegerField(default=-1, verbose_name="Tango Job ID")
   
   def __str__(self): 
     return self.problem.title + " - " + self.student_problem_set.user.username
@@ -163,10 +163,12 @@ class StudentProblemSolution(models.Model):
   def is_late(self):
     ps_due_date = self.student_problem_set.problem_set.due_date
     submit_date = self.submitted
-    if submit_date > ps_due_date:
-      return 1
+    if submit_date is not None:
+      if submit_date > ps_due_date:
+        return 1
     else:
       return 0
+
   
 class StudentProblemFile(models.Model):
   required_problem_filename = models.ForeignKey(RequiredProblemFilename, null=True)
@@ -176,18 +178,18 @@ class StudentProblemFile(models.Model):
 
 class ProblemResult(models.Model):
   #tango jobid
-  job_id = models.IntegerField(default=-1)
-
-  sp_sol = models.ForeignKey(StudentProblemSolution)
+  job_id = models.IntegerField(default=-1, verbose_name="Tango Job ID")
+  attempt_num = models.IntegerField(default=-1)
+  sp_sol = models.ForeignKey(StudentProblemSolution, verbose_name="Student Problem Solution")
   problem = models.ForeignKey(Problem)
-  sp_set = models.ForeignKey(StudentProblemSet, null=True)
+  sp_set = models.ForeignKey(StudentProblemSet, null=True, verbose_name="Student Problem Set")
   user = models.ForeignKey('generic.CSUser', null=True)
 
   #general data about the actual results
-  timestamp = models.DateTimeField('date received', null=True, editable=False)
+  timestamp = models.DateTimeField('date received', null=True) #, editable=False)
   score = models.IntegerField(default=-1)
-  json_log = JSONField(null=True, blank=True)
-  raw_output = models.TextField(null=True, blank=True)
+  json_log = JSONField(null=True, blank=True, verbose_name="Session Log")
+  raw_output = models.TextField(null=True, blank=True, verbose_name="Raw Autograder Output")
 
   def external_log(self):
     return self.json_log["external_log"]
@@ -198,9 +200,12 @@ class ProblemResult(models.Model):
   def sanity_log(self):
     return self.json_log["sanity_compare"]
 
+  def __str__(self):
+    return self.problem.title + "_" + self.user.username + "_jID" + str(self.job_id)
+
 #for testrunner files like session.py or sanity.py
 class GraderLib(models.Model):
-  lib_upload = models.FileField(upload_to=grader_lib_upload_path)
+  lib_upload = models.FileField(upload_to=grader_lib_upload_path, verbose_name="Grader Resource")
   comment = models.CharField(max_length=200, null=True, blank=True)
   
   def save(self, *args, **kwargs):

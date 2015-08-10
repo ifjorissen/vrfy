@@ -22,7 +22,8 @@ module.exports = function(grunt) {
     sass: {
           dev: {
             files: {
-              '<%= course.buildcss %>/main.css': '<%= course.sassDir %>/main.scss'
+              '<%= course.buildcss %>/main.css': '<%= course.sassDir %>/main.scss',
+              '<%= course.buildcss %>/pygments.css': '<%= course.sassDir %>/pygments.scss'
             }
           },
     },

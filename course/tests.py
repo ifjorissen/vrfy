@@ -39,18 +39,20 @@ class ProblemSetTests(TransactionTestCase):
   def setUpClass(cls):
     cls.course = catalog.models.Course(title="course_"+str(random.randint(1,10000)), num=random.randint(1,10000))
     cls.course.save()
+
     cls.user, created = generic.models.CSUser.objects.get_or_create(username='isjoriss')
-    cls.user.save()
+    #cls.user.save()
     #cls.user = generic.models.CSUser.get_ldap_user(username = 'isjoriss')
+
     cls.section = catalog.models.Section(course=cls.course, section_id=str(random.randint(1,10000)), start_date=timezone.now(), end_date=timezone.now()+datetime.timedelta(days=60))                           
     cls.section.save()
     cls.section.enrolled.add(cls.user)
-    cls.section.save()
+
     cls.ps = models.ProblemSet(title='test_ps_' + str(random.randint(1,10000)), pub_date=timezone.now(), due_date=timezone.now() + datetime.timedelta(days=30))
     cls.ps.save()
     cls.ps.cs_section.add(cls.section)
-    cls.ps.save()
     cls.pk = cls.ps.pk
+
     cls.prob = models.Problem(title='test_prob_' + str(random.randint(1,10000)), cs_course=cls.course)
     cls.prob.save()
     cls.ps.problems.add(cls.prob)
@@ -74,6 +76,7 @@ class ProblemSetTests(TransactionTestCase):
     #cls.user.delete()
     cls.section.delete()
     cls.course.delete()
+    cls.user.enrolled.clear()
     super(ProblemSetTests, cls).tearDownClass()
   
 class NonExistantProblemsetTests(ProblemSetTests):
@@ -108,16 +111,18 @@ class GetExistingProblemsetTests(ProblemSetTests):
   
   def test_attempt_gives_200_for_existing_problem_set(self):
     response = self.client.get(reverse('course:attempt_problem_set', args=(self.pk,)))
-    self.assertIn('poop', self.section.enrolled.all())
+    #self.assertIn('poop', self.section.enrolled.all())
     self.assertEqual(response.status_code, 200)
 
   #302 because the page should redirect you after you submit
   def test_submit_gives_302_for_existing_problem_set(self):
     response = self.client.post(reverse('course:problem_submit', args=(self.pk, self.prob.pk)))
+    self.assertIn(response.context.get('user'), self.section.enrolled.all())
     self.assertEqual(response.status_code, 302)
 
   def test_results_gives_200_for_existing_problem_set(self):
     response = self.client.get(reverse('course:results_detail', args=(self.pk,)))
+    self.assertIn(response.context.get('user'), self.section.enrolled.all())
     self.assertEqual(response.status_code, 200)
 
   #checks for the name of the problem set on the index page
