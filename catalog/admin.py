@@ -16,7 +16,7 @@ class CourseAdmin(admin.ModelAdmin):
 @admin.register(Section)
 class SectionAdmin(admin.ModelAdmin):
   fieldsets = [
-    ('Course Info', {'fields': ['course', 'prof', 'start_date', 'end_date']}),
+    ('Course Info', {'fields': ['course', 'section_id', 'prof', 'start_date', 'end_date']}),
     ('Enrolled Students', {'fields': ['enrolled']}),
   ]
   filter_vertical = ['enrolled']

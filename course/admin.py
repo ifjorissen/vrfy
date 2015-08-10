@@ -1,23 +1,19 @@
+import csv
 from django.contrib import admin
 from django.utils.text import slugify
-from django.http import Http404
+from django.http import Http404, HttpResponse
 from . import models
 import requests
 import shutil
 import os
 import json
 from django.core.files import File
-
+import datetime
 import sys
 sys.path.append("../")
 import vrfy.settings
 from util import tango
-from django.utils.html import format_html
-from django.utils.safestring import mark_safe
-
-from pygments import highlight
-from pygments.lexers import PythonLexer
-from pygments.formatters import HtmlFormatter
+# from django.core import serializers
 
 admin.site.site_header = "Homework Administration"
 admin.site.site_title = "Homework Administration"
@@ -47,15 +43,10 @@ class StudentProblemSolutionInline(admin.TabularInline):
 
 class StudentProblemFileInline(admin.TabularInline):
   can_delete = False
-  readonly_fields = ('required_problem_filename',  'submitted_file', 'file_content')
-  # exclude = ('attempt_num',)
+  readonly_fields = ('required_problem_filename',  'submitted_file')
+  exclude = ('attempt_num',)
   model = models.StudentProblemFile
   extra = 0
-
-  def file_content(self, obj):
-    f = File(obj.submitted_file)
-    data = f.read()
-    return data
 
 # class ProblemResultInline(admin.StackedInline):
 #   # show_change_link = True
@@ -197,18 +188,15 @@ class StudentProblemSetAdmin(admin.ModelAdmin):
   list_filter = ('user__username', 'problem_set')
 
   def cs_sections(self, obj):
-    return ", ".join([str(section) for section in obj.problem_set.cs_section_set.all()])  
+    return ", ".join([str(section) for section in obj.problem_set.cs_section.all()])  
 
   def date_due(self, obj):
     return obj.problem_set.due_date
 
-  def problems_completed(self, obj):
-    solutions = obj.studentproblemsolution_set.all()
-    problems = obj.problem_set.problems.all()
-    return "{!r} of {!r}".format(len(solutions), len(problems))
 
 @admin.register(models.StudentProblemSolution)
 class StudentProblemSolutionAdmin(admin.ModelAdmin):
+  actions = ['export_csv']
   class Media:
     css = {
         "all": ("course/css/pygments.css",)
@@ -216,32 +204,30 @@ class StudentProblemSolutionAdmin(admin.ModelAdmin):
 
   can_delete = False
   exclude = ('job_id',)
-  readonly_fields = ('problem', 'job_id', 'attempt_num', 'submitted', 'cs_sections', 'user', 'problem_set', 'result_json', 'result_raw_output', 'submitted_code','latest_score', 'late')
+  readonly_fields = ('problem', 'job_id', 'attempt_num', 'submitted', 'cs_section', 'get_user', 'get_problemset', 'result_json', 'result_raw_output', 'submitted_code_table','latest_score', 'late')
   fieldsets = [
-    ('Solution Info', {'classes':('grp-collapse grp-open',), 'fields': ('problem', 'problem_set', 'latest_score', 'user',)}),
-    ('Solution Detail', {'classes':('grp-collapse grp-closed',), 'fields': ('cs_sections', 'attempt_num', 'submitted', 'late', 'job_id',)}),
-    ('Most Recent Result', {'classes':('grp-collapse grp-open',), 'fields': ('result_json', 'result_raw_output', 'submitted_code')}),
+    ('Solution Info', {'classes':('grp-collapse grp-open',), 'fields': ('problem', 'get_problemset', 'latest_score', 'get_user',)}),
+    ('Solution Detail', {'classes':('grp-collapse grp-open',), 'fields': ('cs_section', 'attempt_num', 'submitted', 'late', 'job_id',)}),
+    ('Most Recent Result', {'classes':('grp-collapse grp-open',), 'fields': (('submitted_code_table','result_json'), 'result_raw_output',)}),
   ]
 
   # inlines = [StudentProblemFileInline]
-  list_display = ('problem', 'cs_sections', 'user', 'student_problem_set', 'attempt_num', 'submitted', 'latest_score', 'late')
-  list_filter = ('student_problem_set__user__username', 'student_problem_set')
+  list_display = ('problem', 'cs_section', 'get_user', 'get_problemset', 'attempt_num', 'submitted', 'latest_score', 'late')
+  list_filter = ('student_problem_set__user__username', 'student_problem_set__problem_set')
   # search_fields = ('student_problem_set__user__username',)
 
-  def submitted_code(self, obj):
-    attempt = obj.attempt_num - 1
-    files = obj.studentproblemfile_set.filter(attempt_num=attempt)[0]
-    #get file content (assumes only one file submission)
-    submission = File(files.submitted_file)
-    code = submission.read()
-    submission.close()
-    pretty_code = highlight(code, PythonLexer(), HtmlFormatter(linenos="table"))
-    print(pretty_code)
-      # res = pretty_code
-    # return mark_safe(pretty_code)
-    return format_html('{}', mark_safe(pretty_code))
+  def export_csv(self, request, queryset):
+    date = datetime.datetime.now()
+    filename = "studentsolutions-{}".format(date.strftime("%d_%m_%y"))
+    response = HttpResponse(content_type="text/csv")
+    response['Content-Disposition'] = 'attachment; filename="{}.csv"'.format(filename)
+    writer = csv.writer(response)
+    writer.writerow(['Problem Name', 'Problem Set', 'Course:Section', 'Attempts Made', 'Latest Score', 'User', 'Submitted On', 'Late'])
+    for obj in queryset:
+      writer.writerow([obj.problem, obj.get_problemset(), obj.cs_section(), obj.attempt_num, obj.latest_score(), obj.get_user(), obj.submitted, self.late(obj)])
+    return response
 
-  submitted_code.allow_tags=True
+  export_csv.short_description = "Export Selected to CSV"
 
   def result_json(self, obj):
     result = obj.problemresult_set.get(job_id=obj.job_id)
@@ -251,28 +237,16 @@ class StudentProblemSolutionAdmin(admin.ModelAdmin):
     result = obj.problemresult_set.get(job_id=obj.job_id)
     return result.raw_output
 
-  def problem_set(self, obj):
-    return obj.student_problem_set.problem_set
-
-  def cs_sections(self, obj):
-    return ", ".join([str(section) for section in obj.student_problem_set.problem_set.cs_section.all()])  
-
-  def user(self, obj):
-    return obj.student_problem_set.user
-
-  def latest_score(self, obj):
-    result_obj = obj.problemresult_set.get(job_id=obj.job_id)
-    score = result_obj.score
-    return score
+  # def problem_set(self, obj):
+  #   return obj.student_problem_set.problem_set
+  # def cs_sections(self, obj):
+  #   return ", ".join([str(section) for section in obj.student_problem_set.problem_set.cs_section.all()])  
 
   def late(self, obj):
-    if obj.submitted is not None:
-      if obj.is_late():
-        return 'Yes'
-      else:
-        return 'No'
+    if obj.is_late():
+      return 'Yes'
     else:
-      return 'N/A'
+      return 'No'
 
 @admin.register(models.GraderLib)
 class GraderLibAdmin(admin.ModelAdmin):
@@ -298,9 +272,6 @@ class ProblemResultAdmin(admin.ModelAdmin):
 
   def cs_sections(self, obj):
     return ", ".join([str(section) for section in obj.sp_set.problem_set.cs_section.all()])  
-
-  # def attempt(self, obj):
-  #   return obj.attempt()
 
   def late(self, obj):
     if obj.sp_sol.submitted is not None:
