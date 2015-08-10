@@ -39,10 +39,7 @@
           {% for file in problem.requiredproblemfilename_set.all %}
             <div class="form-group">
               <label class="col-sm-2" for="{{ file.file_title }}">{{ file.file_title }}</label>
-              <input class="col-sm-3" type="file" name="{{ file.file_title }}" id="{{ file.file_title }}">
-              {% if file.force_rename %}
-                <span class="col-sm-5 text-warning">WARNING: this file will be renamed to {{ file.file_title }}.</span>
-              {% endif %}
+              <input class="col-sm-10" type="file" name="{{ file.file_title }}" id="{{ file.file_title }}" force-rename={{file.force_rename}} >
             </div>
           {% endfor %}
           <div class="form-group">

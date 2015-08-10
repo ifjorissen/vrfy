@@ -11,16 +11,32 @@ $(document).ready(function(){
 });
 
 $('#soln_form').submit(function () {
-  returnval = true
-  $("input[type=file]").each(function(index, element){
+  var returnval = true
+  //varibale for all the files being renamed
+  var force_renames = "WARNING!!!!!!\n"
+  $(this).find(":file").each(function(index, element){
     //checking for not uploaded files
-    if (element.value === '') {
+    if (element.value == '') {
       alert('You forgot to upload a file!');
       returnval = false;
       //this resturn statement makes the function stop after one unsubmitted file
       return false;
     }
+    //check if this file is gonna be renamed and alert the user
+    else if (element.getAttribute("force-rename") == "True") {
+      var label = $("label[for='"+$(this).attr('id')+"']");
+      if (label.text() != element.value){
+        force_renames += element.value + " will be renamed to " + label.text() + "\n"
+        
+      }
+    }
+    
   });
+  //if the submit was not gonna happen anyways
+  if (returnval) {
+    force_renames += "Check how these files are referenced!\nDo you still want to submit?"
+    returnval = confirm(force_renames)
+  }
   //and this return statement makes the form not submit
   return returnval
 });
