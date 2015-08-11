@@ -32,10 +32,13 @@ $('#soln_form').submit(function () {
     }
     
   });
-  //if the submit was not gonna happen anyways
+  //if all the fields are full
   if (returnval) {
-    force_renames += "Check how these files are referenced!\nDo you still want to submit?"
-    returnval = confirm(force_renames)
+    //if some files have different names
+    if (force_renames != "WARNING!!!!!!\n"){
+      force_renames += "Check how these files are referenced!\nDo you still want to submit?"
+      returnval = confirm(force_renames)
+    }
   }
   //and this return statement makes the form not submit
   return returnval
