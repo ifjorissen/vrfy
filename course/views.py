@@ -1,6 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, Http404, HttpResponseRedirect
+from django.core.exceptions import PermissionDenied
 from django.utils import timezone
 from django.utils.text import slugify
 from .models import *
@@ -152,7 +153,7 @@ def problem_submit(request, ps_id, p_id):
         if additional_files < MAX_ADDITIONAL_FILES:
           additional_files += 1
         else:
-          raise Http404("You can't upload more than " + str(MAX_ADDITIONAL_FILES) + " additional files.")
+          raise PermissionDenied("You can't upload more than " + str(MAX_ADDITIONAL_FILES) + " additional files.")
         
       else:
         required_pf = RequiredProblemFilename.objects.get(problem=problem, file_title=name)
@@ -162,14 +163,14 @@ def problem_submit(request, ps_id, p_id):
         #we also need to check if it has the same name as any of the grader files
         for psfile in problem.problemsolutionfile_set.all():
           if name == psfile.file_upload.name.split("/")[-1]:
-            raise Http404("HEY! You can't name your file " + name + ". Because.... reasons.")
+            raise PermissionDenied(name + " is an invalid filename.")
         
         if name == problem.grade_script.name.split("/")[-1]:
-          raise Http404("HEY! You can't name your file " + name + ". Because.... reasons.")
+          raise PermissionDenied(name + " is an invalid filename.")
         
         for lib in GraderLib.objects.all():
           if name == lib.lib_upload.name.split("/")[-1]:
-            raise Http404("HEY! You can't name your file " + name + ". Because.... reasons.")
+            raise PermissionDenied(name + " is an invalid filename.")
         
       localfile = name + "-"+ request.user.username
       if problem.autograde_problem:
