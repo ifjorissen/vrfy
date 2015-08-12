@@ -155,7 +155,7 @@ def problem_submit(request, ps_id, p_id):
           additional_files += 1
         else:
           return render(request, '403.html', {'exception': "You can't upload more than " + str(MAX_ADDITIONAL_FILES) + " additional files."}, status=403)
-          raise PermissionDenied()
+          #raise PermissionDenied()
         
       else:
         required_pf = RequiredProblemFilename.objects.get(problem=problem, file_title=name)
@@ -232,6 +232,9 @@ def results_detail(request, ps_id):
       results_dict[problem] = _get_problem_result(sp_sol, request)
     except StudentProblemSolution.DoesNotExist:
       results_dict[problem] = None
+    except ValueError:#there was a problem reading the json_log
+      context = {'exception' : "Something went wrong. Make sure your code is bug free and resubmit. \nIf the problem persists, contact your professor or TA"}
+      return render(request, '500.html', context, status=500)
 
   #make a result object
   #only send the data that the student should see
@@ -248,7 +251,11 @@ def results_problem_detail(request, ps_id, p_id):
   # result_set, created = ProblemResultSet.objects.get_or_create(sp_set = student_ps, user=request.user, problem_set=ps)
   sp_sol = get_object_or_404(StudentProblemSolution, student_problem_set=sp_set, problem=problem)
 
-  result = _get_problem_result(sp_sol, request)
+  try:
+    result = _get_problem_result(sp_sol, request)
+  except ValueError:#if there was a problem reading the json
+    context = {'exception' : "Something went wrong. Make sure your code is bug free and resubmit. \nIf the problem persists, contact your professor or TA"}
+    return render(request, '500.html', context, status=500)
   
   context = {'solution': sp_sol, "result" : result}
   return render(request, 'course/results_problem_detail.html', context)
@@ -278,16 +285,16 @@ def _get_problem_result(solution,request):
         prob_result.timestamp = tango_time
         prob_result.save()
       else:
-        try:
-          log_data = json.loads(line)
-          #create the result object
-          prob_result.score = log_data["score_sum"]
-          prob_result.raw_output = raw_output
-          prob_result.json_log = log_data
-          prob_result.timestamp = tango_time
-          prob_result.save()
-        except ValueError: #if the json isn't there, something went wrong when running the job, or the grader file messed up
-          raise Http404("Something went wrong. Make sure your code is bug free and resubmit. \nIf the problem persists, contact your professor or TA")
+        #try:
+        log_data = json.loads(line)
+        #create the result object
+        prob_result.score = log_data["score_sum"]
+        prob_result.raw_output = raw_output
+        prob_result.json_log = log_data
+        prob_result.timestamp = tango_time
+        prob_result.save()
+        #except ValueError: #if the json isn't there, something went wrong when running the job, or the grader file messed up
+          #raise Http404("Something went wrong. Make sure your code is bug free and resubmit. \nIf the problem persists, contact your professor or TA")
   
   else:
     #special not-autograded stuff goes here
