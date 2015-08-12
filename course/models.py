@@ -187,7 +187,7 @@ class StudentProblemSolution(models.Model):
 
 
   def latest_score(self):
-    result_obj = self.problemresult_set.filter(job_id=self.job_id)[0]
+    result_obj = self.problemresult_set.get(attempt_num=self.attempt_num)
     score = result_obj.get_score()
     return score
 
