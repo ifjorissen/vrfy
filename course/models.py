@@ -100,6 +100,9 @@ class ProblemSolutionFile(models.Model):
   file_upload = models.FileField(upload_to=solution_file_upload_path, help_text="Upload a solution file here")
   comment = models.CharField(max_length=200, null=True, blank=True)
 
+  def __str__(self):
+    return self.file_upload.name.split("/")[-1]
+
 class RequiredProblemFilename(models.Model):
   file_title = models.CharField(max_length=200, help_text="Use the name of the python file the grader script imports as a module. E.g: main.py if the script imports main")
   problem = models.ForeignKey(Problem, null=True)
@@ -204,7 +207,7 @@ class StudentProblemSolution(models.Model):
   submitted_code_table.short_description = "Submitted Code"
 
   def submitted_code(self):
-    attempt = self.attempt_num - 1
+    attempt = self.attempt_num
     files = self.studentproblemfile_set.filter(attempt_num=attempt)[0]
     #get file content (assumes only one file submission)
     submission = File(files.submitted_file)

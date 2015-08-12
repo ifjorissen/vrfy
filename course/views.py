@@ -1,6 +1,6 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.core.urlresolvers import reverse
-from django.http import HttpResponse, Http404, HttpResponseRedirect
+from django.http import HttpResponse, Http404, HttpResponseRedirect, HttpResponseForbidden
 from django.core.exceptions import PermissionDenied
 from django.utils import timezone
 from django.utils.text import slugify
@@ -11,6 +11,7 @@ import requests
 import json
 import time
 import datetime
+from itertools import chain
 from util import tango
 
 from django.forms.models import modelformset_factory
@@ -153,24 +154,20 @@ def problem_submit(request, ps_id, p_id):
         if additional_files < MAX_ADDITIONAL_FILES:
           additional_files += 1
         else:
-          raise PermissionDenied("You can't upload more than " + str(MAX_ADDITIONAL_FILES) + " additional files.")
+          return render(request, '403.html', {'exception': "You can't upload more than " + str(MAX_ADDITIONAL_FILES) + " additional files."}, status=403)
+          raise PermissionDenied()
         
       else:
         required_pf = RequiredProblemFilename.objects.get(problem=problem, file_title=name)
 
       if required_pf == None or not required_pf.force_rename: 
         name = f.name#if the file should not be renamed, give it the name as it was uploaded
+        
         #we also need to check if it has the same name as any of the grader files
-        for psfile in problem.problemsolutionfile_set.all():
-          if name == psfile.file_upload.name.split("/")[-1]:
-            raise PermissionDenied(name + " is an invalid filename.")
-        
-        if name == problem.grade_script.name.split("/")[-1]:
-          raise PermissionDenied(name + " is an invalid filename.")
-        
-        for lib in GraderLib.objects.all():
-          if name == lib.lib_upload.name.split("/")[-1]:
-            raise PermissionDenied(name + " is an invalid filename.")
+        for gfile in chain(problem.problemsolutionfile_set.all(), GraderLib.objects.all(),[problem.grade_script.name.split("/")[-1]]):
+          if name == str(gfile):
+            return render(request, '403.html', {'exception': name + " is an invalid filename."}, status=403)
+            #raise PermissionDenied(name + " is an invalid filename.")
         
       localfile = name + "-"+ request.user.username
       if problem.autograde_problem:
