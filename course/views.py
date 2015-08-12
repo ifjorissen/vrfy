@@ -4,9 +4,7 @@ from django.http import HttpResponse, Http404, HttpResponseRedirect
 from django.utils import timezone
 from django.utils.text import slugify
 from .models import *
-# from generic.views import *
-# from generic.models import CSUser
-from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.decorators import login_required
 import requests
 import json
 import time
@@ -26,10 +24,10 @@ MAX_ADDITIONAL_FILES = 7
 
 #these helper functions enforce the universal restrictions on what problemsets a user can get
 def _get_problem_set(pk, user): #if you want one problem set
-  return get_object_or_404(ProblemSet, pk=pk, pub_date__lte=timezone.now(), cs_section__in=user.enrolled.all())
+  return get_object_or_404(ProblemSet, pk=pk, pub_date__lte=timezone.now(), cs_section__in=user.reedie.enrolled.all())
 
 def _query_problem_sets(user):#if you want a queryset
-  return ProblemSet.objects.filter(pub_date__lte=timezone.now(), cs_section__in=user.enrolled.all())
+  return ProblemSet.objects.filter(pub_date__lte=timezone.now(), cs_section__in=user.reedie.enrolled.all())
 
 @login_required
 def index(request):

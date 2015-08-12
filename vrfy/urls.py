@@ -16,6 +16,7 @@ Including another URLconf
 from django.conf.urls import include, url
 from django.contrib import admin
 from vrfy import settings
+from catalog import receivers
 
 urlpatterns = [
     url(r'^', include('course.urls', namespace="course")),

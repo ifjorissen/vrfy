@@ -1,7 +1,7 @@
 from django.db import models
 # from generic.models import CSUser
-from catalog.models import Section, Course
-from django.contrib.auth.models import User
+from catalog.models import Section, Course, Reedie
+# from django.contrib.auth.models import User
 from django.utils.text import slugify
 from django.core.exceptions import ValidationError
 from django.core.files import File
@@ -36,7 +36,7 @@ def grader_lib_upload_path(instance, filename):
   return file_path
 
 def grade_script_upload_path(instance, filename):
-  #filepath should be of the form: course/solutions/problem_set/problem/filename
+  #filepath should be of the form: course/solutions/problem_set/problem/filename 
   file_path = instance.get_upload_folder() + filename
   if os.path.isfile(vrfy.settings.MEDIA_ROOT + file_path):
     os.remove(vrfy.settings.MEDIA_ROOT + file_path)
@@ -137,7 +137,8 @@ class ProblemSet(models.Model):
 class StudentProblemSet(models.Model):
   problem_set = models.ForeignKey(ProblemSet)
   # user = models.ForeignKey('generic.CSUser', null=True)
-  user = models.ForeignKey(User)
+  # user = models.ForeignKey(User)
+  user = models.ForeignKey('catalog.Reedie')
   submitted = models.DateTimeField('date submitted')
 
   def problems_completed(self):
@@ -232,7 +233,8 @@ class ProblemResult(models.Model):
   problem = models.ForeignKey(Problem)
   sp_set = models.ForeignKey(StudentProblemSet, verbose_name="Student Problem Set")
   # user = models.ForeignKey('generic.CSUser', null=True)
-  user = models.ForeignKey(User)
+  # user = models.ForeignKey(User)
+  user = models.ForeignKey('catalog.Reedie')
 
   #general data about the actual results
   timestamp = models.DateTimeField('date received', null=True) #, editable=False)
