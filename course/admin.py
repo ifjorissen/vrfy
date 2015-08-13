@@ -215,7 +215,7 @@ class StudentProblemSolutionAdmin(admin.ModelAdmin):
 
   # inlines = [StudentProblemFileInline]
   list_display = ('problem', 'cs_section', 'get_user', 'get_problemset', 'attempt_num', 'submitted', 'latest_score', 'late')
-  list_filter = ('student_problem_set__user__username', 'student_problem_set__problem_set', 'problem')
+  list_filter = ('student_problem_set__user__user__username', 'student_problem_set__problem_set', 'problem')
   # search_fields = ('student_problem_set__user__username',)
 
   def export_csv(self, request, queryset):
