@@ -158,7 +158,7 @@ class StudentProblemSet(models.Model):
       return False
   
   def __str__(self): 
-    return self.problem_set.title + " - " + self.user.username
+    return self.problem_set.title + " - " + self.user.username()
     
 class StudentProblemSolution(models.Model):
   problem = models.ForeignKey(Problem)
@@ -170,7 +170,7 @@ class StudentProblemSolution(models.Model):
   job_id = models.IntegerField(default=-1, verbose_name="Tango Job ID")
   
   def __str__(self): 
-    return self.problem.title + " - " + self.student_problem_set.user.username
+    return self.problem.title + " - " + self.student_problem_set.user.username()
 
   def is_late(self):
     ps_due_date = self.student_problem_set.problem_set.due_date
@@ -197,8 +197,8 @@ class StudentProblemSolution(models.Model):
     return score
 
   def submitted_code_table(self):
-    attempt = self.attempt_num - 1
-    files = self.studentproblemfile_set.filter(attempt_num=attempt)[0]
+    attempt = self.attempt_num
+    files = self.studentproblemfile_set.get(attempt_num=attempt)
     #get file content (assumes only one file submission)
     submission = File(files.submitted_file)
     code = submission.read()
@@ -229,6 +229,10 @@ class StudentProblemFile(models.Model):
   student_problem_solution = models.ForeignKey(StudentProblemSolution, null=True)
   submitted_file = models.FileField(upload_to=student_file_upload_path)
   attempt_num = models.IntegerField(default=0)
+
+  def __str__(self):
+    head, filename = os.path.split(submitted_file.name)
+    return filename
 
 class ProblemResult(models.Model):
   #tango jobid

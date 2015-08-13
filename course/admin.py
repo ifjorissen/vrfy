@@ -11,6 +11,7 @@ import json
 from django.core.files import File
 from django.core.servers.basehttp import FileWrapper
 import datetime
+from itertools import chain
 import sys
 sys.path.append("../")
 import vrfy.settings
@@ -198,7 +199,7 @@ class StudentProblemSetAdmin(admin.ModelAdmin):
 
 @admin.register(models.StudentProblemSolution)
 class StudentProblemSolutionAdmin(admin.ModelAdmin):
-  actions = ['export_csv', 'export_files']
+  actions = ['export_csv', 'export_files', 'reassess']
   class Media:
     css = {
         "all": ("course/css/pygments.css",)
@@ -252,6 +253,25 @@ class StudentProblemSolutionAdmin(admin.ModelAdmin):
       response = HttpResponse(FileWrapper(sols_zip), content_type='application/zip')
     response['Content-Disposition'] = 'attachment; filename=StudentSolutions.zip'
     return response
+  
+  #sends the job to tango again but doesn't increase the attempt counter
+  def reassess(self, request, queryset):
+    for obj in queryset:
+      files = []
+      for sf in obj.studentproblemfile_set.filter(attempt_num=obj.attempt_num):
+        if sf.required_problem_filename == None or not sf.required_problem_filename.force_rename:#if it's not renamed, we can use the given name
+          name = str(sf)
+        else:#if it is we have to lookup the required name
+          name = str(sf.required_problem_filename)
+        #localfile has username appended to it
+        localFile = name + "-"+ str(sf.student_problem_solution.student_problem_set.user)
+        files.append({'localFile': localFile, 'destFile': name})
+      
+      for f in chain(obj.problem.problemsolutionfile_set.all(), models.GraderLib.objects.all(),[obj.problem.grade_script.name.split("/")[-1]]):
+        files.append({'localFile': str(f), 'destFile': str(f)})
+      
+      jobName = tango.get_jobName(obj.problem, obj.student_problem_set.problem_set, str(sf.student_problem_solution.student_problem_set.user))
+      tango.addJob(obj.problem, obj.student_problem_set.problem_set, files, jobName, jobName)
 
   def result_json(self, obj):
     result = obj.problemresult_set.get(job_id=obj.job_id)
