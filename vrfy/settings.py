@@ -20,6 +20,11 @@ LOCAL_DEV = True
 ALLOWED_HOSTS = ["localhost"]
 INTERNAL_IPS = ['127.0.0.1','localhost']
 
+# Admins & Email for the server
+ADMINS = (('Alex', 'granta@reed.edu'), ('Isabella', 'isjoriss@reed.edu'))
+EMAIL_HOST = 'localhost'
+SERVER_EMAIL = 'noreply@cs.reed.edu'
+
 #Grappelli settings
 GRAPPELLI_ADMIN_TITLE = "CS@Reed Admin"
 GRAPPELLI_INDEX_DASHBOARD = "vrfy.dashboard.CustomIndexDashboard"
@@ -138,6 +143,11 @@ LOGGING = {
         },
     },
     'handlers': {
+        'mail_admins': {
+            'level': 'ERROR',
+            'class': 'django.utils.log.AdminEmailHandler',
+            'include_html': True,
+        }
         'file': {
             'level': 'INFO',
             'class': 'logging.FileHandler',
@@ -171,24 +181,24 @@ LOGGING = {
     },
     'loggers': {
         'django': {
-            'handlers':['file'],
+            'handlers':['file', 'mail_admins'],
             'propagate': True,
             'level':'INFO',
         },
         'vrfy': {
-            'handlers': ['vrfy_log'],
+            'handlers': ['vrfy_log', 'mail_admins'],
             'level': 'INFO',
         },
         'catalog': {
-            'handlers': ['catalog_log'],
+            'handlers': ['catalog_log', 'mail_admins'],
             'level': 'INFO',
         },
         'course': {
-            'handlers': ['course_log'],
+            'handlers': ['course_log', 'mail_admins'],
             'level': 'INFO',
         },
         'ldap_auth': {
-            'handlers': ['ldap_auth_log'],
+            'handlers': ['ldap_auth_log', 'mail_admins'],
             'level': 'INFO',
         },
     }
