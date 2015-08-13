@@ -1,7 +1,7 @@
 from django.db import models
-from generic.models import CSUser
-from catalog.models import Section, Course
-from django.contrib.auth.models import User
+# from generic.models import CSUser
+from catalog.models import Section, Course, Reedie
+# from django.contrib.auth.models import User
 from django.utils.text import slugify
 from django.core.exceptions import ValidationError
 from django.core.files import File
@@ -15,7 +15,7 @@ from util import tango, pretty_code
 def student_file_upload_path(instance, filename):
   #filepath should be of the form: course/folio/user/problem_set/problem/filename  (maybe add attempt number)
   problem_set = instance.student_problem_solution.student_problem_set.problem_set.title
-  user = instance.student_problem_solution.student_problem_set.user.username
+  user = instance.student_problem_solution.student_problem_set.user.username()
   problem = instance.student_problem_solution.problem
   attempt = instance.attempt_num
   course = problem.cs_course.num
@@ -139,8 +139,10 @@ class ProblemSet(models.Model):
 
 class StudentProblemSet(models.Model):
   problem_set = models.ForeignKey(ProblemSet)
-  user = models.ForeignKey('generic.CSUser', null=True)
-  submitted = models.DateTimeField('date submitted', null=True)
+  # user = models.ForeignKey('generic.CSUser', null=True)
+  # user = models.ForeignKey(User)
+  user = models.ForeignKey('catalog.Reedie')
+  submitted = models.DateTimeField('date submitted')
 
   def problems_completed(self):
     solutions = self.studentproblemsolution_set.all()
@@ -208,7 +210,7 @@ class StudentProblemSolution(models.Model):
 
   def submitted_code(self):
     attempt = self.attempt_num
-    files = self.studentproblemfile_set.filter(attempt_num=attempt)[0]
+    files = self.studentproblemfile_set.get(attempt_num=attempt)
     #get file content (assumes only one file submission)
     submission = File(files.submitted_file)
     code = submission.read()
@@ -234,8 +236,10 @@ class ProblemResult(models.Model):
   attempt_num = models.IntegerField(default=-1)
   sp_sol = models.ForeignKey(StudentProblemSolution, verbose_name="Student Problem Solution")
   problem = models.ForeignKey(Problem)
-  sp_set = models.ForeignKey(StudentProblemSet, null=True, verbose_name="Student Problem Set")
-  user = models.ForeignKey('generic.CSUser', null=True)
+  sp_set = models.ForeignKey(StudentProblemSet, verbose_name="Student Problem Set")
+  # user = models.ForeignKey('generic.CSUser', null=True)
+  # user = models.ForeignKey(User)
+  user = models.ForeignKey('catalog.Reedie')
 
   #general data about the actual results
   timestamp = models.DateTimeField('date received', null=True) #, editable=False)

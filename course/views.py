@@ -5,14 +5,14 @@ from django.core.exceptions import PermissionDenied
 from django.utils import timezone
 from django.utils.text import slugify
 from .models import *
-from generic.views import *
-from generic.models import CSUser
+from django.contrib.auth.decorators import login_required
 import requests
 import json
 import time
 import datetime
 from itertools import chain
 from util import tango
+from django.contrib.auth.models import User
 
 from django.forms.models import modelformset_factory
 from django.shortcuts import render_to_response
@@ -26,20 +26,21 @@ ADDITIONAL_FILE_NAME = "additional"
 MAX_ADDITIONAL_FILES = 7
 
 #these helper functions enforce the universal restrictions on what problemsets a user can get
-def _get_problem_set(pk, user): #if you want one problem set
-  return get_object_or_404(ProblemSet, pk=pk, pub_date__lte=timezone.now(), cs_section__in=user.enrolled.all())
+def _get_problem_set(pk, reedie): #if you want one problem set
+  return get_object_or_404(ProblemSet, pk=pk, pub_date__lte=timezone.now(), cs_section__in=reedie.enrolled.all())
 
-def _query_problem_sets(user):#if you want a queryset
-  return ProblemSet.objects.filter(pub_date__lte=timezone.now(), cs_section__in=user.enrolled.all())
+def _query_problem_sets(reedie):#if you want a queryset
+  return ProblemSet.objects.filter(pub_date__lte=timezone.now(), cs_section__in=reedie.enrolled.all())
 
+@login_required
 def index(request):
-  authenticate(request)
   #problems due in the next week
-  ps_set = _query_problem_sets(request.user).filter(due_date__range=(timezone.now(), (timezone.now()+datetime.timedelta(days=7)))).order_by('due_date')
+  ps_set = _query_problem_sets(request.user.reedie).filter(due_date__range=(timezone.now(), (timezone.now()+datetime.timedelta(days=7)))).order_by('due_date')
+  # ps_set = []
   ps_rs_dict = {}
   for ps in ps_set:
     try:
-      sp_set = StudentProblemSet.objects.get(problem_set=ps, user=request.user)
+      sp_set = StudentProblemSet.objects.get(problem_set=ps, user=request.user.reedie)
       ps_rs_dict[ps] = sp_set
     except StudentProblemSet.DoesNotExist:
       ps_rs_dict[ps] = None
@@ -49,15 +50,15 @@ def index(request):
   context = {'upcoming_sets_results_dict': ps_rs_dict, 'recently_submitted_solutions': recent_solutions}
   return render(request, 'course/index.html', context)
 
+@login_required
 def attempt_problem_set(request, ps_id):
   '''
   when a student attempts a problem set, try to get their solution set & solutions if they exist
   '''
-  authenticate(request)
-  ps = _get_problem_set(ps_id, request.user)
+  ps = _get_problem_set(ps_id, request.user.reedie)
   problem_solution_dict = {}
   try: 
-    sp_set = StudentProblemSet.objects.get(problem_set=ps, user=request.user)
+    sp_set = StudentProblemSet.objects.get(problem_set=ps, user=request.user.reedie)
     for problem in ps.problems.all():
       try: 
         student_psol = StudentProblemSolution.objects.get(problem=problem, student_problem_set=sp_set)
@@ -77,9 +78,9 @@ def attempt_problem_set(request, ps_id):
   context = {'problem_set': ps, 'problem_solution_dict':problem_solution_dict, 'additional_file_name':ADDITIONAL_FILE_NAME, 'max_additional_files':MAX_ADDITIONAL_FILES}
   return render(request, 'course/attempt_problem_set.html', context)
 
+@login_required
 def submit_success(request, ps_id, p_id):
-  authenticate(request)
-  ps = _get_problem_set(ps_id, request.user)
+  ps = _get_problem_set(ps_id, request.user.reedie)
   problem = get_object_or_404(Problem, pk=p_id)
 
   if problem.autograde_problem:#if it is running in Tango
@@ -102,16 +103,16 @@ def submit_success(request, ps_id, p_id):
   else:#if it's a human graded problem
     return redirect('course:problem_set_index')
 
+@login_required
 def problem_set_index(request):
   '''
-  authenticate the request, return a dict of the (problem sets : student problem set solutions)
+  return a dict of the (problem sets : student problem set solutions)
   '''
-  authenticate(request)
   ps_sol_dict = {}
-  latest_problem_sets = _query_problem_sets(request.user).order_by('due_date')
+  latest_problem_sets = _query_problem_sets(request.user.reedie).order_by('due_date')
   for ps in latest_problem_sets:
     try:
-      student_ps_sol = StudentProblemSet.objects.get(problem_set=ps, user=request.user)
+      student_ps_sol = StudentProblemSet.objects.get(problem_set=ps, user=request.user.reedie)
     except StudentProblemSet.DoesNotExist:
       student_ps_sol = None
 
@@ -120,15 +121,14 @@ def problem_set_index(request):
   context = {'ps_dict': ps_sol_dict}
   return render(request, 'course/problem_set_index.html', context)
 
+@login_required
 def problem_submit(request, ps_id, p_id):
-  authenticate(request)
   if request.method == 'POST':#make sure the user doesn't type this into the address bar
-    ps = _get_problem_set(ps_id, request.user)
+    ps = _get_problem_set(ps_id, request.user.reedie)
     problem = get_object_or_404(Problem, pk=p_id)
 
     #create / get the student problem set and update the submission time (reflects latest attempt)
-    student_ps_sol, sp_set_created = StudentProblemSet.objects.get_or_create(problem_set=ps, user=request.user)
-    student_ps_sol.submitted = timezone.now()
+    student_ps_sol, sp_set_created = StudentProblemSet.objects.get_or_create(problem_set=ps, user=request.user.reedie, defaults={'submitted': timezone.now()})
     student_ps_sol.save()
 
     student_psol, sp_sol_created = StudentProblemSolution.objects.get_or_create(problem=problem, student_problem_set=student_ps_sol)
@@ -141,7 +141,7 @@ def problem_submit(request, ps_id, p_id):
     mytimestamp = None
     if not problem.autograde_problem: #if its not being autograded, we should set the timestamp here; if it is, tango will set it
       mytimestamp = timezone.now()
-    prob_result = ProblemResult.objects.create(attempt_num=student_psol.attempt_num, sp_sol=student_psol, sp_set=student_ps_sol, user=request.user, problem=problem, timestamp=mytimestamp)
+    prob_result = ProblemResult.objects.create(attempt_num=student_psol.attempt_num, sp_sol=student_psol, sp_set=student_ps_sol, user=request.user.reedie, problem=problem, timestamp=mytimestamp)
     
     additional_files = 0
     files = []#for the addJob
@@ -215,12 +215,12 @@ def problem_submit(request, ps_id, p_id):
   else:
     raise Http404("Don't do that")
 
-#returns the results of a given problem set (and all attempts)
+@login_required
 def results_detail(request, ps_id):
-  authenticate(request)
+  #returns the results of a given problem set (and all attempts)
   # logic to figure out if the results are availiable and if so, get them
-  ps = _get_problem_set(ps_id, request.user)
-  sp_set = get_object_or_404(StudentProblemSet, problem_set=ps, user=request.user)
+  ps = _get_problem_set(ps_id, request.user.reedie)
+  sp_set = get_object_or_404(StudentProblemSet, problem_set=ps, user=request.user.reedie)
   # result_set = get_object_or_404(ProblemResultSet, user=request.user, sp_set=student_ps, problem_set=ps)
   results_dict = {}
 
@@ -241,12 +241,12 @@ def results_detail(request, ps_id):
   context = {'sps': sp_set, "ps_results" : results_dict}
   return render(request, 'course/results_detail.html', context)
 
+@login_required
 def results_problem_detail(request, ps_id, p_id):
-  authenticate(request)
   # logic to figure out if the results are availiable and if so, get them
-  ps = _get_problem_set(ps_id, request.user)
+  ps = _get_problem_set(ps_id, request.user.reedie)
   problem = get_object_or_404(Problem, pk=p_id)
-  sp_set = get_object_or_404(StudentProblemSet, problem_set=ps, user=request.user)
+  sp_set = get_object_or_404(StudentProblemSet, problem_set=ps, user=request.user.reedie)
   results_dict = {}
   # result_set, created = ProblemResultSet.objects.get_or_create(sp_set = student_ps, user=request.user, problem_set=ps)
   sp_sol = get_object_or_404(StudentProblemSolution, student_problem_set=sp_set, problem=problem)

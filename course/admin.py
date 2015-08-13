@@ -187,7 +187,7 @@ class StudentProblemSetAdmin(admin.ModelAdmin):
   readonly_fields = ('problem_set', 'user', 'submitted')
   inlines = [StudentProblemSolutionInline]
   list_display = ('problem_set','cs_sections', 'user','submitted', 'date_due', 'problems_completed',)
-  list_filter = ('user__username', 'problem_set')
+  list_filter = ('user', 'problem_set')
 
   def cs_sections(self, obj):
     return ", ".join([str(section) for section in obj.problem_set.cs_section.all()])  
@@ -292,7 +292,7 @@ class ProblemResultAdmin(admin.ModelAdmin):
     ('Raw Autograder Output', {'classes':('grp-collapse grp-closed',), 'fields': ('raw_output',)}),
   ]
   list_display = ('problem', 'problem_set', 'cs_sections', 'user', 'attempt_num', 'late', 'score', 'timestamp')
-  list_filter = ('user__username', 'problem')
+  list_filter = ('user', 'problem')
 
   def cs_sections(self, obj):
     return ", ".join([str(section) for section in obj.sp_set.problem_set.cs_section.all()])  
