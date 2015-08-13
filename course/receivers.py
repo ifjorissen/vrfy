@@ -1,7 +1,7 @@
 import os
 import shutil
 from django.dispatch import receiver
-from django.db.models.signals import pre_delete
+from django.db.models.signals import pre_delete, post_save, post_init
 from course import models
 from util import tango
 from vrfy.settings import MEDIA_ROOT
@@ -37,3 +37,4 @@ def Problem_pre_delete(sender, **kwargs):
   shutil.rmtree(MEDIA_ROOT + problem.get_upload_folder())#delete all the problem files
   for ps in problem.problemset_set.all():
     tango.delete(problem, ps)
+
