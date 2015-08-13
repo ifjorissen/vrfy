@@ -12,7 +12,7 @@ class Reedie(models.Model):
   last_updated = models.DateTimeField('most recent ldap query', null=True)
 
   def __str__(self):
-    return self.user.username
+    return self.username()
 
   def first_name(self):
     return self.user.first_name
@@ -22,6 +22,9 @@ class Reedie(models.Model):
 
   def email(self):
     return self.user.email
+  
+  def username(self):
+    return self.user.username
 
 # class Enrollment(models.Model):
 #   student = models.ForeignKey(Reedie, on_delete=models.CASCADE)

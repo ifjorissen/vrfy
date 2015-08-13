@@ -15,7 +15,7 @@ from util import tango, pretty_code
 def student_file_upload_path(instance, filename):
   #filepath should be of the form: course/folio/user/problem_set/problem/filename  (maybe add attempt number)
   problem_set = instance.student_problem_solution.student_problem_set.problem_set.title
-  user = instance.student_problem_solution.student_problem_set.user.username
+  user = instance.student_problem_solution.student_problem_set.user.username()
   problem = instance.student_problem_solution.problem
   attempt = instance.attempt_num
   course = problem.cs_course.num
@@ -207,7 +207,7 @@ class StudentProblemSolution(models.Model):
 
   def submitted_code(self):
     attempt = self.attempt_num - 1
-    files = self.studentproblemfile_set.filter(attempt_num=attempt)[0]
+    files = self.studentproblemfile_set.get(attempt_num=attempt)
     #get file content (assumes only one file submission)
     submission = File(files.submitted_file)
     code = submission.read()
