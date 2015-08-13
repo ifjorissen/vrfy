@@ -14,23 +14,15 @@ https://docs.djangoproject.com/en/1.8/ref/settings/
 import os
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/1.8/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = '#yu7$c#_y#2sip5i@hi^#iocpoa0))m14@e3ob_#0&#rvj_)w+'
-
-# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 TEST = True
-
-GRAPPELLI_ADMIN_TITLE = "CS@Reed Admin"
-
-GRAPPELLI_INDEX_DASHBOARD = "vrfy.dashboard.CustomIndexDashboard"
-
 ALLOWED_HOSTS = ["localhost"]
 INTERNAL_IPS = ['127.0.0.1','localhost']
+
+#Grappelli settings
+GRAPPELLI_ADMIN_TITLE = "CS@Reed Admin"
+GRAPPELLI_INDEX_DASHBOARD = "vrfy.dashboard.CustomIndexDashboard"
 
 # Application definition
 
@@ -43,10 +35,17 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'catalog',
-    'generic',
-    'course',
     'vrfy',
+    'vrfy.apps.LDAPAuthConfig',
+    'vrfy.apps.CourseConfig',
+    'vrfy.apps.CatalogConfig',
+)
+
+#Authentication Settings (With ModelBackend as a fallback)
+AUTHENTICATION_BACKENDS = (
+    'ldap_auth.auth_backend.LDAPRemoteUserBackend',
+    'django.contrib.auth.backends.ModelBackend',
+    # 'django.contrib.auth.backends.RemoteUserBackend',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -54,6 +53,8 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'ldap_auth.auth_middleware.LDAPRemoteUserMiddleware',
+    # 'django.contrib.auth.middleware.RemoteUserMiddleware',
     'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -82,14 +83,11 @@ TEMPLATES = [
 WSGI_APPLICATION = 'vrfy.wsgi.application'
 
 
-# Database
-# https://docs.djangoproject.com/en/1.8/ref/settings/#databases
-
+# Database Info
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': 'vrfy_dev',
-        # The following settings are not used with sqlite3
         'USER': 'vrfy_dev_usr',
         'PASSWORD': 'pass',
         'HOST': 'localhost',
@@ -97,32 +95,25 @@ DATABASES = {
     }
 }
 
-
-# Internationalization
-# https://docs.djangoproject.com/en/1.8/topics/i18n/
-
 LANGUAGE_CODE = 'en-us'
-
 TIME_ZONE = 'UTC'
-
 USE_I18N = True
-
 USE_L10N = True
-
 USE_TZ = True
 
 SERVER_EMAIL = 'isjoriss@reed.edu'
 
 # Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/1.8/howto/static-files/
 STATIC_ROOT = 'staticfiles/'
 STATIC_URL = '/static/'
 MEDIA_ROOT = 'problem_assets/'
 MEDIA_URL = '/problem_assets/'
 STATICFILES_DIRS = (
     # os.path.join(BASE_DIR, "static"),
-    'bower_components/',
+    os.path.join(BASE_DIR, "bower_components"),
 )
+
+#TANGO Settings (for more info see documentation/tango.md)
 
 #address of the tango server
 TANGO_ADDRESS = "http://localhost:3300/"
@@ -130,6 +121,5 @@ TANGO_ADDRESS = "http://localhost:3300/"
 TANGO_KEY = "test"
 #location of the tango courselabs folder
 TANGO_COURSELAB_DIR = "/home/alex/verify_project/courselabs/"
-
 #name of the makefile to be called in Tango
 MAKEFILE_NAME="autograde-Makefile"
