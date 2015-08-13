@@ -1,6 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.core.urlresolvers import reverse
-from django.http import HttpResponse, Http404, HttpResponseRedirect
+from django.http import HttpResponse, Http404, HttpResponseRedirect, HttpResponseForbidden
+from django.core.exceptions import PermissionDenied
 from django.utils import timezone
 from django.utils.text import slugify
 from .models import *
@@ -9,6 +10,7 @@ import requests
 import json
 import time
 import datetime
+from itertools import chain
 from util import tango
 from django.contrib.auth.models import User
 
@@ -152,38 +154,29 @@ def problem_submit(request, ps_id, p_id):
         if additional_files < MAX_ADDITIONAL_FILES:
           additional_files += 1
         else:
-          raise Http404("You can't upload more than " + str(MAX_ADDITIONAL_FILES) + " additional files.")
+          return render(request, '403.html', {'exception': "You can't upload more than " + str(MAX_ADDITIONAL_FILES) + " additional files."}, status=403)
+          #raise PermissionDenied()
         
       else:
         required_pf = RequiredProblemFilename.objects.get(problem=problem, file_title=name)
 
       if required_pf == None or not required_pf.force_rename: 
         name = f.name#if the file should not be renamed, give it the name as it was uploaded
+        
         #we also need to check if it has the same name as any of the grader files
-        for psfile in problem.problemsolutionfile_set.all():
-          if name == psfile.file_upload.name.split("/")[-1]:
-            raise Http404("HEY! You can't name your file " + name + ". Because.... reasons.")
-        
-        if name == problem.grade_script.name.split("/")[-1]:
-          raise Http404("HEY! You can't name your file " + name + ". Because.... reasons.")
-        
-        for lib in GraderLib.objects.all():
-          if name == lib.lib_upload.name.split("/")[-1]:
-            raise Http404("HEY! You can't name your file " + name + ". Because.... reasons.")
+        for gfile in chain(problem.problemsolutionfile_set.all(), GraderLib.objects.all(),[problem.grade_script.name.split("/")[-1]]):
+          if name == str(gfile):
+            return render(request, '403.html', {'exception': name + " is an invalid filename."}, status=403)
+            #raise PermissionDenied(name + " is an invalid filename.")
         
       localfile = name + "-"+ request.user.username
       if problem.autograde_problem:
         r = tango.upload(problem, ps, localfile, f.read())
         files.append({"localFile" : localfile, "destFile":name})#for the addJob command
-      try:
-        prob_file = StudentProblemFile.objects.filter(required_problem_filename=required_pf, student_problem_solution = student_psol).latest('attempt_num')
-        attempts = prob_file.attempt_num + 1
-        new_prob_file = StudentProblemFile.objects.create(required_problem_filename=required_pf, student_problem_solution = student_psol, submitted_file=f, attempt_num = attempts)
-        new_prob_file.save()
 
-      except StudentProblemFile.DoesNotExist:
-        prob_file = StudentProblemFile.objects.create(required_problem_filename=required_pf, student_problem_solution = student_psol, submitted_file=f)
-        prob_file.save()
+      attempts = student_psol.attempt_num
+      new_prob_file = StudentProblemFile.objects.create(required_problem_filename=required_pf, student_problem_solution = student_psol, submitted_file=f, attempt_num = attempts)
+      new_prob_file.save()
 
     if problem.autograde_problem:#these operatons are only required for autograding
       #add grader libraries
@@ -239,6 +232,9 @@ def results_detail(request, ps_id):
       results_dict[problem] = _get_problem_result(sp_sol, request)
     except StudentProblemSolution.DoesNotExist:
       results_dict[problem] = None
+    except ValueError:#there was a problem reading the json_log
+      context = {'exception' : "Something went wrong. Make sure your code is bug free and resubmit. \nIf the problem persists, contact your professor or TA"}
+      return render(request, '500.html', context, status=500)
 
   #make a result object
   #only send the data that the student should see
@@ -255,7 +251,11 @@ def results_problem_detail(request, ps_id, p_id):
   # result_set, created = ProblemResultSet.objects.get_or_create(sp_set = student_ps, user=request.user, problem_set=ps)
   sp_sol = get_object_or_404(StudentProblemSolution, student_problem_set=sp_set, problem=problem)
 
-  result = _get_problem_result(sp_sol, request)
+  try:
+    result = _get_problem_result(sp_sol, request)
+  except ValueError:#if there was a problem reading the json
+    context = {'exception' : "Something went wrong. Make sure your code is bug free and resubmit. \nIf the problem persists, contact your professor or TA"}
+    return render(request, '500.html', context, status=500)
   
   context = {'solution': sp_sol, "result" : result}
   return render(request, 'course/results_problem_detail.html', context)
@@ -285,16 +285,16 @@ def _get_problem_result(solution,request):
         prob_result.timestamp = tango_time
         prob_result.save()
       else:
-        try:
-          log_data = json.loads(line)
-          #create the result object
-          prob_result.score = log_data["score_sum"]
-          prob_result.raw_output = raw_output
-          prob_result.json_log = log_data
-          prob_result.timestamp = tango_time
-          prob_result.save()
-        except ValueError: #if the json isn't there, something went wrong when running the job, or the grader file messed up
-          raise Http404("Something went wrong. Make sure your code is bug free and resubmit. \nIf the problem persists, contact your professor or TA")
+        #try:
+        log_data = json.loads(line)
+        #create the result object
+        prob_result.score = log_data["score_sum"]
+        prob_result.raw_output = raw_output
+        prob_result.json_log = log_data
+        prob_result.timestamp = tango_time
+        prob_result.save()
+        #except ValueError: #if the json isn't there, something went wrong when running the job, or the grader file messed up
+          #raise Http404("Something went wrong. Make sure your code is bug free and resubmit. \nIf the problem persists, contact your professor or TA")
   
   else:
     #special not-autograded stuff goes here
