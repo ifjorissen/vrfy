@@ -46,4 +46,4 @@ def sig_user_logged_in(sender, user, request, **kwargs):
 
 @receiver(user_logged_out, sender=User)
 def sig_user_logged_out(sender, user, request, **kwargs):
-  logger.info("LOGOUT: {} @ {}".format(user.username, request.META['REMOTE_ADDR']))
+  log.info("LOGOUT: {} @ {}".format(user.username, request.META['REMOTE_ADDR']))
