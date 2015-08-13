@@ -9,12 +9,18 @@ class ReedieInline(admin.StackedInline):
   model = Reedie
   can_delete = False
 
+# class EnrollmentInline(admin.TabularInline):
+#   model = Enrollment
+#   extra = 1
+#   verbose_name_plural = "Enrolled"
+
 @admin.register(Reedie)
 class ReedieAdmin(admin.ModelAdmin):
-  readonly_fields = ('first_name', 'last_name', 'email')
+  readonly_fields = ('first_name', 'last_name', 'email', 'last_updated')
   fieldsets = [
-    ('Reed Profile Info', {'fields': ['user', 'first_name', 'last_name', 'email', 'role']}),
+    ('Reed Profile Info', {'fields': ['user', 'first_name', 'last_name', 'last_updated', 'email', 'role']}),
   ]
+  # inlines = (EnrollmentInline,)
 
 @admin.register(User)
 class UserAdmin(UserAdmin):
@@ -37,4 +43,5 @@ class SectionAdmin(admin.ModelAdmin):
     ('Course Info', {'fields': ['course', 'section_id', 'prof', 'start_date', 'end_date']}),
     ('Enrolled Students', {'fields': ['enrolled']}),
   ]
+  # inlines = (EnrollmentInline,)
   filter_vertical = ['enrolled']

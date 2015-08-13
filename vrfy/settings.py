@@ -35,11 +35,10 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'catalog',
-    'ldap_auth',
-    # 'generic',
-    'course',
     'vrfy',
+    'vrfy.apps.LDAPAuthConfig',
+    'vrfy.apps.CourseConfig',
+    'vrfy.apps.CatalogConfig',
 )
 
 #Authentication Settings (With ModelBackend as a fallback)
@@ -111,7 +110,7 @@ MEDIA_ROOT = 'problem_assets/'
 MEDIA_URL = '/problem_assets/'
 STATICFILES_DIRS = (
     # os.path.join(BASE_DIR, "static"),
-    'bower_components/',
+    os.path.join(BASE_DIR, "bower_components"),
 )
 
 #TANGO Settings (for more info see documentation/tango.md)

@@ -10,6 +10,7 @@ import json
 import time
 import datetime
 from util import tango
+from django.contrib.auth.models import User
 
 from django.forms.models import modelformset_factory
 from django.shortcuts import render_to_response
@@ -33,6 +34,7 @@ def _query_problem_sets(user):#if you want a queryset
 def index(request):
   #problems due in the next week
   ps_set = _query_problem_sets(request.user).filter(due_date__range=(timezone.now(), (timezone.now()+datetime.timedelta(days=7)))).order_by('due_date')
+  # ps_set = []
   ps_rs_dict = {}
   for ps in ps_set:
     try:
