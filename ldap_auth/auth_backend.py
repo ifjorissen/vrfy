@@ -1,6 +1,5 @@
 from django.db import models
 from django.contrib.auth.backends import RemoteUserBackend
-from vrfy.settings import TEST
 from django.contrib.auth import get_user_model
 from util.query_ldap import ldap_lookup_user
  

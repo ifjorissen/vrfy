@@ -1,11 +1,11 @@
-from vrfy.settings import TEST
+from vrfy.settings import LOCAL_DEV
 import ldap3
 from ldap3 import ASYNC, SYNC, ALL_ATTRIBUTES, Server, Connection, SUBTREE, ALL
 
 def ldap_lookup_user(username):
   # print("lookup called with {!s}".format(username))
   #to do: make this asynchronous
-  if TEST:
+  if LOCAL_DEV:
     result = {
       "cn": [
         "Isabella F Jorissen",

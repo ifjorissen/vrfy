@@ -12,7 +12,7 @@ class LDAPAuthConfig(AppConfig):
   verbose_name = "Authentication With LDAP"
 
   def ready(self):
-    print("LDAP_AUTH READY!")
+    print("LDAP_auth READY!")
     import ldap_auth.receivers
 
 class CourseConfig(AppConfig):
