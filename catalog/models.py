@@ -1,6 +1,5 @@
 from django.db import models
 from django.contrib.auth.models import User
-from vrfy.settings import TEST
 import ldap3
 from ldap3 import ASYNC, SYNC, ALL_ATTRIBUTES, Server, Connection, SUBTREE, ALL
 

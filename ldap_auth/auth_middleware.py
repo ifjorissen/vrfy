@@ -1,7 +1,7 @@
 from django.contrib import auth
 from django.contrib.auth.middleware import RemoteUserMiddleware
 from django.core.exceptions import ImproperlyConfigured
-from vrfy.settings import TEST
+from vrfy.settings import LOCAL_DEV
 
 class LDAPRemoteUserMiddleware(RemoteUserMiddleware):
   # header = "REMOTE_USER"
@@ -18,7 +18,7 @@ class LDAPRemoteUserMiddleware(RemoteUserMiddleware):
     try:
       username = request.META[self.header]
     except KeyError:
-      if TEST:
+      if LOCAL_DEV:
         username = 'isjoriss'
       # If specified header doesn't exist then remove any existing
       # authenticated remote-user, or return (leaving request.user set to

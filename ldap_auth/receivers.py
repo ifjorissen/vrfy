@@ -25,14 +25,14 @@ def User_post_save(sender, **kwargs):
       print("could not find a reedie with that username")
 
 
-@receiver(user_logged_in)
-def sig_user_logged_in(sender, user, request, **kwargs):
-  print(sender)
-  logger = logging.getLogger(__name__)
-  logger.info("user logged in: %s at %s" % (user, request.META['REMOTE_ADDR']))
+# @receiver(user_logged_in)
+# def sig_user_logged_in(sender, user, request, **kwargs):
+#   print(sender)
+#   logger = logging.getLogger(__name__)
+#   logger.info("user logged in: %s at %s" % (user, request.META['REMOTE_ADDR']))
 
 
-@receiver(user_logged_out)
-def sig_user_logged_out(sender, user, request, **kwargs):
-    logger = logging.getLogger(__name__)
-    logger.info("user logged out: %s at %s" % (user, request.META['REMOTE_ADDR']))
+# @receiver(user_logged_out)
+# def sig_user_logged_out(sender, user, request, **kwargs):
+#     logger = logging.getLogger(__name__)
+#     logger.info("user logged out: %s at %s" % (user, request.META['REMOTE_ADDR']))
