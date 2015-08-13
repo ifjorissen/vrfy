@@ -267,7 +267,7 @@ class ProblemResult(models.Model):
       return "Not Autograded"
 
   def __str__(self):
-    return self.problem.title + "_" + self.user.username + "_jobID" + str(self.job_id)
+    return self.problem.title + "_" + self.user.username()+"_jobID" + str(self.job_id)
 
 #for testrunner files like session.py or sanity.py
 class GraderLib(models.Model):
