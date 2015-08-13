@@ -1,18 +1,14 @@
 
 from django.apps import AppConfig
-# from ldap_auth.apps import LDAPAuthConfig
-# from course.apps import CourseConfig
-
-# class AuthConfig(LDAPAuthConfig):
-#   verbose_name = "Authentication"
-
+import logging
+log = logging.getLogger(__name__)
 
 class LDAPAuthConfig(AppConfig):
   name = 'ldap_auth'
   verbose_name = "Authentication With LDAP"
 
   def ready(self):
-    print("LDAP_auth READY!")
+    log.info("LDAP_auth READY!")
     import ldap_auth.receivers
 
 class CourseConfig(AppConfig):
@@ -20,7 +16,7 @@ class CourseConfig(AppConfig):
   verbose_name = "Assignment Administration"
 
   def ready(self):
-    print("Assignment READY!")
+    log.info("Assignment READY!")
     import course.receivers
 
 class CatalogConfig(AppConfig):
@@ -28,4 +24,4 @@ class CatalogConfig(AppConfig):
   verbose_name = "Catalog Administration"
 
   def ready(self):
-    print("CATALOG READY!")
+    log.info("CATALOG READY!")

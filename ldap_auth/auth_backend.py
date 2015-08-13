@@ -2,7 +2,9 @@ from django.db import models
 from django.contrib.auth.backends import RemoteUserBackend
 from django.contrib.auth import get_user_model
 from util.query_ldap import ldap_lookup_user
- 
+import logging
+log = logging.getLogger(__name__)
+
 class LDAPRemoteUserBackend(RemoteUserBackend):
   def authenticate(self, remote_user):
     """
@@ -50,6 +52,7 @@ class LDAPRemoteUserBackend(RemoteUserBackend):
     #To determine if the user is to have further priviledges
     #we consult LDAP
     #connect to ldap server
+    log.info("UPDATE: {!s} User Profile".format(user.username))
     try:
       user_dict = ldap_lookup_user(user.username)
       try:
@@ -61,9 +64,10 @@ class LDAPRemoteUserBackend(RemoteUserBackend):
 
     except IndexError:  
       if user.is_superuser:
-        print("superusers can be configured without being reedies")
+        log.info("No Reed Profile Found")
       else:
-        print("could not find a reedie with that username")
+        log.error("Not a superuser & No Reed Profile Found ... something went terrible wrong")
+
 
     user.save()
     return user
