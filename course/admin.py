@@ -266,6 +266,8 @@ class StudentProblemSolutionAdmin(admin.ModelAdmin):
         #localfile has username appended to it
         localFile = name + "-"+ str(sf.student_problem_solution.student_problem_set.user)
         files.append({'localFile': localFile, 'destFile': name})
+      jsonlocalFile = "data.json" + "-" + str(sf.student_problem_solution.student_problem_set.user)
+      files.append({'localFile': jsonlocalFile, 'destFile': "data.json"})
       
       for f in chain(obj.problem.problemsolutionfile_set.all(), models.GraderLib.objects.all(),[obj.problem.grade_script.name.split("/")[-1]]):
         files.append({'localFile': str(f), 'destFile': str(f)})
