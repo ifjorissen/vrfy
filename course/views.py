@@ -1,6 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.core.urlresolvers import reverse
-from django.http import HttpResponse, Http404, HttpResponseRedirect
+from django.http import HttpResponse, Http404, HttpResponseRedirect, HttpResponseForbidden
+from django.core.exceptions import PermissionDenied
 from django.utils import timezone
 from django.utils.text import slugify
 from .models import *
@@ -9,6 +10,7 @@ import requests
 import json
 import time
 import datetime
+from itertools import chain
 from util import tango
 from django.contrib.auth.models import User
 
@@ -24,21 +26,21 @@ ADDITIONAL_FILE_NAME = "additional"
 MAX_ADDITIONAL_FILES = 7
 
 #these helper functions enforce the universal restrictions on what problemsets a user can get
-def _get_problem_set(pk, user): #if you want one problem set
-  return get_object_or_404(ProblemSet, pk=pk, pub_date__lte=timezone.now(), cs_section__in=user.reedie.enrolled.all())
+def _get_problem_set(pk, reedie): #if you want one problem set
+  return get_object_or_404(ProblemSet, pk=pk, pub_date__lte=timezone.now(), cs_section__in=reedie.enrolled.all())
 
-def _query_problem_sets(user):#if you want a queryset
-  return ProblemSet.objects.filter(pub_date__lte=timezone.now(), cs_section__in=user.reedie.enrolled.all())
+def _query_problem_sets(reedie):#if you want a queryset
+  return ProblemSet.objects.filter(pub_date__lte=timezone.now(), cs_section__in=reedie.enrolled.all())
 
 @login_required
 def index(request):
   #problems due in the next week
-  ps_set = _query_problem_sets(request.user).filter(due_date__range=(timezone.now(), (timezone.now()+datetime.timedelta(days=7)))).order_by('due_date')
+  ps_set = _query_problem_sets(request.user.reedie).filter(due_date__range=(timezone.now(), (timezone.now()+datetime.timedelta(days=7)))).order_by('due_date')
   # ps_set = []
   ps_rs_dict = {}
   for ps in ps_set:
     try:
-      sp_set = StudentProblemSet.objects.get(problem_set=ps, user=request.user)
+      sp_set = StudentProblemSet.objects.get(problem_set=ps, user=request.user.reedie)
       ps_rs_dict[ps] = sp_set
     except StudentProblemSet.DoesNotExist:
       ps_rs_dict[ps] = None
@@ -53,10 +55,10 @@ def attempt_problem_set(request, ps_id):
   '''
   when a student attempts a problem set, try to get their solution set & solutions if they exist
   '''
-  ps = _get_problem_set(ps_id, request.user)
+  ps = _get_problem_set(ps_id, request.user.reedie)
   problem_solution_dict = {}
   try: 
-    sp_set = StudentProblemSet.objects.get(problem_set=ps, user=request.user)
+    sp_set = StudentProblemSet.objects.get(problem_set=ps, user=request.user.reedie)
     for problem in ps.problems.all():
       try: 
         student_psol = StudentProblemSolution.objects.get(problem=problem, student_problem_set=sp_set)
@@ -78,7 +80,7 @@ def attempt_problem_set(request, ps_id):
 
 @login_required
 def submit_success(request, ps_id, p_id):
-  ps = _get_problem_set(ps_id, request.user)
+  ps = _get_problem_set(ps_id, request.user.reedie)
   problem = get_object_or_404(Problem, pk=p_id)
 
   if problem.autograde_problem:#if it is running in Tango
@@ -107,10 +109,10 @@ def problem_set_index(request):
   return a dict of the (problem sets : student problem set solutions)
   '''
   ps_sol_dict = {}
-  latest_problem_sets = _query_problem_sets(request.user).order_by('due_date')
+  latest_problem_sets = _query_problem_sets(request.user.reedie).order_by('due_date')
   for ps in latest_problem_sets:
     try:
-      student_ps_sol = StudentProblemSet.objects.get(problem_set=ps, user=request.user)
+      student_ps_sol = StudentProblemSet.objects.get(problem_set=ps, user=request.user.reedie)
     except StudentProblemSet.DoesNotExist:
       student_ps_sol = None
 
@@ -122,12 +124,11 @@ def problem_set_index(request):
 @login_required
 def problem_submit(request, ps_id, p_id):
   if request.method == 'POST':#make sure the user doesn't type this into the address bar
-    ps = _get_problem_set(ps_id, request.user)
+    ps = _get_problem_set(ps_id, request.user.reedie)
     problem = get_object_or_404(Problem, pk=p_id)
 
     #create / get the student problem set and update the submission time (reflects latest attempt)
-    student_ps_sol, sp_set_created = StudentProblemSet.objects.get_or_create(problem_set=ps, user=request.user)
-    student_ps_sol.submitted = timezone.now()
+    student_ps_sol, sp_set_created = StudentProblemSet.objects.get_or_create(problem_set=ps, user=request.user.reedie, defaults={'submitted': timezone.now()})
     student_ps_sol.save()
 
     student_psol, sp_sol_created = StudentProblemSolution.objects.get_or_create(problem=problem, student_problem_set=student_ps_sol)
@@ -140,7 +141,7 @@ def problem_submit(request, ps_id, p_id):
     mytimestamp = None
     if not problem.autograde_problem: #if its not being autograded, we should set the timestamp here; if it is, tango will set it
       mytimestamp = timezone.now()
-    prob_result = ProblemResult.objects.create(attempt_num=student_psol.attempt_num, sp_sol=student_psol, sp_set=student_ps_sol, user=request.user, problem=problem, timestamp=mytimestamp)
+    prob_result = ProblemResult.objects.create(attempt_num=student_psol.attempt_num, sp_sol=student_psol, sp_set=student_ps_sol, user=request.user.reedie, problem=problem, timestamp=mytimestamp)
     
     additional_files = 0
     files = []#for the addJob
@@ -153,38 +154,29 @@ def problem_submit(request, ps_id, p_id):
         if additional_files < MAX_ADDITIONAL_FILES:
           additional_files += 1
         else:
-          raise Http404("You can't upload more than " + str(MAX_ADDITIONAL_FILES) + " additional files.")
+          return render(request, '403.html', {'exception': "You can't upload more than " + str(MAX_ADDITIONAL_FILES) + " additional files."}, status=403)
+          #raise PermissionDenied()
         
       else:
         required_pf = RequiredProblemFilename.objects.get(problem=problem, file_title=name)
 
       if required_pf == None or not required_pf.force_rename: 
         name = f.name#if the file should not be renamed, give it the name as it was uploaded
+        
         #we also need to check if it has the same name as any of the grader files
-        for psfile in problem.problemsolutionfile_set.all():
-          if name == psfile.file_upload.name.split("/")[-1]:
-            raise Http404("HEY! You can't name your file " + name + ". Because.... reasons.")
-        
-        if name == problem.grade_script.name.split("/")[-1]:
-          raise Http404("HEY! You can't name your file " + name + ". Because.... reasons.")
-        
-        for lib in GraderLib.objects.all():
-          if name == lib.lib_upload.name.split("/")[-1]:
-            raise Http404("HEY! You can't name your file " + name + ". Because.... reasons.")
+        for gfile in chain(problem.problemsolutionfile_set.all(), GraderLib.objects.all(),[problem.grade_script.name.split("/")[-1]]):
+          if name == str(gfile):
+            return render(request, '403.html', {'exception': name + " is an invalid filename."}, status=403)
+            #raise PermissionDenied(name + " is an invalid filename.")
         
       localfile = name + "-"+ request.user.username
       if problem.autograde_problem:
         r = tango.upload(problem, ps, localfile, f.read())
         files.append({"localFile" : localfile, "destFile":name})#for the addJob command
-      try:
-        prob_file = StudentProblemFile.objects.filter(required_problem_filename=required_pf, student_problem_solution = student_psol).latest('attempt_num')
-        attempts = prob_file.attempt_num + 1
-        new_prob_file = StudentProblemFile.objects.create(required_problem_filename=required_pf, student_problem_solution = student_psol, submitted_file=f, attempt_num = attempts)
-        new_prob_file.save()
 
-      except StudentProblemFile.DoesNotExist:
-        prob_file = StudentProblemFile.objects.create(required_problem_filename=required_pf, student_problem_solution = student_psol, submitted_file=f)
-        prob_file.save()
+      attempts = student_psol.attempt_num
+      new_prob_file = StudentProblemFile.objects.create(required_problem_filename=required_pf, student_problem_solution = student_psol, submitted_file=f, attempt_num = attempts)
+      new_prob_file.save()
 
     if problem.autograde_problem:#these operatons are only required for autograding
       #add grader libraries
@@ -227,8 +219,8 @@ def problem_submit(request, ps_id, p_id):
 def results_detail(request, ps_id):
   #returns the results of a given problem set (and all attempts)
   # logic to figure out if the results are availiable and if so, get them
-  ps = _get_problem_set(ps_id, request.user)
-  sp_set = get_object_or_404(StudentProblemSet, problem_set=ps, user=request.user)
+  ps = _get_problem_set(ps_id, request.user.reedie)
+  sp_set = get_object_or_404(StudentProblemSet, problem_set=ps, user=request.user.reedie)
   # result_set = get_object_or_404(ProblemResultSet, user=request.user, sp_set=student_ps, problem_set=ps)
   results_dict = {}
 
@@ -240,6 +232,9 @@ def results_detail(request, ps_id):
       results_dict[problem] = _get_problem_result(sp_sol, request)
     except StudentProblemSolution.DoesNotExist:
       results_dict[problem] = None
+    except ValueError:#there was a problem reading the json_log
+      context = {'exception' : "Something went wrong. Make sure your code is bug free and resubmit. \nIf the problem persists, contact your professor or TA"}
+      return render(request, '500.html', context, status=500)
 
   #make a result object
   #only send the data that the student should see
@@ -249,14 +244,18 @@ def results_detail(request, ps_id):
 @login_required
 def results_problem_detail(request, ps_id, p_id):
   # logic to figure out if the results are availiable and if so, get them
-  ps = _get_problem_set(ps_id, request.user)
+  ps = _get_problem_set(ps_id, request.user.reedie)
   problem = get_object_or_404(Problem, pk=p_id)
-  sp_set = get_object_or_404(StudentProblemSet, problem_set=ps, user=request.user)
+  sp_set = get_object_or_404(StudentProblemSet, problem_set=ps, user=request.user.reedie)
   results_dict = {}
   # result_set, created = ProblemResultSet.objects.get_or_create(sp_set = student_ps, user=request.user, problem_set=ps)
   sp_sol = get_object_or_404(StudentProblemSolution, student_problem_set=sp_set, problem=problem)
 
-  result = _get_problem_result(sp_sol, request)
+  try:
+    result = _get_problem_result(sp_sol, request)
+  except ValueError:#if there was a problem reading the json
+    context = {'exception' : "Something went wrong. Make sure your code is bug free and resubmit. \nIf the problem persists, contact your professor or TA"}
+    return render(request, '500.html', context, status=500)
   
   context = {'solution': sp_sol, "result" : result}
   return render(request, 'course/results_problem_detail.html', context)
@@ -286,16 +285,16 @@ def _get_problem_result(solution,request):
         prob_result.timestamp = tango_time
         prob_result.save()
       else:
-        try:
-          log_data = json.loads(line)
-          #create the result object
-          prob_result.score = log_data["score_sum"]
-          prob_result.raw_output = raw_output
-          prob_result.json_log = log_data
-          prob_result.timestamp = tango_time
-          prob_result.save()
-        except ValueError: #if the json isn't there, something went wrong when running the job, or the grader file messed up
-          raise Http404("Something went wrong. Make sure your code is bug free and resubmit. \nIf the problem persists, contact your professor or TA")
+        #try:
+        log_data = json.loads(line)
+        #create the result object
+        prob_result.score = log_data["score_sum"]
+        prob_result.raw_output = raw_output
+        prob_result.json_log = log_data
+        prob_result.timestamp = tango_time
+        prob_result.save()
+        #except ValueError: #if the json isn't there, something went wrong when running the job, or the grader file messed up
+          #raise Http404("Something went wrong. Make sure your code is bug free and resubmit. \nIf the problem persists, contact your professor or TA")
   
   else:
     #special not-autograded stuff goes here

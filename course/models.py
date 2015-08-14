@@ -15,7 +15,7 @@ from util import tango, pretty_code
 def student_file_upload_path(instance, filename):
   #filepath should be of the form: course/folio/user/problem_set/problem/filename  (maybe add attempt number)
   problem_set = instance.student_problem_solution.student_problem_set.problem_set.title
-  user = instance.student_problem_solution.student_problem_set.user.username
+  user = instance.student_problem_solution.student_problem_set.user.username()
   problem = instance.student_problem_solution.problem
   attempt = instance.attempt_num
   course = problem.cs_course.num
@@ -100,6 +100,9 @@ class ProblemSolutionFile(models.Model):
   file_upload = models.FileField(upload_to=solution_file_upload_path, help_text="Upload a solution file here")
   comment = models.CharField(max_length=200, null=True, blank=True)
 
+  def __str__(self):
+    return self.file_upload.name.split("/")[-1]
+
 class RequiredProblemFilename(models.Model):
   file_title = models.CharField(max_length=200, help_text="Use the name of the python file the grader script imports as a module. E.g: main.py if the script imports main")
   problem = models.ForeignKey(Problem, null=True)
@@ -155,7 +158,7 @@ class StudentProblemSet(models.Model):
       return False
   
   def __str__(self): 
-    return self.problem_set.title + " - " + self.user.username
+    return self.problem_set.title + " - " + self.user.username()
     
 class StudentProblemSolution(models.Model):
   problem = models.ForeignKey(Problem)
@@ -167,11 +170,13 @@ class StudentProblemSolution(models.Model):
   job_id = models.IntegerField(default=-1, verbose_name="Tango Job ID")
   
   def __str__(self): 
-    return self.problem.title + " - " + self.student_problem_set.user.username
+    return self.problem.title + " - " + self.student_problem_set.user.username()
 
   def is_late(self):
     ps_due_date = self.student_problem_set.problem_set.due_date
     submit_date = self.submitted
+    if submit_date == None:
+      return 0
     if submit_date > ps_due_date:
       return 1
     else:
@@ -187,13 +192,13 @@ class StudentProblemSolution(models.Model):
 
 
   def latest_score(self):
-    result_obj = self.problemresult_set.get(job_id=self.job_id)
+    result_obj = self.problemresult_set.get(attempt_num=self.attempt_num)
     score = result_obj.get_score()
     return score
 
   def submitted_code_table(self):
-    attempt = self.attempt_num - 1
-    files = self.studentproblemfile_set.filter(attempt_num=attempt)[0]
+    attempt = self.attempt_num
+    files = self.studentproblemfile_set.get(attempt_num=attempt)
     #get file content (assumes only one file submission)
     submission = File(files.submitted_file)
     code = submission.read()
@@ -204,8 +209,8 @@ class StudentProblemSolution(models.Model):
   submitted_code_table.short_description = "Submitted Code"
 
   def submitted_code(self):
-    attempt = self.attempt_num - 1
-    files = self.studentproblemfile_set.filter(attempt_num=attempt)[0]
+    attempt = self.attempt_num
+    files = self.studentproblemfile_set.get(attempt_num=attempt)
     #get file content (assumes only one file submission)
     submission = File(files.submitted_file)
     code = submission.read()
@@ -224,6 +229,10 @@ class StudentProblemFile(models.Model):
   student_problem_solution = models.ForeignKey(StudentProblemSolution, null=True)
   submitted_file = models.FileField(upload_to=student_file_upload_path)
   attempt_num = models.IntegerField(default=0)
+
+  def __str__(self):
+    head, filename = os.path.split(submitted_file.name)
+    return filename
 
 class ProblemResult(models.Model):
   #tango jobid
@@ -258,7 +267,7 @@ class ProblemResult(models.Model):
       return "Not Autograded"
 
   def __str__(self):
-    return self.problem.title + "_" + self.user.username + "_jobID" + str(self.job_id)
+    return self.problem.title + "_" + self.user.username()+"_jobID" + str(self.job_id)
 
 #for testrunner files like session.py or sanity.py
 class GraderLib(models.Model):

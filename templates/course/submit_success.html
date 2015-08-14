@@ -3,15 +3,29 @@
 {% block content %}
 <section>
   <h1>Submission Successful!</h1>
-  <p> Your submission has {% if job_running %} not {% endif %} been graded.</p>
-  <p> There are currently {{ num_jobs }} assignments being graded. </p>
-  {% if num_jobs > 40 %}
-    <p> it'll probably be a few minutes before you homework gets graded</p>
+  {% if job_running %}
+    <div class="alert alert-info" role="alert">Your submission is still being graded.</div>
+  {% else %}
+    <div class="alert alert-success" role="alert">Your submission has been graded!</div>
   {% endif %}
+  <p> There are currently {{ num_jobs }} assignments being graded. </p>
+  {% if job_running %}
+    <p> Refresh this page in 
+    {% if num_jobs > 40 %}
+      a few minutes 
+    {% elif numb_jobs > 10 %}
+      30 seconds
+    {% else %}
+      a few seconds 
+    {% endif %}
+    to see if your job has finished </p>
+  {% endif %}
+  {% if not job_running %}
   <div>
     <a role="button" type="button" href="{% url 'course:results_problem_detail' ps_id p_id %}" class="btn btn-default">
       <span class="glyphicon glyphicon-eye-open"></span> results
     </a>
   </div>
+  {% endif %}
 </section>
 {% endblock %}

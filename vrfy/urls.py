@@ -21,6 +21,5 @@ urlpatterns = [
     url(r'^', include('course.urls', namespace="course")),
     url(r'^grappelli/', include('grappelli.urls')), # grappelli URLS
     url(r'^admin/', include(admin.site.urls)),
-    url(r'^problem_assets/(?P<path>.*)$', 'django.views.static.serve', { 'document_root': settings.MEDIA_ROOT }),
 ]
 

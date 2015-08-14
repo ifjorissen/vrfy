@@ -29,8 +29,12 @@
             <div class="flex-panel-wrapper">
               <div>
                 <p class = "h4">{{ sol.problem.title }}</p>
-                <p class="h5"> 
-                  Latest Score {{sol.latest_score}}/10
+                <p class="h5">
+                  {% if sol.latest_score == "Not Autograded" %}
+                    Not Autograded
+                  {% else %}
+                    Latest Score {{sol.latest_score}}/10
+                  {% endif %}
                 </p>
                 <p class="h5"> 
                   <span class="glyphicon glyphicon-time"></span>
