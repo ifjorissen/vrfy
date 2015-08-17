@@ -20,6 +20,11 @@ LOCAL_DEV = True
 ALLOWED_HOSTS = ["localhost"]
 INTERNAL_IPS = ['127.0.0.1','localhost']
 
+# Admins & Email for the server
+ADMINS = (('Alex', 'grantal@reed.edu'), ('Isabella', 'isjoriss@reed.edu'))
+EMAIL_HOST = 'localhost'
+SERVER_EMAIL = 'noreply@cs.reed.edu'
+
 #Grappelli settings
 GRAPPELLI_ADMIN_TITLE = "CS@Reed Admin"
 GRAPPELLI_INDEX_DASHBOARD = "vrfy.dashboard.CustomIndexDashboard"
@@ -123,3 +128,78 @@ TANGO_KEY = "test"
 TANGO_COURSELAB_DIR = "/home/alex/verify_project/courselabs/"
 #name of the makefile to be called in Tango
 MAKEFILE_NAME="autograde-Makefile"
+
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format' : "[%(asctime)s] %(levelname)s [%(name)s:%(lineno)s] %(message)s",
+            'datefmt' : "%d/%b/%Y %H:%M:%S"
+        },
+        'simple': {
+            'format': '%(levelname)s %(message)s'
+        },
+    },
+    'handlers': {
+        'mail_admins': {
+            'level': 'ERROR',
+            'class': 'django.utils.log.AdminEmailHandler',
+            'include_html': True,
+        },
+        'file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': 'logging/django.log',
+            'formatter': 'verbose'
+        },
+        'vrfy_log': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': 'logging/vrfy.log',
+            'formatter': 'verbose'
+        },
+        'ldap_auth_log': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': 'logging/ldap_auth.log',
+            'formatter': 'verbose'
+        },
+        'catalog_log': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': 'logging/catalog.log',
+            'formatter': 'verbose'
+        },
+        'course_log': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': 'logging/course.log',
+            'formatter': 'verbose'
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers':['file', 'mail_admins'],
+            'propagate': True,
+            'level':'INFO',
+        },
+        'vrfy': {
+            'handlers': ['vrfy_log', 'mail_admins'],
+            'level': 'INFO',
+        },
+        'catalog': {
+            'handlers': ['catalog_log', 'mail_admins'],
+            'level': 'INFO',
+        },
+        'course': {
+            'handlers': ['course_log', 'mail_admins'],
+            'level': 'INFO',
+        },
+        'ldap_auth': {
+            'handlers': ['ldap_auth_log', 'mail_admins'],
+            'level': 'INFO',
+        },
+    }
+}
