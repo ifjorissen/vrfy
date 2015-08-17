@@ -6,12 +6,31 @@ from django.contrib.auth.models import User
 from util.query_ldap import ldap_lookup_user
 from django.utils import timezone
 from django.contrib.auth.signals import user_logged_in, user_logged_out
+import logging
+
+log = logging.getLogger(__name__)
+
+# @receiver(post_save, sender=User)
+# def User_post_save(sender, **kwargs):
+#   user = kwargs.get("instance")
+#   try:
+#     log.info("updating a reedie")
+#     user_dict = ldap_lookup_user(user.username)
+#     reed_usr, created = Reedie.objects.get_or_create(user=user)
+#     reed_usr.role = user_dict['eduPersonPrimaryAffiliation']
+#     reed_usr.last_updated = timezone.now()
+#     reed_usr.save()
+#   except IndexError:  
+#     if user.is_superuser:
+#       log.info("superusers don't need to be reedies")
+#     else:
+#       log.info("could not find a reedie with that username")
 
 
-@receiver(post_save, sender=User)
-def User_post_save(sender, **kwargs):
-  # logger = logging.getLogger(__name__)
-  user = kwargs.get("instance")
+@receiver(user_logged_in, sender=User)
+def sig_user_logged_in(sender, user, request, **kwargs):
+  log.info("LOGIN: {} @ {}".format(user.username, request.META['REMOTE_ADDR']))
+  log.info("UPDATE: {!s} Reed Profile".format(user.username))
   try:
     user_dict = ldap_lookup_user(user.username)
     reed_usr, created = Reedie.objects.get_or_create(user=user)
@@ -20,19 +39,11 @@ def User_post_save(sender, **kwargs):
     reed_usr.save()
   except IndexError:  
     if user.is_superuser:
-      print("superusers don't need to be reedies")
+      log.info("No Reed Profile Found")
     else:
-      print("could not find a reedie with that username")
+      log.error("Not a superuser & No Reed Profile Found ... something went terrible wrong")
 
 
-# @receiver(user_logged_in)
-# def sig_user_logged_in(sender, user, request, **kwargs):
-#   print(sender)
-#   logger = logging.getLogger(__name__)
-#   logger.info("user logged in: %s at %s" % (user, request.META['REMOTE_ADDR']))
-
-
-# @receiver(user_logged_out)
-# def sig_user_logged_out(sender, user, request, **kwargs):
-#     logger = logging.getLogger(__name__)
-#     logger.info("user logged out: %s at %s" % (user, request.META['REMOTE_ADDR']))
+@receiver(user_logged_out, sender=User)
+def sig_user_logged_out(sender, user, request, **kwargs):
+  log.info("LOGOUT: {} @ {}".format(user.username, request.META['REMOTE_ADDR']))
