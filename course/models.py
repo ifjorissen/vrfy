@@ -231,7 +231,7 @@ class StudentProblemFile(models.Model):
   attempt_num = models.IntegerField(default=0)
 
   def __str__(self):
-    head, filename = os.path.split(submitted_file.name)
+    head, filename = os.path.split(self.submitted_file.name)
     return filename
 
 class ProblemResult(models.Model):
