@@ -1,5 +1,5 @@
 {% extends 'course/base.html' %}
-
+{% load staticfiles %}
 {% block content %}
 <section>
   <h1>Submission Successful!</h1>
@@ -9,17 +9,7 @@
     <div class="alert alert-success" role="alert">Your submission has been graded!</div>
   {% endif %}
   <p> There are currently {{ num_jobs }} assignments being graded. </p>
-  {% if job_running %}
-    <p> Refresh this page in 
-    {% if num_jobs > 40 %}
-      a few minutes 
-    {% elif numb_jobs > 10 %}
-      30 seconds
-    {% else %}
-      a few seconds 
-    {% endif %}
-    to see if your job has finished </p>
-  {% endif %}
+  <p> This page will auto-refresh </p>
   {% if not job_running %}
   <div>
     <a role="button" type="button" href="{% url 'course:results_problem_detail' ps_id p_id %}" class="btn btn-default">
@@ -28,4 +18,11 @@
   </div>
   {% endif %}
 </section>
+{% endblock %}
+{% block otherscripts %}
+<script type="text/javascript"> 
+  var job_running = "{{ job_running }}" == "True"
+  var num_jobs = {{ num_jobs }}
+</script>
+<script src="{% static 'course/js/submit_success.js' %}"></script>
 {% endblock %}

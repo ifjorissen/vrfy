@@ -6,3 +6,195 @@
 [17/Aug/2015 16:50:22] WARNING [django.request:170] Not Found: /attempt/problem-set4364/
 [17/Aug/2015 16:50:25] WARNING [django.request:170] Not Found: /results/problem-set4364/
 [17/Aug/2015 16:50:28] WARNING [django.request:170] Not Found: /submit/problem-set4364/problem3/
+[17/Aug/2015 19:15:52] ERROR [django.request:256] Internal Server Error: /submit/success/problem-set3/problem1/
+Traceback (most recent call last):
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/template/base.py", line 337, in parse
+    compile_func = self.tags[command]
+KeyError: 'static'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/core/handlers/base.py", line 132, in get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/contrib/auth/decorators.py", line 22, in _wrapped_view
+    return view_func(request, *args, **kwargs)
+  File "/home/alex/verify_project/vrfy/course/views.py", line 101, in submit_success
+    return render(request, 'course/submit_success.html', context)
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/shortcuts.py", line 67, in render
+    template_name, context, request=request, using=using)
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/template/loader.py", line 98, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/template/loader.py", line 35, in get_template
+    return engine.get_template(template_name, dirs)
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/template/backends/django.py", line 30, in get_template
+    return Template(self.engine.get_template(template_name, dirs))
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/template/engine.py", line 167, in get_template
+    template, origin = self.find_template(template_name, dirs)
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/template/engine.py", line 141, in find_template
+    source, display_name = loader(name, dirs)
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/template/loaders/base.py", line 13, in __call__
+    return self.load_template(template_name, template_dirs)
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/template/loaders/base.py", line 23, in load_template
+    template = Template(source, origin, template_name, self.engine)
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/template/base.py", line 190, in __init__
+    self.nodelist = engine.compile_string(template_string, origin)
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/template/engine.py", line 261, in compile_string
+    return parser.parse()
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/template/base.py", line 341, in parse
+    compiled_result = compile_func(self, token)
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/template/loader_tags.py", line 210, in do_extends
+    nodelist = parser.parse()
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/template/base.py", line 341, in parse
+    compiled_result = compile_func(self, token)
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/template/loader_tags.py", line 184, in do_block
+    nodelist = parser.parse(('endblock',))
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/template/base.py", line 339, in parse
+    self.invalid_block_tag(token, command, parse_until)
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/template/base.py", line 394, in invalid_block_tag
+    (command, get_text_list(["'%s'" % p for p in parse_until])))
+django.template.base.TemplateSyntaxError: Invalid block tag: 'static', expected 'endblock'
+[17/Aug/2015 19:16:48] ERROR [django.request:256] Internal Server Error: /submit/success/problem-set3/problem1/
+Traceback (most recent call last):
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/template/base.py", line 337, in parse
+    compile_func = self.tags[command]
+KeyError: 'static'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/core/handlers/base.py", line 132, in get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/contrib/auth/decorators.py", line 22, in _wrapped_view
+    return view_func(request, *args, **kwargs)
+  File "/home/alex/verify_project/vrfy/course/views.py", line 101, in submit_success
+    return render(request, 'course/submit_success.html', context)
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/shortcuts.py", line 67, in render
+    template_name, context, request=request, using=using)
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/template/loader.py", line 98, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/template/loader.py", line 35, in get_template
+    return engine.get_template(template_name, dirs)
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/template/backends/django.py", line 30, in get_template
+    return Template(self.engine.get_template(template_name, dirs))
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/template/engine.py", line 167, in get_template
+    template, origin = self.find_template(template_name, dirs)
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/template/engine.py", line 141, in find_template
+    source, display_name = loader(name, dirs)
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/template/loaders/base.py", line 13, in __call__
+    return self.load_template(template_name, template_dirs)
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/template/loaders/base.py", line 23, in load_template
+    template = Template(source, origin, template_name, self.engine)
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/template/base.py", line 190, in __init__
+    self.nodelist = engine.compile_string(template_string, origin)
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/template/engine.py", line 261, in compile_string
+    return parser.parse()
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/template/base.py", line 341, in parse
+    compiled_result = compile_func(self, token)
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/template/loader_tags.py", line 210, in do_extends
+    nodelist = parser.parse()
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/template/base.py", line 341, in parse
+    compiled_result = compile_func(self, token)
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/template/loader_tags.py", line 184, in do_block
+    nodelist = parser.parse(('endblock',))
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/template/base.py", line 339, in parse
+    self.invalid_block_tag(token, command, parse_until)
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/template/base.py", line 394, in invalid_block_tag
+    (command, get_text_list(["'%s'" % p for p in parse_until])))
+django.template.base.TemplateSyntaxError: Invalid block tag: 'static', expected 'endblock'
+[17/Aug/2015 20:02:46] ERROR [django.request:256] Internal Server Error: /submit/success/problem-set3/problem1/
+Traceback (most recent call last):
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/template/base.py", line 337, in parse
+    compile_func = self.tags[command]
+KeyError: 'static'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/core/handlers/base.py", line 132, in get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/contrib/auth/decorators.py", line 22, in _wrapped_view
+    return view_func(request, *args, **kwargs)
+  File "/home/alex/verify_project/vrfy/course/views.py", line 101, in submit_success
+    return render(request, 'course/submit_success.html', context)
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/shortcuts.py", line 67, in render
+    template_name, context, request=request, using=using)
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/template/loader.py", line 98, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/template/loader.py", line 35, in get_template
+    return engine.get_template(template_name, dirs)
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/template/backends/django.py", line 30, in get_template
+    return Template(self.engine.get_template(template_name, dirs))
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/template/engine.py", line 167, in get_template
+    template, origin = self.find_template(template_name, dirs)
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/template/engine.py", line 141, in find_template
+    source, display_name = loader(name, dirs)
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/template/loaders/base.py", line 13, in __call__
+    return self.load_template(template_name, template_dirs)
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/template/loaders/base.py", line 23, in load_template
+    template = Template(source, origin, template_name, self.engine)
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/template/base.py", line 190, in __init__
+    self.nodelist = engine.compile_string(template_string, origin)
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/template/engine.py", line 261, in compile_string
+    return parser.parse()
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/template/base.py", line 341, in parse
+    compiled_result = compile_func(self, token)
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/template/loader_tags.py", line 210, in do_extends
+    nodelist = parser.parse()
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/template/base.py", line 341, in parse
+    compiled_result = compile_func(self, token)
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/template/loader_tags.py", line 184, in do_block
+    nodelist = parser.parse(('endblock',))
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/template/base.py", line 339, in parse
+    self.invalid_block_tag(token, command, parse_until)
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/template/base.py", line 394, in invalid_block_tag
+    (command, get_text_list(["'%s'" % p for p in parse_until])))
+django.template.base.TemplateSyntaxError: Invalid block tag: 'static', expected 'endblock'
+[17/Aug/2015 20:03:54] ERROR [django.request:256] Internal Server Error: /submit/success/problem-set3/problem1/
+Traceback (most recent call last):
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/template/base.py", line 337, in parse
+    compile_func = self.tags[command]
+KeyError: 'static'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/core/handlers/base.py", line 132, in get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/contrib/auth/decorators.py", line 22, in _wrapped_view
+    return view_func(request, *args, **kwargs)
+  File "/home/alex/verify_project/vrfy/course/views.py", line 101, in submit_success
+    return render(request, 'course/submit_success.html', context)
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/shortcuts.py", line 67, in render
+    template_name, context, request=request, using=using)
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/template/loader.py", line 98, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/template/loader.py", line 35, in get_template
+    return engine.get_template(template_name, dirs)
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/template/backends/django.py", line 30, in get_template
+    return Template(self.engine.get_template(template_name, dirs))
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/template/engine.py", line 167, in get_template
+    template, origin = self.find_template(template_name, dirs)
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/template/engine.py", line 141, in find_template
+    source, display_name = loader(name, dirs)
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/template/loaders/base.py", line 13, in __call__
+    return self.load_template(template_name, template_dirs)
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/template/loaders/base.py", line 23, in load_template
+    template = Template(source, origin, template_name, self.engine)
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/template/base.py", line 190, in __init__
+    self.nodelist = engine.compile_string(template_string, origin)
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/template/engine.py", line 261, in compile_string
+    return parser.parse()
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/template/base.py", line 341, in parse
+    compiled_result = compile_func(self, token)
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/template/loader_tags.py", line 210, in do_extends
+    nodelist = parser.parse()
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/template/base.py", line 341, in parse
+    compiled_result = compile_func(self, token)
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/template/loader_tags.py", line 184, in do_block
+    nodelist = parser.parse(('endblock',))
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/template/base.py", line 339, in parse
+    self.invalid_block_tag(token, command, parse_until)
+  File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/template/base.py", line 394, in invalid_block_tag
+    (command, get_text_list(["'%s'" % p for p in parse_until])))
+django.template.base.TemplateSyntaxError: Invalid block tag: 'static', expected 'endblock'

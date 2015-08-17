@@ -28,3 +28,7 @@
 [17/Aug/2015 16:50:28] INFO [ldap_auth.auth_backend:55] UPDATE: isjoriss User Profile
 [17/Aug/2015 16:50:28] INFO [ldap_auth.receivers:32] LOGIN: isjoriss @ 127.0.0.1
 [17/Aug/2015 16:50:28] INFO [ldap_auth.receivers:33] UPDATE: isjoriss Reed Profile
+[17/Aug/2015 19:09:53] INFO [ldap_auth.receivers:32] LOGIN: isjoriss @ 127.0.0.1
+[17/Aug/2015 19:09:53] INFO [ldap_auth.receivers:33] UPDATE: isjoriss Reed Profile
+[17/Aug/2015 19:16:37] INFO [ldap_auth.receivers:32] LOGIN: isjoriss @ 127.0.0.1
+[17/Aug/2015 19:16:37] INFO [ldap_auth.receivers:33] UPDATE: isjoriss Reed Profile
