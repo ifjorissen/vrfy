@@ -1,0 +1,8 @@
+[17/Aug/2015 16:49:55] WARNING [django.request:170] Not Found: /attempt/problem-set1/
+[17/Aug/2015 16:50:02] WARNING [django.request:170] Not Found: /results/problem-set1/
+[17/Aug/2015 16:50:05] WARNING [django.request:170] Not Found: /submit/problem-set1/problem1/
+[17/Aug/2015 16:50:15] WARNING [django.request:170] Not Found: /results/problem-set2/
+[17/Aug/2015 16:50:18] WARNING [django.request:170] Not Found: /submit/problem-set2/problem2/
+[17/Aug/2015 16:50:22] WARNING [django.request:170] Not Found: /attempt/problem-set4364/
+[17/Aug/2015 16:50:25] WARNING [django.request:170] Not Found: /results/problem-set4364/
+[17/Aug/2015 16:50:28] WARNING [django.request:170] Not Found: /submit/problem-set4364/problem3/
