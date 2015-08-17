@@ -21,7 +21,7 @@ ALLOWED_HOSTS = ["localhost"]
 INTERNAL_IPS = ['127.0.0.1','localhost']
 
 # Admins & Email for the server
-ADMINS = (('Alex', 'granta@reed.edu'), ('Isabella', 'isjoriss@reed.edu'))
+ADMINS = (('Alex', 'grantal@reed.edu'), ('Isabella', 'isjoriss@reed.edu'))
 EMAIL_HOST = 'localhost'
 SERVER_EMAIL = 'noreply@cs.reed.edu'
 
