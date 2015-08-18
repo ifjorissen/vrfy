@@ -198,3 +198,4 @@ Traceback (most recent call last):
   File "/home/alex/verify_project/vrfy_env/lib/python3.4/site-packages/django/template/base.py", line 394, in invalid_block_tag
     (command, get_text_list(["'%s'" % p for p in parse_until])))
 django.template.base.TemplateSyntaxError: Invalid block tag: 'static', expected 'endblock'
+[18/Aug/2015 16:24:42] WARNING [django.request:170] Not Found: /favicon.ico
