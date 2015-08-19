@@ -10,13 +10,17 @@
   {% endif %}
   <p> There are currently {{ num_jobs }} assignments being graded. </p>
   <p> This page will auto-refresh </p>
-  {% if not job_running %}
   <div>
-    <a role="button" type="button" href="{% url 'course:results_problem_detail' ps_id p_id %}" class="btn btn-default">
-      <span class="glyphicon glyphicon-eye-open"></span> results
-    </a>
+    {% if not job_running %}
+      <a role="button" type="button" href="{% url 'course:results_problem_detail' ps_id p_id %}" class="btn btn-default">
+        <span class="glyphicon glyphicon-eye-open"></span> results
+      </a>
+    {% else %}
+      <a role="button" type="button" href="#" class="btn btn-default disabled">
+        <span class="glyphicon glyphicon-eye-open"></span> results
+      </a>
+    {% endif %}
   </div>
-  {% endif %}
 </section>
 {% endblock %}
 {% block otherscripts %}

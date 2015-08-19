@@ -199,3 +199,4 @@ Traceback (most recent call last):
     (command, get_text_list(["'%s'" % p for p in parse_until])))
 django.template.base.TemplateSyntaxError: Invalid block tag: 'static', expected 'endblock'
 [18/Aug/2015 16:24:42] WARNING [django.request:170] Not Found: /favicon.ico
+[19/Aug/2015 16:22:36] WARNING [django.request:170] Not Found: /favicon.ico
