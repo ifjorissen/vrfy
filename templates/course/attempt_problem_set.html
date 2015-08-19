@@ -51,7 +51,7 @@
           </div>
           
           {% if not problem.many_attempts %}
-            <a id="popoverbtn" role="button" class="btn btn-default" data-toggle="popover" tabindex="0" data-html=true data-trigger="focus" data-content="You can only submit this problem once.<br>Are you sure you want to submit?"  data-template='<div class="popover" role="tooltip"><div class="arrow"></div><p class="popover-title"></p><div class="popover-content"></div><div class="popover-footer"><button type="button" class="btn btn-default">No</button><button type="button" class="btn btn-primary" id="submitbtn">Yes</button></div></div>'>Submit {{problem.title}}</a>
+            <a id="popoverbtn" role="button" class="btn btn-default" data-toggle="popover" tabindex="0" data-html=true data-trigger="focus" data-content="You can only submit this problem once.<br>Are you sure you want to submit?"  data-template='<div class="popover" role="tooltip"><div class="arrow"></div><p class="popover-title"></p><div class="popover-content"></div><div class="popover-footer container-fluid"><button type="button" class="btn btn-default">No</button><button type="button" class="btn btn-primary" id="submitbtn">Yes</button></div></div>'>Submit {{problem.title}}</a>
           {% else %}
             <button type="button" class="btn btn-default" id="submitbtn">Submit {{problem.title}}</button>
           {% endif %}
@@ -87,11 +87,9 @@
       <div class="modal-body" id=fileNameBody>
       </div>
       <div class="modal-footer">
-        <div class="container-fluid">
-          <div><p>Do you still want to submit?</p></div>
-          <button type="button" class="btn btn-default" data-dismiss="modal">No</button>
-          <button type="button" class="btn btn-primary" id="modalSubmit">Yes</button>
-        </div>
+        Do you still want to submit?
+        <button type="button" class="btn btn-default" data-dismiss="modal">No</button>
+        <button type="button" class="btn btn-primary" id="modalSubmit">Yes</button>
       </div>
     </div>
   </div>

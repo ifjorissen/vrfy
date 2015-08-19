@@ -38,6 +38,10 @@ body{
   border-top: 1px solid #E5E5E5;
 }
 
+.popover-footer .btn + .btn {
+  margin-left: 5px;
+}
+
 .popover{
     max-width: 100%;
 }
