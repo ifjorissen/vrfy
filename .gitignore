@@ -9,3 +9,4 @@ node_modules
 problem_assets/*/**
 problem_assets/**
 **/migrations/**
+logging/**
