@@ -17,3 +17,5 @@
     # edit DB password
     sudo --user=postgres psql template1
     # create DB + user to match settings_local.py in production
+    
+* modify `start.sh` in the project directory with the proper environment dir and project dir
