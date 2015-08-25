@@ -203,3 +203,10 @@ LOGGING = {
         },
     }
 }
+
+# local overrides for production settings, etc.
+try:
+  from settings_local import *
+except ImportError:
+  pass
+
