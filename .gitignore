@@ -10,3 +10,4 @@ problem_assets/*/**
 problem_assets/**
 **/migrations/**
 logging/**
+vrfy/settings_local.py

@@ -1,0 +1,10 @@
+LOCAL_DEV = False
+DEBUG = False
+DATABASES['default'].update({
+  'NAME': 'vrfy_prod',
+  'USER': 'vrfy_prod_usr',
+  'PASSWORD': 'really strong password goes here'
+})
+
+SERVER_EMAIL = 'sds-internal@reed.edu'
+
