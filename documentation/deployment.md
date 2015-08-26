@@ -4,7 +4,7 @@
 
 # One-Time Setup
 
-    sudo apt-get install build-essential nginx postgresql-9.4 python3 python3-pip python-virtualenv postgresql-server-dev-9.4
+    sudo apt-get install build-essential postgresql-9.4 python3 python3-pip python-virtualenv postgresql-server-dev-9.4 apache2 apache2-dev
     sudo adduser vrfy
     sudo -u vrfy -i
     virtualenv --python=/usr/bin/python3 py_env
@@ -17,5 +17,22 @@
     # edit DB password
     sudo --user=postgres psql template1
     # create DB + user to match settings_local.py in production
-    
-* modify `start.sh` in the project directory with the proper environment dir and project dir
+    cd
+    # download, build, and install Cosign signle-sign-on module
+curl -O "http://tcpdiag.dl.sourceforge.net/project/cosign/cosign/cosign-3.2.0/cosign-3.2.0.tar.gz"
+    tar -zxvf cosign-3.2.0.tar.gz
+    cd cosign-3.2.0
+    ./configure --enable-apache2=/usr/bin/apxs2
+    # quick-n-dirty patch for apache 2.4
+    sed s/remote_ip/client_ip/g -i filters/apache2/mod_cosign.c
+    make
+    sudo make install
+    sudo mkdir /etc/apache2/include
+    sudo cp vrfy/config/apache/cosign.conf /etc/apache2/include/
+    sudo cp vrfy/config/apache/vhost.conf /etc/apache2/sites-available/vrfy.conf
+    # installed certs from TIS; can't be stored in repo so not reproduced here
+    sudo a2enmod proxy cosign ssl
+    sudo a2ensite vrfy
+    sudo service apache2 restart
+
+  * modify `start.sh` in the project directory with the proper environment dir and project dir
