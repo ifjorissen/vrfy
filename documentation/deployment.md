@@ -44,5 +44,7 @@ curl -O "http://tcpdiag.dl.sourceforge.net/project/cosign/cosign/cosign-3.2.0/co
   * Since ksudo also doesn't respect virtual envs, you'll have to install your packages with `ksudo pip install -r /PATH/TO/Tango/requirements.txt -t /PATH/TO/YOUR/VIRTUALENV/lib/python2.7/site-packages`
     * The way the Tango instructions say to do it, the virtualenv folder is the same as the root Tango folder
   * install supervisor with `ksudo apt-get install supervisor`
-  * make a file in `/etc/supervisor/conf.d/` called `tango.conf`
+  * modify `tango.conf.template` in the root vrfy directory with the correct paths and rename it to `tango.conf` and put it in `/etc/supervisor/conf.d/`
+    * also make a log directory and point to it in `tango.conf`
+  * then start tango with `ksudo supervisorctl reread` and `ksudo supervisorctl update`
   
