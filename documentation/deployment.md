@@ -41,6 +41,8 @@ curl -O "http://tcpdiag.dl.sourceforge.net/project/cosign/cosign/cosign-3.2.0/co
 #Tango
   * Generally follow the docs in our Readme.md
   * On our server, we had to use a weird command called `ksudo` instead of `sudo` which doesn't maintain maintaing your current working directory, so I had to change the addresses in `autodriver/Makefile` to be absolute(and change all of the `sudo`s to `ksudo`s
-  * Since ksudo also doesn't respect virtual envs, you'll have to install you packages with `ksudo pip install -r /PATH/TO/Tango/requirements.txt -t /PATH/TO/YOUR/VIRTUALENV/lib/python2.7/site-packages`
-    * The way the Tango instructions say to do it, your virtualenv folder is the same as the root Tango folder
+  * Since ksudo also doesn't respect virtual envs, you'll have to install your packages with `ksudo pip install -r /PATH/TO/Tango/requirements.txt -t /PATH/TO/YOUR/VIRTUALENV/lib/python2.7/site-packages`
+    * The way the Tango instructions say to do it, the virtualenv folder is the same as the root Tango folder
+  * install supervisor with `ksudo apt-get install supervisor`
+  * make a file in `/etc/supervisor/conf.d/` called `tango.conf`
   
