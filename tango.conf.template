@@ -1,0 +1,6 @@
+[program:tango]
+command = /path/to/your/virtualenv/bin/python /path/to/Tango/restful-tango/server.py
+user = vrfy
+stdout_logfile = /path/to/log/folder/tango_supervisor.log
+redirect_stderr = true
+environment=en_US.UTF-8,LC_ALL=en_US.UTF-8
