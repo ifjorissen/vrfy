@@ -37,6 +37,7 @@ curl -O "http://tcpdiag.dl.sourceforge.net/project/cosign/cosign/cosign-3.2.0/co
 
   * modify `start.sh` in the project directory with the proper environment dir and project dir
   * Add a folder called `migrations` with a file called `__init__.py` to `course`, `catalog` and `ldap_auth`
+  * Add whatever host you're using to `ALOWED_HOSTS` in vrfy.settings
 
 #Tango
   * Generally follow the docs in our Readme.md
