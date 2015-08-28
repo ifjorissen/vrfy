@@ -17,7 +17,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = '#yu7$c#_y#2sip5i@hi^#iocpoa0))m14@e3ob_#0&#rvj_)w+'
 DEBUG = True
 LOCAL_DEV = True
-ALLOWED_HOSTS = ["localhost"]
+ALLOWED_HOSTS = ["localhost", "cs.reed.edu"]
 INTERNAL_IPS = ['127.0.0.1','localhost']
 
 # Admins & Email for the server
