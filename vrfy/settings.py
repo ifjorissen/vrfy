@@ -17,7 +17,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = '#yu7$c#_y#2sip5i@hi^#iocpoa0))m14@e3ob_#0&#rvj_)w+'
 DEBUG = True
 LOCAL_DEV = True
-ALLOWED_HOSTS = ["localhost"]
+ALLOWED_HOSTS = ["localhost", "cs.reed.edu"]
 INTERNAL_IPS = ['127.0.0.1','localhost']
 
 # Admins & Email for the server
@@ -46,21 +46,15 @@ INSTALLED_APPS = (
     'vrfy.apps.CatalogConfig',
 )
 
-#Authentication Settings (With ModelBackend as a fallback)
 AUTHENTICATION_BACKENDS = (
     'ldap_auth.auth_backend.LDAPRemoteUserBackend',
-    'django.contrib.auth.backends.ModelBackend',
-    # 'django.contrib.auth.backends.RemoteUserBackend',
 )
 
 MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
     'ldap_auth.auth_middleware.LDAPRemoteUserMiddleware',
-    # 'django.contrib.auth.middleware.RemoteUserMiddleware',
-    'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.security.SecurityMiddleware',
@@ -206,7 +200,9 @@ LOGGING = {
 
 # local overrides for production settings, etc.
 try:
-  from settings_local import *
-except ImportError:
+  from vrfy.settings_local import *
+except ImportError as e:
+  import sys
+  print("Could not import local settings: {}; using defaults".format(e), file=sys.stderr)
   pass
 
