@@ -59,7 +59,7 @@ vrfy_project /
       * CRUD: Problems, Problem Sets
       * Ability to upload/paste a markdown / html file in lieu of full detailed info (not yet implemented)
       * Read, Delete: Student Solutions & Results (currently full CRUD)
-      * Manually Resubmit a Student's Solution (not yet implemented)
+      * Manually Resubmit a Student's Solution
       * Download a .csv of aggreggate results & submissions (not yet implemented)
     * Catalog App
       * CRUD: Courses, Sections, Enrollment List
