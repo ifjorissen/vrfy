@@ -51,9 +51,9 @@
           </div>
           
           {% if not problem.many_attempts %}
-            <button type="submit" class="btn btn-default" id="submit"  data-container="body" data-toggle="popover" data-placement="right" title="WARNING" data-content="You can only submit this problem once.\nAre you sure you want to submit?" >Submit {{problem.title}}</button>
+            <a id="popoverbtn" role="button" class="btn btn-default" data-toggle="popover" tabindex="0" data-html=true data-trigger="focus" data-content="You can only submit this problem once.<br>Are you sure you want to submit?"  data-template='<div class="popover" role="tooltip"><div class="arrow"></div><p class="popover-title"></p><div class="popover-content"></div><div class="popover-footer container-fluid"><button type="button" class="btn btn-default">No</button><button type="button" class="btn btn-primary" id="submitbtn">Yes</button></div></div>'>Submit {{problem.title}}</a>
           {% else %}
-            <button type="submit" class="btn btn-default" id="submit">Submit {{problem.title}}</button>
+            <button type="button" class="btn btn-default" id="submitbtn">Submit {{problem.title}}</button>
           {% endif %}
         </form>
       </section>
@@ -61,10 +61,47 @@
   </section>
   {% endif %}
 {% endfor %}
+
+<!-- modal for missing files -->
+<div class="modal" id="fileCheck" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+  <div class="modal-dialog modal-sm" role="document">
+    <div class="modal-content">
+      <div class="modal-body">
+        You forgot to upload a file!
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary btn-sm" data-dismiss="modal">OK</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- modal for renamed files -->
+<div class="modal" id="fileNameCheck" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="myModalLabel">WARNING!!!!</h4>
+      </div>
+      <div class="modal-body" id=fileNameBody>
+      </div>
+      <div class="modal-footer">
+        Do you still want to submit?
+        <button type="button" class="btn btn-default" data-dismiss="modal">No</button>
+        <button type="button" class="btn btn-primary" id="modalSubmit">Yes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
 {% endblock content %}
 {% block otherscripts %}
 <script type="text/javascript"> 
    var max_files = {{ max_additional_files }}
 </script>
+<script src="{% static 'bootstrap/js/tooltip.js' %}"></script>
+<script src="{% static 'bootstrap/js/popover.js' %}"></script>
 <script src="{% static 'course/js/attempt_problem_set.js' %}"></script>
 {% endblock %}

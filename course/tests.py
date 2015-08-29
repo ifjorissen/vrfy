@@ -24,7 +24,7 @@ import vrfy.settings
 from . import views
 from . import models
 import catalog.models
-import generic.models
+from django.contrib.auth.models import User
 #from .models import ProblemSet, Problem, ProblemSolutionFile
 
 ADMIN_USERNAME = "admin"
@@ -39,8 +39,8 @@ class ProblemSetTests(TransactionTestCase):
   def setUpClass(cls):
     cls.course = catalog.models.Course(title="course_"+str(random.randint(1,10000)), num=random.randint(1,10000))
     cls.course.save()
-
-    cls.user, created = generic.models.CSUser.objects.get_or_create(username='isjoriss')
+    duser, created = User.objects.get_or_create(username='isjoriss')
+    cls.user, created = catalog.models.Reedie.objects.get_or_create(user=duser)
     #cls.user.save()
     #cls.user = generic.models.CSUser.get_ldap_user(username = 'isjoriss')
 
@@ -86,11 +86,8 @@ class NonExistantProblemsetTests(ProblemSetTests):
   @classmethod
   def setUpClass(cls):
     super(NonExistantProblemsetTests, cls).setUpClass()
-    try:
-      cls.ps.delete()
-    #since the ps was not made in the admin, the courselab was never created, and as such cannot be deleted
-    except FileNotFoundError: 
-      pass
+    #probably haven't made 10000 problem sets yet
+    cls.pk = random.randint(1,10000)
 
   def test_attempt_gives_404_for_nonexistant_problem_set(self):
     response = self.client.get(reverse('course:attempt_problem_set', args=(self.pk,)), secure=True)
@@ -111,25 +108,25 @@ class GetExistingProblemsetTests(ProblemSetTests):
   
   def test_attempt_gives_200_for_existing_problem_set(self):
     response = self.client.get(reverse('course:attempt_problem_set', args=(self.pk,)))
-    #self.assertIn('poop', self.section.enrolled.all())
+    self.assertIn('poop', self.section.enrolled.all())
     self.assertEqual(response.status_code, 200)
 
   #302 because the page should redirect you after you submit
   def test_submit_gives_302_for_existing_problem_set(self):
     response = self.client.post(reverse('course:problem_submit', args=(self.pk, self.prob.pk)))
-    self.assertIn(response.context.get('user'), self.section.enrolled.all())
+    self.assertIn('poop', self.section.enrolled.all())
     self.assertEqual(response.status_code, 302)
 
   def test_results_gives_200_for_existing_problem_set(self):
     response = self.client.get(reverse('course:results_detail', args=(self.pk,)))
-    self.assertIn(response.context.get('user'), self.section.enrolled.all())
+    self.assertIn('poop', self.section.enrolled.all())
     self.assertEqual(response.status_code, 200)
 
   #checks for the name of the problem set on the index page
   def test_ps_index_lists_existing_problem_sets(self):
     response = self.client.get(reverse('course:problem_set_index'))
-    self.assertIn(response.context['user'], self.section.enrolled.all())
-    #self.assertIn(self.ps.title, str(response.content))
+    self.assertIn('poop', self.section.enrolled.all())
+    self.assertIn(self.ps.title, str(response.content))
 
 class CantSeeFutureAssignmentsTests(ProblemSetTests):
   """
