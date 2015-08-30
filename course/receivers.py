@@ -18,7 +18,7 @@ def GraderLib_pre_delete(sender, **kwargs):
     #remove all of the instances of it in tango
     for ps in models.ProblemSet.objects.all():
       for problem in ps.problems.all():
-        if autograde_problem:
+        if problem.autograde_problem:
           tango.delete(problem, ps, name)
 
   except:
@@ -32,7 +32,8 @@ def ProblemSet_pre_delete(sender, **kwargs):
   """
   ps = kwargs.get("instance")
   for problem in ps.problems.all():
-    tango.delete(problem, ps)
+    if problem.autograde_problem:
+      tango.delete(problem, ps)
 
 @receiver(pre_delete, sender=models.Problem)
 def Problem_pre_delete(sender, **kwargs):
@@ -41,6 +42,7 @@ def Problem_pre_delete(sender, **kwargs):
   """
   problem = kwargs.get("instance")
   shutil.rmtree(MEDIA_ROOT + problem.get_upload_folder())#delete all the problem files
-  for ps in problem.problemset_set.all():
-    tango.delete(problem, ps)
+  if problem.autograde_problem:
+    for ps in problem.problemset_set.all():
+      tango.delete(problem, ps)
 
