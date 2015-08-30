@@ -195,7 +195,6 @@ class StudentProblemSolution(models.Model):
     max_score = result_obj.get_max_score()
     return max_score
 
-
   def latest_score(self):
     result_obj = self.problemresult_set.get(job_id=self.job_id, attempt_num=self.attempt_num)
     score = result_obj.get_score()

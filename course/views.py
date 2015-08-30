@@ -133,6 +133,7 @@ def problem_submit(request, ps_id, p_id):
 
     student_psol, sp_sol_created = StudentProblemSolution.objects.get_or_create(problem=problem, student_problem_set=student_ps_sol)
     student_psol.submitted = timezone.now()
+    prevscore = student_psol.latest_score()
     student_psol.attempt_num += 1 
     student_psol.save()
 
@@ -194,7 +195,7 @@ def problem_submit(request, ps_id, p_id):
         files.append({"localFile" : name, "destFile": name})
 
       #upload the json data object
-      prevscore = student_psol.latest_score()
+      # prevscore = student_psol.latest_score()
       tango_data = json.dumps({"attempts": student_psol.attempt_num, "prevscore": prevscore, "timedelta": student_psol.is_late()})
       data_name = "data.json" + "-" + request.user.username
       tango.upload(problem, ps, data_name, tango_data)
