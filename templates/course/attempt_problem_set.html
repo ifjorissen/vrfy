@@ -33,7 +33,7 @@
       <p>{{ problem.statement }}</p>
       <hr>
       <section class="problem-form">
-        <form id="soln_form" class="form-horizontal" action="{% url 'course:problem_submit' problem_set.id  problem.id %}" method="POST" enctype="multipart/form-data">
+        <form id="soln-pid{{problem.id}}" class="form-horizontal" action="{% url 'course:problem_submit' problem_set.id  problem.id %}" method="POST" enctype="multipart/form-data">
           {% csrf_token %}
           <p class="help-block">Upload the required files for {{problem.title}}</p>
           {% for file in problem.requiredproblemfilename_set.all %}
@@ -51,9 +51,9 @@
           </div>
           
           {% if not problem.many_attempts %}
-            <a id="popoverbtn" role="button" class="btn btn-default" data-toggle="popover" tabindex="0" data-html=true data-trigger="focus" data-content="You can only submit this problem once.<br>Are you sure you want to submit?"  data-template='<div class="popover" role="tooltip"><div class="arrow"></div><p class="popover-title"></p><div class="popover-content"></div><div class="popover-footer container-fluid"><button type="button" class="btn btn-default">No</button><button type="button" class="btn btn-primary" id="submitbtn">Yes</button></div></div>'>Submit {{problem.title}}</a>
+            <a id="popoverbtn" role="button" class="btn btn-default" data-toggle="popover" tabindex="0" data-html=true data-trigger="focus" data-content="You can only submit this problem once.<br>Are you sure you want to submit?"  data-template='<div class="popover" role="tooltip"><div class="arrow"></div><p class="popover-title"></p><div class="popover-content"></div><div class="popover-footer container-fluid"><button type="button" class="btn btn-default">No</button><button type="button" class="btn btn-primary" id="submit-pid{{problem.id}}">Yes</button></div></div>'>Submit {{problem.title}}</a>
           {% else %}
-            <button type="button" class="btn btn-default" id="submitbtn">Submit {{problem.title}}</button>
+            <button type="button" class="btn btn-default" id="submit-pid{{problem.id}}">Submit {{problem.title}}</button>
           {% endif %}
         </form>
       </section>

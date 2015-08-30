@@ -1,8 +1,13 @@
-var submit_checks = function () {
+var submit_checks = function() {
+  // console.log("submit_checks")
+  // console.log(e)
   var returnval = true
   //varibale for all the files being renamed
   var force_renames = "";
-  $(this).parents("form").find(":file").each(function(index, element){
+  // console.log($(this))
+  // console.log(this)
+  // console.log($(this).parent("form"))
+  $(this).parent("form").find(":file").each(function(index, element){
     //checking for not uploaded files
     if (element.value == '') {
       $('#fileCheck').modal()
@@ -32,10 +37,10 @@ var submit_checks = function () {
   }
   //if returnval is true, nothing went wrong and you can submit
   if (returnval){
-    $(this).parents("form").submit();
+    $(this).parent("form").submit();
   }
   //else make the modal submit this form
-  var form = $(this).parents("form");
+  var form = $(this).parent("form");
   $("#modalSubmit").click(function(){
     form.submit();
   });
@@ -56,13 +61,12 @@ $(document).ready(function(){
       $(this).attr("num-files",numFiles+1);
     }
   });
-  //if has many_attempts=True, the submit button gets created with the document
-  $('#submitbtn').click(submit_checks);
+  $('[id^="submit-"]').click(submit_checks);
 
   //if not, it gets created with the popover
   $('#popoverbtn').click(function(){
-    $(".popover").find('#submitbtn').click(submit_checks);
-    var mybtn = $(".popover").find('#submitbtn')
+    $(".popover").find('[id^="submit-"]').click(submit_checks);
+    var mybtn = $(".popover").find('[id^="submit-"]')
     console.log("hello")
   });
 });
