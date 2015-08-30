@@ -46,7 +46,7 @@ def index(request):
       ps_rs_dict[ps] = None
 
   #student problems submitted in the last 24hrs
-  recent_solutions = StudentProblemSolution.objects.filter(submitted__gte=(timezone.now()-datetime.timedelta(days=1)))
+  recent_solutions = StudentProblemSolution.objects.filter(student_problem_set__user=request.user.reedie, submitted__gte=(timezone.now()-datetime.timedelta(days=1)))
   context = {'upcoming_sets_results_dict': ps_rs_dict, 'recently_submitted_solutions': recent_solutions}
   return render(request, 'course/index.html', context)
 
@@ -194,7 +194,8 @@ def problem_submit(request, ps_id, p_id):
         files.append({"localFile" : name, "destFile": name})
 
       #upload the json data object
-      tango_data = json.dumps({"attempts": student_psol.attempt_num, "timedelta": student_psol.is_late()})
+      prevscore = student_psol.latest_score()
+      tango_data = json.dumps({"attempts": student_psol.attempt_num, "prevscore": prevscore, "timedelta": student_psol.is_late()})
       data_name = "data.json" + "-" + request.user.username
       tango.upload(problem, ps, data_name, tango_data)
       files.append({"localFile" : data_name, "destFile": "data.json"})
@@ -287,7 +288,9 @@ def _get_problem_result(solution,request):
       else:
         #try:
         log_data = json.loads(line)
+
         #create the result object
+        prob_result.max_score = log_data["max_score"]
         prob_result.score = log_data["score_sum"]
         prob_result.raw_output = raw_output
         prob_result.json_log = log_data
