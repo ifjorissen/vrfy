@@ -45,8 +45,8 @@ def grade_script_upload_path(instance, filename):
 class Problem(models.Model):
   title = models.CharField(max_length=200)
   cs_course = models.ForeignKey('catalog.Course', null=True, verbose_name="Course Name")
-  description = models.TextField(default='', help_text="You can use plain text, markdown, or html for your problem description") #markdown compatible
-  statement = models.TextField(default='', verbose_name='TL;DR') #short statement, optional(?)
+  description = models.TextField(blank=True, default='', help_text="You can use plain text, markdown, or html for your problem description") #markdown compatible
+  statement = models.TextField(blank=True, default='', verbose_name='TL;DR') #short statement, optional(?)
   many_attempts = models.BooleanField(default=True, verbose_name="allow multiple attempts")
   autograde_problem = models.BooleanField(default=True, verbose_name="autograde this problem")
   grade_script = models.FileField(upload_to=grade_script_upload_path, null=True, blank=True, help_text="Upload the script that grades the student submission here")
@@ -190,6 +190,11 @@ class StudentProblemSolution(models.Model):
     return self.student_problem_set.problem_set
   get_problemset.short_description = "Problem Set"
 
+  def get_max_score(self):
+    result_obj = self.problemresult_set.get(attempt_num=self.attempt_num)
+    max_score = result_obj.get_max_score()
+    return max_score
+
 
   def latest_score(self):
     result_obj = self.problemresult_set.get(attempt_num=self.attempt_num)
@@ -241,12 +246,11 @@ class ProblemResult(models.Model):
   sp_sol = models.ForeignKey(StudentProblemSolution, verbose_name="Student Problem Solution")
   problem = models.ForeignKey(Problem)
   sp_set = models.ForeignKey(StudentProblemSet, verbose_name="Student Problem Set")
-  # user = models.ForeignKey('generic.CSUser', null=True)
-  # user = models.ForeignKey(User)
   user = models.ForeignKey('catalog.Reedie')
 
   #general data about the actual results
   timestamp = models.DateTimeField('date received', null=True) #, editable=False)
+  max_score = models.IntegerField(blank=True, null=True)
   score = models.IntegerField(default=-1)
   json_log = JSONField(null=True, blank=True, verbose_name="Session Log")
   raw_output = models.TextField(null=True, blank=True, verbose_name="Raw Autograder Output")
@@ -265,6 +269,12 @@ class ProblemResult(models.Model):
       return self.score
     else:
       return "Not Autograded"
+
+  def get_max_score(self):
+    if self.problem.autograde_problem:
+      return self.max_score
+    else:
+      return None
 
   def __str__(self):
     return self.problem.title + "_" + self.user.username()+"_jobID" + str(self.job_id)

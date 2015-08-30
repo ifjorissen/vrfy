@@ -12,11 +12,12 @@
   <section id="result-{{result.id}}" class="panel panel-default">
     <div class="panel-heading">
       <h3><span role="button" data-toggle="collapse" data-parent="#result-{{result.id}}" href="#collapse-result-{{result.id}}" aria-expanded="true">
-        {{problem.title }}</span><span class="pull-right small">Score: {{result.score}}/10</span></h3>
+        {{problem.title }}</span><span class="pull-right small">Score: {{result.score}}
+        {% if result.max_score %}/{{result.max_score}}{% endif %}</span></h3>
     </div>
     <div id="collapse-result-{{result.id}}" class="panel-body panel-collapse collapse in" role="tabpanel">
       <h4>Attempts: {{result.attempt_num}}</h4>
-      <h4>Score: {{result.score}}</h4>
+      <h4>Score: {{result.score}}{% if result.max_score %}/{{result.max_score}}{% endif %}</h4>
       {% if result.external_log %}
       <h4>Comments:</h4>
       <ul class="list-group">
@@ -33,7 +34,7 @@
       <h3><span>{{problem.title }} is not autograded </span></h3>
     </div>
     <div class="panel-body" >
-      <p>Check in with your professor to recieve feedback </p>
+      <p>Check in with your professor to receive feedback </p>
     </div>
 </section>
 {% else %}
@@ -42,7 +43,7 @@
       <h3><span>You have not attempted {{problem.title }} yet </span></h3>
     </div>
     <div class="panel-body" >
-      <p>No results Available -- try the problem! </p>
+      <p>No results available -- try the problem! </p>
     </div>
   </section>
 {% endif %}

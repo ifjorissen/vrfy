@@ -33,7 +33,7 @@
                   {% if sol.latest_score == "Not Autograded" %}
                     Not Autograded
                   {% else %}
-                    Latest Score {{sol.latest_score}}/10
+                    Latest Score: {{sol.latest_score}}{% if sol.max_score %}/{{sol.max_score}}{% endif %}
                   {% endif %}
                 </p>
                 <p class="h5"> 

@@ -12,6 +12,11 @@ https://docs.djangoproject.com/en/1.8/ref/settings/
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
+LANGUAGE_CODE = 'en-us'
+TIME_ZONE = 'America/Los_Angeles'
+USE_I18N = True
+USE_L10N = True
+USE_TZ = True
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = '#yu7$c#_y#2sip5i@hi^#iocpoa0))m14@e3ob_#0&#rvj_)w+'
@@ -94,12 +99,6 @@ DATABASES = {
     }
 }
 
-LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'UTC'
-USE_I18N = True
-USE_L10N = True
-USE_TZ = True
-
 SERVER_EMAIL = 'isjoriss@reed.edu'
 
 # Static files (CSS, JavaScript, Images)
@@ -119,7 +118,7 @@ TANGO_ADDRESS = "http://localhost:3300/"
 #key to access tango server
 TANGO_KEY = "test"
 #location of the tango courselabs folder
-TANGO_COURSELAB_DIR = "/home/alex/verify_project/courselabs/"
+TANGO_COURSELAB_DIR = "/Users/ifjorissen/vrfy_proj/cmu_tango/courselabs/"
 #name of the makefile to be called in Tango
 MAKEFILE_NAME="autograde-Makefile"
 

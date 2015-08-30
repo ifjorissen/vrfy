@@ -14,77 +14,83 @@ from grappelli.dashboard.utils import get_admin_site_name
 
 
 class CustomIndexDashboard(Dashboard):
-    """
-    Custom index dashboard for www.
-    """
-    
     def init_with_context(self, context):
         site_name = get_admin_site_name(context)
         
          # append an app list module for "Administration"
-        self.children.append(modules.ModelList(
-            _('Administration'),
-            column=1,
-            collapsible=False,
-            models=('django.contrib.*',),
+        self.children.append(modules.Group(
+            title="Administration",
+            column=2,
+            collapsible=True,
+            children=[
+                modules.ModelList(
+                _('Users'),
+                collapsible=False,
+                models=('catalog.models.Reedie', 'django.contrib.*', ),
+            ),
+                modules.ModelList(
+                _('Enrollment'),
+                collapsible=False,
+                models=('catalog.models.Course', 'catalog.models.Section',),
+            )
+            ]
         ))
-        # append an app list module for "Applications"
-        self.children.append(modules.AppList(
-            _('Applications'),
+
+        # self.children.append(modules.Group(
+        #     title="Administration",
+        #     column=1,
+        #     collapsible=True,
+        #     children=[
+        #         modules.ModelList(
+        #         _('Add Problems and Problem Sets'),
+        #         collapsible=True,
+        #         column=1,
+        #         models=('course.models.GraderLib', 'course.models.Problem', 'course.models.ProblemSet'),
+        #         # exclude=('django.contrib.*',),
+        #     ),                
+        #         modules.ModelList(
+        #         _('Results'),
+        #         collapsible=True,
+        #         column=1,
+        #         models=('course.models.StudentProblemSet', 'course.models.StudentProblemSolution',),
+        #     ),
+        #         modules.ModelList(
+        #         _('Advanced: View Previous Attempts on a Problem'),
+        #         collapsible=True,
+        #         column=1,
+        #         models=('course.models.ProblemResult',),
+        #     # exclude=('django.contrib.*',),
+        #     ),
+
+        #     ]
+        # ))
+        self.children.append(modules.ModelList(
+            _('Add Problems and Problem Sets'),
             collapsible=True,
             column=1,
-            exclude=('django.contrib.*',),
+            models=('course.models.GraderLib', 'course.models.Problem', 'course.models.ProblemSet'),
+            # exclude=('django.contrib.*',),
+        ))
+
+        self.children.append(modules.ModelList(
+            _('Results'),
+            collapsible=True,
+            column=1,
+            models=('course.models.StudentProblemSet', 'course.models.StudentProblemSolution',),
+            # exclude=('django.contrib.*',),
+        ))
+
+        self.children.append(modules.ModelList(
+            _('Advanced: View Previous Attempts on a Problem'),
+            collapsible=True,
+            column=1,
+            models=('course.models.ProblemResult',),
+            # exclude=('django.contrib.*',),
         ))
         
-        
-        # append another link list module for "support".
-        # append another link list module for "support".
-        # self.children.append(modules.LinkList(
-        #     _('Media Management'),
-        #     column=2,
-        #     children=[
-        #         {
-        #             'title': _('FileBrowser'),
-        #             'url': '/admin/filebrowser/browse/',
-        #             'external': False,
-        #         },
-        #     ]
-        # ))
-        
-        # append another link list module for "support".
-        # self.children.append(modules.LinkList(
-        #     _('Support'),
-        #     column=2,
-        #     children=[
-        #         {
-        #             'title': _('Django Documentation'),
-        #             'url': 'http://docs.djangoproject.com/',
-        #             'external': True,
-        #         },
-        #         {
-        #             'title': _('Grappelli Documentation'),
-        #             'url': 'http://packages.python.org/django-grappelli/',
-        #             'external': True,
-        #         },
-        #         {
-        #             'title': _('Grappelli Google-Code'),
-        #             'url': 'http://code.google.com/p/django-grappelli/',
-        #             'external': True,
-        #         },
-        #     ]
-        # ))
-        
-        # append a feed module
-        # self.children.append(modules.Feed(
-        #     _('Latest Django News'),
-        #     column=2,
-        #     feed_url='http://www.djangoproject.com/rss/weblog/',
-        #     limit=5
-        # ))
-        # append a recent actions module
         self.children.append(modules.RecentActions(
             _('Recent Actions'),
-            limit=5,
+            limit=10,
             collapsible=False,
             column=3,
         ))

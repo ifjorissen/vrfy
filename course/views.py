@@ -46,7 +46,7 @@ def index(request):
       ps_rs_dict[ps] = None
 
   #student problems submitted in the last 24hrs
-  recent_solutions = StudentProblemSolution.objects.filter(submitted__gte=(timezone.now()-datetime.timedelta(days=1)))
+  recent_solutions = StudentProblemSolution.objects.filter(student_problem_set__user=request.user.reedie, submitted__gte=(timezone.now()-datetime.timedelta(days=1)))
   context = {'upcoming_sets_results_dict': ps_rs_dict, 'recently_submitted_solutions': recent_solutions}
   return render(request, 'course/index.html', context)
 
@@ -194,7 +194,8 @@ def problem_submit(request, ps_id, p_id):
         files.append({"localFile" : name, "destFile": name})
 
       #upload the json data object
-      tango_data = json.dumps({"attempts": student_psol.attempt_num, "timedelta": student_psol.is_late()})
+      prevscore = student_psol.latest_score()
+      tango_data = json.dumps({"attempts": student_psol.attempt_num, "prevscore": prevscore, "timedelta": student_psol.is_late()})
       data_name = "data.json" + "-" + request.user.username
       tango.upload(problem, ps, data_name, tango_data)
       files.append({"localFile" : data_name, "destFile": "data.json"})
@@ -278,7 +279,6 @@ def _get_problem_result(solution,request):
     tango_time = time.strftime("%Y-%m-%d %H:%M:%S", time.strptime(tango_time, '%a %b %d %H:%M:%S %Y'))
     
     if tango_time != str(prob_result.timestamp).split("+")[0]:
-      print("hello")
       if "Autodriver: Job timed out after " in line: #thats the text that Tango outputs when a job times out
         prob_result.score = 0
         prob_result.json_log = {'score_sum':'0','external_log':["Program timed out after " + line.split(" ")[-2] + " seconds."]}
@@ -287,7 +287,9 @@ def _get_problem_result(solution,request):
       else:
         #try:
         log_data = json.loads(line)
+
         #create the result object
+        prob_result.max_score = log_data["max_score"]
         prob_result.score = log_data["score_sum"]
         prob_result.raw_output = raw_output
         prob_result.json_log = log_data

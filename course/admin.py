@@ -273,7 +273,18 @@ class StudentProblemSolutionAdmin(admin.ModelAdmin):
         files.append({'localFile': str(f), 'destFile': str(f)})
       
       jobName = tango.get_jobName(obj.problem, obj.student_problem_set.problem_set, str(sf.student_problem_solution.student_problem_set.user))
-      tango.addJob(obj.problem, obj.student_problem_set.problem_set, files, jobName, jobName)
+      r = tango.addJob(obj.problem, obj.student_problem_set.problem_set, files, jobName, jobName)
+      if r.status_code is not 200:
+        return redirect('500.html')
+      else:
+        #create a new problem result
+        response = r.json()
+        job_id = response["jobId"]
+        obj.job_id = job_id
+        prob_result = models.ProblemResult.objects.create(job_id=job_id, attempt_num=obj.attempt_num, sp_sol=obj, sp_set=obj.student_problem_set, user=obj.get_user, problem=obj.problem, timestamp=obj.submitted)
+        obj.save()
+        prob_result.save()
+
 
   def result_json(self, obj):
     result = obj.problemresult_set.get(job_id=obj.job_id)
