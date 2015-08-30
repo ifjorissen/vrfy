@@ -12,12 +12,18 @@ def GraderLib_pre_delete(sender, **kwargs):
   Deletes the grader lib file from django and
   """
   gl = kwargs.get("instance")
-  os.remove(MEDIA_ROOT + gl.lib_upload.name)#removes if from problem_assets
-  name = gl.lib_upload.name.split("/")[-1]
-  #remove all of the instances of it in tango
-  for ps in models.ProblemSet.objects.all():
-    for problem in ps.problems.all():
-      tango.delete(problem, ps, name)
+  try:
+    os.remove(MEDIA_ROOT + gl.lib_upload.name)#removes if from problem_assets
+    name = gl.lib_upload.name.split("/")[-1]
+    #remove all of the instances of it in tango
+    for ps in models.ProblemSet.objects.all():
+      for problem in ps.problems.all():
+        if autograde_problem:
+          tango.delete(problem, ps, name)
+
+  except:
+    print("Could Not Delete")
+    pass
 
 @receiver(pre_delete, sender=models.ProblemSet)
 def ProblemSet_pre_delete(sender, **kwargs):
