@@ -281,7 +281,7 @@ class StudentProblemSolutionAdmin(admin.ModelAdmin):
         response = r.json()
         job_id = response["jobId"]
         obj.job_id = job_id
-        prob_result = models.ProblemResult.objects.create(job_id=job_id, attempt_num=obj.attempt_num, sp_sol=obj, sp_set=obj.student_problem_set, user=obj.get_user, problem=obj.problem, timestamp=obj.submitted)
+        prob_result = models.ProblemResult.objects.create(job_id=job_id, attempt_num=obj.attempt_num, sp_sol=obj, sp_set=obj.student_problem_set, user=obj.get_user(), problem=obj.problem, timestamp=obj.submitted)
         obj.save()
         prob_result.save()
 
