@@ -45,8 +45,8 @@ def grade_script_upload_path(instance, filename):
 class Problem(models.Model):
   title = models.CharField(max_length=200)
   cs_course = models.ForeignKey('catalog.Course', null=True, verbose_name="Course Name")
-  description = models.TextField(default='', help_text="You can use plain text, markdown, or html for your problem description") #markdown compatible
-  statement = models.TextField(default='', verbose_name='TL;DR') #short statement, optional(?)
+  description = models.TextField(blank=True, default='', help_text="You can use plain text, markdown, or html for your problem description") #markdown compatible
+  statement = models.TextField(blank=True, default='', verbose_name='TL;DR') #short statement, optional(?)
   many_attempts = models.BooleanField(default=True, verbose_name="allow multiple attempts")
   autograde_problem = models.BooleanField(default=True, verbose_name="autograde this problem")
   grade_script = models.FileField(upload_to=grade_script_upload_path, null=True, blank=True, help_text="Upload the script that grades the student submission here")
