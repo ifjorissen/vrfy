@@ -279,7 +279,6 @@ def _get_problem_result(solution,request):
     tango_time = time.strftime("%Y-%m-%d %H:%M:%S", time.strptime(tango_time, '%a %b %d %H:%M:%S %Y'))
     
     if tango_time != str(prob_result.timestamp).split("+")[0]:
-      print("hello")
       if "Autodriver: Job timed out after " in line: #thats the text that Tango outputs when a job times out
         prob_result.score = 0
         prob_result.json_log = {'score_sum':'0','external_log':["Program timed out after " + line.split(" ")[-2] + " seconds."]}
