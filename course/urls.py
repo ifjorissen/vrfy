@@ -5,6 +5,7 @@ from . import views
 
 urlpatterns = [
   url(r'^$', views.index, name='index'),
+  url(r'^logout/$', views.logout_user, name='logout'),
   url(r'^problem_sets/$', views.problem_set_index, name='problem_set_index'),
 
   #attempt & submit urls
