@@ -225,8 +225,12 @@ class StudentProblemSolution(models.Model):
   def cs_section(self):
     user = self.get_user()
     cs_sections = self.get_problemset().cs_section.all()
-    section = set(user.enrolled.all()).intersection(cs_sections)
-    return section.pop()
+    sections = set(user.enrolled.all()).intersection(cs_sections)
+    if sections:
+      res = ", ".join([str(section) for section in sections]) 
+    else:
+      res = "Unenrolled"
+    return res
   
 class StudentProblemFile(models.Model):
   required_problem_filename = models.ForeignKey(RequiredProblemFilename, null=True)
