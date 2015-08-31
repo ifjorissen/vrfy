@@ -67,14 +67,6 @@ def attempt_problem_set(request, ps_id):
       problem_solution_dict[problem] = student_psol
   except StudentProblemSet.DoesNotExist:
     problem_solution_dict = {problem: None for problem in ps.problems.all()}
-
-  # for problem in ps.problems.all():
-  #   #try to get the student solution
-  #   try: 
-  #     student_psol = StudentProblemSolution.objects.get(problem=problem, student_problem_set=sp_set)
-  #   except StudentProblemSolution.DoesNotExist:
-  #     student_psol = None
-  #   problem_solution_dict[problem] = student_psol
   context = {'problem_set': ps, 'problem_solution_dict':problem_solution_dict, 'additional_file_name':ADDITIONAL_FILE_NAME, 'max_additional_files':MAX_ADDITIONAL_FILES}
   return render(request, 'course/attempt_problem_set.html', context)
 

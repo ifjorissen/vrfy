@@ -196,8 +196,11 @@ class StudentProblemSolution(models.Model):
     return max_score
 
   def latest_score(self):
-    result_obj = self.problemresult_set.get(job_id=self.job_id, attempt_num=self.attempt_num)
-    score = result_obj.get_score()
+    try:
+      result_obj = self.problemresult_set.get(job_id=self.job_id, attempt_num=self.attempt_num)
+      score = result_obj.get_score()
+    except ProblemResult.DoesNotExist:
+      score = 0
     return score
 
   def submitted_code_table(self):
