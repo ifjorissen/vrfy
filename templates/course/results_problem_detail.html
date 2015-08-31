@@ -10,7 +10,7 @@
   </div>
   <section class="row">
     <section class="col-sm-12 col-md-6 col-lg-8 problem-set">
-    {% if result and problem.autograde_problem %}
+    {% if result and solution.problem.autograde_problem %}
       <section id="result-{{result.id}}" class="panel panel-default">
         <div class="panel-heading">
           <h3><span role="button" data-toggle="collapse" data-parent="#result-{{result.id}}" href="#collapse-result-{{result.id}}" aria-expanded="true">
@@ -28,10 +28,10 @@
           </ul>
           {% endif %}
         </div>
-    {% elif result and not problem.autograde_problem %}
+    {% elif result and not solution.problem.autograde_problem %}
     <section id="result-{{result.id}}" class="panel panel-default">
         <div class="panel-heading">
-          <h3><span>{{problem.title }} is not autograded </span></h3>
+          <h3><span>{{solution.problem.title }} is not autograded </span></h3>
         </div>
         <div class="panel-body" >
           <p>Check in with your professor to receive feedback </p>
@@ -39,7 +39,7 @@
     {% else %}
       <section id="problem-{{problem.id}}" class="panel panel-default">
         <div class="panel-heading">
-          <h3><span>You have not attempted {{problem.title }} yet </span></h3>
+          <h3><span>You have not attempted {{ solution.problem.title }} yet </span></h3>
         </div>
         <div class="panel-body" >
           <p>No results available -- try the problem! </p>
