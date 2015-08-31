@@ -98,7 +98,7 @@ def submit_success(request, ps_id, p_id):
     return render(request, 'course/submit_success.html', context)
 
   else:#if it's a human graded problem
-    return redirect('course:problem_set_index')
+    return results_problem_detail(request, ps_id, p_id)
 
 @login_required
 def problem_set_index(request):
@@ -192,7 +192,6 @@ def problem_submit(request, ps_id, p_id):
         files.append({"localFile" : name, "destFile": name})
 
       #upload the json data object
-      # prevscore = student_psol.latest_score()
       tango_data = json.dumps({"attempts": student_psol.attempt_num, "prevscore": prevscore, "timedelta": student_psol.is_late()})
       data_name = "data.json" + "-" + request.user.username
       tango.upload(problem, ps, data_name, tango_data)
