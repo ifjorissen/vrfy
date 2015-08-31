@@ -13,7 +13,7 @@ import datetime
 from itertools import chain
 from util import tango
 from django.contrib.auth.models import User
-
+from django.contrib.auth import logout
 from django.forms.models import modelformset_factory
 from django.shortcuts import render_to_response
 
@@ -49,6 +49,11 @@ def index(request):
   recent_solutions = StudentProblemSolution.objects.filter(student_problem_set__user=request.user.reedie, submitted__gte=(timezone.now()-datetime.timedelta(days=1)))
   context = {'upcoming_sets_results_dict': ps_rs_dict, 'recently_submitted_solutions': recent_solutions}
   return render(request, 'course/index.html', context)
+
+@login_required
+def logout_user(request):
+  logout(request)
+  return HttpResponseRedirect('https://weblogin.reed.edu/cgi-bin/logout?https://cs.reed.edu')
 
 @login_required
 def attempt_problem_set(request, ps_id):
@@ -93,7 +98,7 @@ def submit_success(request, ps_id, p_id):
     return render(request, 'course/submit_success.html', context)
 
   else:#if it's a human graded problem
-    return redirect('course:problem_set_index')
+    return results_problem_detail(request, ps_id, p_id)
 
 @login_required
 def problem_set_index(request):
@@ -187,7 +192,6 @@ def problem_submit(request, ps_id, p_id):
         files.append({"localFile" : name, "destFile": name})
 
       #upload the json data object
-      # prevscore = student_psol.latest_score()
       tango_data = json.dumps({"attempts": student_psol.attempt_num, "prevscore": prevscore, "timedelta": student_psol.is_late()})
       data_name = "data.json" + "-" + request.user.username
       tango.upload(problem, ps, data_name, tango_data)

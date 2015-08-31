@@ -11,11 +11,12 @@
 	  </div>
 	  <div id="nav-links" class="collapse navbar-collapse links">
 	  	<ul class="nav navbar-nav navbar-right">
-				<li class="navbar-link"><a href="#"> Hello, {{user.username}}</a></li>
+	  	<li class="navbar-text">Hello, {{user.username}}</li>
 			</ul>
 			<ul class="nav navbar-nav" role="menu">
 				<li class="navbar-link" role="menuitem"><a href={% url 'course:index'%}>Home</a></li>
 				<li class="navbar-link" role="menuitem"><a href={% url 'course:problem_set_index'%}>Problem Sets</a></li>
+				<li class="navbar-link"><a href="{% url 'course:logout' %}"> Logout </a></li>
 			</ul>
 		</div>
 	</div>
