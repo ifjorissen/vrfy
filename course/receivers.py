@@ -5,6 +5,8 @@ from django.db.models.signals import pre_delete, post_save, post_init
 from course import models
 from util import tango
 from vrfy.settings import MEDIA_ROOT
+import logging
+log = logging.getLogger(__name__)
 
 @receiver(pre_delete, sender=models.GraderLib)
 def GraderLib_pre_delete(sender, **kwargs):
@@ -22,7 +24,7 @@ def GraderLib_pre_delete(sender, **kwargs):
           tango.delete(problem, ps, name)
 
   except:
-    print("Could Not Delete")
+    log.info("DELETE: Could not remove {!s}".format(filename))
     pass
 
 @receiver(pre_delete, sender=models.ProblemSet)
