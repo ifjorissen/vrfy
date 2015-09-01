@@ -56,6 +56,11 @@ def logout_user(request):
   logout(request)
   return HttpResponseRedirect('https://weblogin.reed.edu/cgi-bin/logout?https://cs.reed.edu/logged_out/')
 
+def logout_view(request):
+  logout(request)
+  context = {}
+  return render(request, 'course/logged_out.html', context)
+
 @login_required
 def attempt_problem_set(request, ps_id):
   '''

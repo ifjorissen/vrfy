@@ -11,7 +11,7 @@
 	  </div>
 	  <div id="nav-links" class="collapse navbar-collapse links">
 	  	<ul class="nav navbar-nav navbar-right">
-	  	<li class="navbar-text">Hello, {{user.username}}</li>
+	  	<li class="navbar-text">Hello, {{user.username | default:"friend" }}</li>
 			</ul>
 			<ul class="nav navbar-nav" role="menu">
 				<li class="navbar-link" role="menuitem"><a href={% url 'course:index'%}>Home</a></li>

@@ -7,7 +7,7 @@ from django.views.generic import TemplateView
 urlpatterns = [
   url(r'^$', views.index, name='index'),
   url(r'^logout/$', views.logout_user, name='logout'),
-  url(r'^logged_out/$', TemplateView.as_view(template_name="course/logged_out.html")),
+  url(r'^logged_out/$', views.logout_view, name='logged_out'),
   url(r'^problem_sets/$', views.problem_set_index, name='problem_set_index'),
 
   #attempt & submit urls
