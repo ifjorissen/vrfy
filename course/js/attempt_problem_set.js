@@ -67,6 +67,6 @@ $(document).ready(function(){
   $('#popoverbtn').click(function(){
     $(".popover").find('[id^="submit-"]').click(submit_checks);
     var mybtn = $(".popover").find('[id^="submit-"]')
-    console.log("hello")
+    // console.log("hello")
   });
 });

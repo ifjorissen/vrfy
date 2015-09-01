@@ -16,6 +16,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth import logout
 from django.forms.models import modelformset_factory
 from django.shortcuts import render_to_response
+from django.utils.dateparse import parse_datetime
 
 import sys
 sys.path.append("../")
@@ -53,7 +54,7 @@ def index(request):
 @login_required
 def logout_user(request):
   logout(request)
-  return HttpResponseRedirect('https://weblogin.reed.edu/cgi-bin/logout?https://cs.reed.edu')
+  return HttpResponseRedirect('https://weblogin.reed.edu/cgi-bin/logout?https://cs.reed.edu/logged_out/')
 
 @login_required
 def attempt_problem_set(request, ps_id):
@@ -145,10 +146,10 @@ def problem_submit(request, ps_id, p_id):
     files = []#for the addJob
     #getting all the submitted files
     for name, f in request.FILES.items():
-      print(name, ADDITIONAL_FILE_NAME)
+      # print(name, ADDITIONAL_FILE_NAME)
       if ADDITIONAL_FILE_NAME in name:
         required_pf = None
-        print(additional_files)
+        # print(additional_files)
         if additional_files < MAX_ADDITIONAL_FILES:
           additional_files += 1
         else:
@@ -231,7 +232,7 @@ def results_detail(request, ps_id):
     except StudentProblemSolution.DoesNotExist:
       results_dict[problem] = None
     except ValueError:#there was a problem reading the json_log
-      context = {'exception' : "Something went wrong. Make sure your code is bug free and resubmit. \nIf the problem persists, contact your professor or TA"}
+      context = {'exception' : "Something went wrong. Our autograder is likely encountering a runtime error. Did you run (and test) your code? If not, make sure your code is bug free and resubmit. \nIf the problem persists, contact your professor or TA, as it might be a problem with the grading script."}
       return render(request, '500.html', context, status=500)
 
   #make a result object
@@ -252,7 +253,7 @@ def results_problem_detail(request, ps_id, p_id):
   try:
     result = _get_problem_result(sp_sol, request)
   except ValueError:#if there was a problem reading the json
-    context = {'exception' : "Something went wrong. Make sure your code is bug free and resubmit. \nIf the problem persists, contact your professor or TA"}
+    context = {'exception' : "Something went wrong. Our autograder is likely encountering a runtime error. Did you run (and test) your code?  If not, make sure your code is bug free and resubmit. \nIf the problem persists, contact your professor or TA, as it might be a problem with the grading script."}
     return render(request, '500.html', context, status=500)
   
   context = {'solution': sp_sol, "result" : result}
@@ -274,8 +275,9 @@ def _get_problem_result(solution,request):
     line = r.text.split("\n")[-2]#theres a line with an empty string after the last actual output line
     tango_time = r.text.split("\n")[0].split("[")[1].split("]")[0] #the time is on the first line surrounded by brackets
     tango_time = time.strftime("%Y-%m-%d %H:%M:%S", time.strptime(tango_time, '%a %b %d %H:%M:%S %Y'))
-    
-    if tango_time != str(prob_result.timestamp).split("+")[0]:
+    tango_time = parse_datetime(tango_time)
+    tango_time = timezone.make_aware(tango_time, timezone=timezone.UTC())
+    if tango_time != prob_result.timestamp:
       if "Autodriver: Job timed out after " in line: #thats the text that Tango outputs when a job times out
         prob_result.score = 0
         prob_result.json_log = {'score_sum':'0','external_log':["Program timed out after " + line.split(" ")[-2] + " seconds."]}

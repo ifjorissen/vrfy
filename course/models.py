@@ -255,7 +255,7 @@ class ProblemResult(models.Model):
   user = models.ForeignKey('catalog.Reedie')
 
   #general data about the actual results
-  timestamp = models.DateTimeField('date received', null=True) #, editable=False)
+  timestamp = models.DateTimeField('date received (from Tango)', null=True) #, editable=False)
   max_score = models.IntegerField(blank=True, null=True)
   score = models.IntegerField(default=-1)
   json_log = JSONField(null=True, blank=True, verbose_name="Session Log")

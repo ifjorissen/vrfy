@@ -16,6 +16,12 @@ import sys
 sys.path.append("../")
 import vrfy.settings
 from util import tango
+import time
+from django.utils import timezone
+import logging
+from django.utils.dateparse import parse_datetime
+from datetime import timedelta
+log = logging.getLogger(__name__)
 # from django.core import serializers
 
 admin.site.site_header = "Homework Administration"
@@ -253,10 +259,66 @@ class StudentProblemSolutionAdmin(admin.ModelAdmin):
       response = HttpResponse(FileWrapper(sols_zip), content_type='application/zip')
     response['Content-Disposition'] = 'attachment; filename=StudentSolutions.zip'
     return response
+
+  def _update_result(self, solution):
+    timeout = timedelta(seconds=60)
+    ps = solution.get_problemset()
+    prob_result = models.ProblemResult.objects.get(job_id=solution.job_id, attempt_num=solution.attempt_num)
+    reedie = solution.get_user()
+    outputFile = slugify(ps.title) + "_" +slugify(solution.problem.title) + "-" + str(reedie)
+    r = tango.poll(solution.problem, ps, outputFile)
+    while r.status_code is 404:
+      time.sleep(.2)
+      r = tango.poll(solution.problem, ps, outputFile)
+
+    if r.status_code is 200:
+      raw_output = r.text
+      #Autograder [Tue Sep  1 21:39:00 2015]: Received job test-reassess-hw0_hw0reassess-isjoriss:25
+      line = r.text.split("\n")[-2]#theres a line with an empty string after the last actual output line
+      job_id = r.text.split("\n")[0].split(":")[4]
+      tango_time = r.text.split("\n")[0].split("[")[1].split("]")[0] #the time is on the first line surrounded by brackets
+      tango_time = time.strftime("%Y-%m-%d %H:%M:%S", time.strptime(tango_time, '%a %b %d %H:%M:%S %Y'))
+      tango_time = parse_datetime(tango_time)
+      tango_time = timezone.make_aware(tango_time, timezone=timezone.UTC())
+      while int(job_id) != prob_result.job_id:
+        time.sleep(.5)
+        r = tango.poll(solution.problem, ps, outputFile)
+        try:
+          job_id = int(r.text.split("\n")[0].split(":")[4])
+        except:
+          pass
+
+      raw_output = r.text
+      line = r.text.split("\n")[-2]#theres a line with an empty string after the last actual output line
+      tango_time = r.text.split("\n")[0].split("[")[1].split("]")[0] #the time is on the first line surrounded by brackets
+      tango_time = time.strftime("%Y-%m-%d %H:%M:%S", time.strptime(tango_time, '%a %b %d %H:%M:%S %Y'))
+      tango_time = parse_datetime(tango_time)
+      tango_time = timezone.make_aware(tango_time, timezone=timezone.UTC())
+
+      if "Autodriver: Job timed out after " in line: #thats the text that Tango outputs when a job times out
+        prob_result.score = 0
+        prob_result.json_log = {'score_sum':'0','external_log':["Program timed out after " + line.split(" ")[-2] + " seconds."]}
+        prob_result.timestamp = tango_time
+        prob_result.save()
+      else:
+        #try:
+        log_data = json.loads(line)
+        #create the result object
+        prob_result.max_score = log_data["max_score"]
+        prob_result.score = log_data["score_sum"]
+        prob_result.raw_output = raw_output
+        prob_result.json_log = log_data
+        prob_result.timestamp = tango_time
+        prob_result.save()
+    else: 
+      return redirect('500.html')
+
+
   
   #sends the job to tango again but doesn't increase the attempt counter
   def reassess(self, request, queryset):
     for obj in queryset:
+      log.info("REASSESS: {!s}".format(str(obj)))
       files = []
       for sf in obj.studentproblemfile_set.filter(attempt_num=obj.attempt_num):
         if sf.required_problem_filename == None or not sf.required_problem_filename.force_rename:#if it's not renamed, we can use the given name
@@ -272,8 +334,8 @@ class StudentProblemSolutionAdmin(admin.ModelAdmin):
       for f in chain(obj.problem.problemsolutionfile_set.all(), models.GraderLib.objects.all(),[obj.problem.grade_script.name.split("/")[-1]]):
         files.append({'localFile': str(f), 'destFile': str(f)})
       
-      jobName = tango.get_jobName(obj.problem, obj.student_problem_set.problem_set, str(sf.student_problem_solution.student_problem_set.user))
-      r = tango.addJob(obj.problem, obj.student_problem_set.problem_set, files, jobName, jobName)
+      jobName = tango.get_jobName(obj.problem, obj.get_problemset(), str(sf.student_problem_solution.get_user()))
+      r = tango.addJob(obj.problem, obj.get_problemset(), files, jobName, jobName)
       if r.status_code is not 200:
         return redirect('500.html')
       else:
@@ -284,6 +346,7 @@ class StudentProblemSolutionAdmin(admin.ModelAdmin):
         prob_result = models.ProblemResult.objects.create(job_id=job_id, attempt_num=obj.attempt_num, sp_sol=obj, sp_set=obj.student_problem_set, user=obj.get_user(), problem=obj.problem, timestamp=obj.submitted)
         obj.save()
         prob_result.save()
+        self._update_result(obj)
 
 
   def result_json(self, obj):

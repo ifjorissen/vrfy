@@ -7,6 +7,8 @@ import requests
 import json
 import shutil
 import os
+import logging
+log = logging.getLogger(__name__)
 
 def _request(action, courselab, method, body=None, headers=None, outputFile=""):
   """
@@ -35,6 +37,11 @@ def upload(problem, problemset, filename, file):
   """
   uploads a file to the courselab. all args are strings
   """
+  try:
+    delete(problem, problemset, filename)
+  except:
+    log.info("DELETE:{!s} did not exist in tango".format(filename))
+    pass
   courselab = _get_courselab(problem, problemset)
   header = {'Filename': filename}
   return _request("upload", courselab, "POST", body=file, headers=header)
@@ -59,7 +66,6 @@ def delete(problem, problemset, filename=""):
     shutil.rmtree(path)
   else:
     path += "/" + filename
-    print(path)
     os.remove(path)
 
 def get_jobName(problem, ps, username):
