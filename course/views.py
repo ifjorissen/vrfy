@@ -231,7 +231,7 @@ def results_detail(request, ps_id):
     except StudentProblemSolution.DoesNotExist:
       results_dict[problem] = None
     except ValueError:#there was a problem reading the json_log
-      context = {'exception' : "Something went wrong. Make sure your code is bug free and resubmit. \nIf the problem persists, contact your professor or TA"}
+      context = {'exception' : "Something went wrong. Our autograder is likely encountering a runtime error. Did you run (and test) your code? If not, make sure your code is bug free and resubmit. \nIf the problem persists, contact your professor or TA, as it might be a problem with the grading script."}
       return render(request, '500.html', context, status=500)
 
   #make a result object
@@ -252,7 +252,7 @@ def results_problem_detail(request, ps_id, p_id):
   try:
     result = _get_problem_result(sp_sol, request)
   except ValueError:#if there was a problem reading the json
-    context = {'exception' : "Something went wrong. Make sure your code is bug free and resubmit. \nIf the problem persists, contact your professor or TA"}
+    context = {'exception' : "Something went wrong. Our autograder is likely encountering a runtime error. Did you run (and test) your code?  If not, make sure your code is bug free and resubmit. \nIf the problem persists, contact your professor or TA, as it might be a problem with the grading script."}
     return render(request, '500.html', context, status=500)
   
   context = {'solution': sp_sol, "result" : result}
