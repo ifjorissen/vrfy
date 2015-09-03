@@ -21,6 +21,8 @@ from django.utils import timezone
 import logging
 from django.utils.dateparse import parse_datetime
 from datetime import timedelta
+from django_markdown.admin import AdminMarkdownWidget, MarkdownField
+
 log = logging.getLogger(__name__)
 # from django.core import serializers
 
@@ -68,6 +70,7 @@ class StudentProblemFileInline(admin.TabularInline):
 
 @admin.register(models.Problem)
 class ProblemAdmin(admin.ModelAdmin):
+  formfield_overrides = {MarkdownField: {'widget': AdminMarkdownWidget}}
   class Meta:
     model = models.Problem
 
@@ -119,6 +122,7 @@ class ProblemAdmin(admin.ModelAdmin):
 
 @admin.register(models.ProblemSet)
 class ProblemSetAdmin(admin.ModelAdmin):
+  formfield_overrides = {MarkdownField: {'widget': AdminMarkdownWidget}}
   fieldsets = [
     ('Problem Set Info', {'fields': ['title', 'description']}),
     ('Sections', {'fields':['cs_section']}),

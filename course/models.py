@@ -1,16 +1,15 @@
+import os
+import os.path
+import vrfy.settings
 from django.db import models
-# from generic.models import CSUser
 from catalog.models import Section, Course, Reedie
-# from django.contrib.auth.models import User
 from django.utils.text import slugify
 from django.core.exceptions import ValidationError
 from django.core.files import File
 from jsonfield import JSONField
-import os
-import os.path
-import vrfy.settings
 from django.utils import timezone
 from util import tango, pretty_code
+from django_markdown.models import MarkdownField
 
 def student_file_upload_path(instance, filename):
   #filepath should be of the form: course/folio/user/problem_set/problem/filename  (maybe add attempt number)
@@ -45,8 +44,10 @@ def grade_script_upload_path(instance, filename):
 class Problem(models.Model):
   title = models.CharField(max_length=200)
   cs_course = models.ForeignKey('catalog.Course', null=True, verbose_name="Course Name")
-  description = models.TextField(blank=True, default='', help_text="You can use plain text, markdown, or html for your problem description") #markdown compatible
-  statement = models.TextField(blank=True, default='', verbose_name='TL;DR') #short statement, optional(?)
+  # description = models.TextField(blank=True, default='', help_text="You can use plain text, markdown, or html for your problem description") #markdown compatible
+  # statement = models.TextField(blank=True, default='', verbose_name='TL;DR') #short statement, optional(?)
+  description = MarkdownField(blank=True, default='', help_text="You can use plain text, markdown, or html for your problem description") #markdown compatible
+  statement = MarkdownField(blank=True, default='', verbose_name='TL;DR') #short statement, optional(?)
   many_attempts = models.BooleanField(default=True, verbose_name="allow multiple attempts")
   autograde_problem = models.BooleanField(default=True, verbose_name="autograde this problem")
   grade_script = models.FileField(upload_to=grade_script_upload_path, null=True, blank=True, help_text="Upload the script that grades the student submission here")
@@ -121,7 +122,8 @@ class RequiredProblemFilename(models.Model):
 """
 class ProblemSet(models.Model):
   title = models.CharField(max_length=200)
-  description = models.TextField(default='', help_text="Provide some additional information about this problem set.")
+  # description = models.TextField(default='', help_text="Provide some additional information about this problem set.")
+  description = MarkdownField(default='', help_text="Provide some additional information about this problem set.")
   problems = models.ManyToManyField(Problem)
   cs_section = models.ManyToManyField('catalog.Section', verbose_name="course Section")
   pub_date = models.DateTimeField('date assigned')
@@ -139,8 +141,6 @@ class ProblemSet(models.Model):
 
 class StudentProblemSet(models.Model):
   problem_set = models.ForeignKey(ProblemSet)
-  # user = models.ForeignKey('generic.CSUser', null=True)
-  # user = models.ForeignKey(User)
   user = models.ForeignKey('catalog.Reedie')
   submitted = models.DateTimeField('date submitted')
 

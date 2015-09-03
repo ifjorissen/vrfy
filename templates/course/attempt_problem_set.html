@@ -1,11 +1,12 @@
 {% extends 'course/base.html' %}
 {% load staticfiles %}
+{% load django_markdown %}
 {% block content %}
 <section class="problem-set">
 <section class="ps-info page-header">
 <p class="h1">{{ problem_set.title }} </p>
 <p class="h2" style="margin-top:0;"><small><span class="glyphicon glyphicon-time"></span> Due {{ problem_set.due_date }}</small></p>
-<p class="lead">{{problem_set.description}}</p>
+<p class="lead">{{problem_set.description | markdown}}</p>
 </section>
 
 {% for problem, solution in problem_solution_dict.items %}
@@ -29,8 +30,8 @@
       {% endif %}
     </div>
     <div id="collapse-problem-{{problem.id}}" class="panel-body panel-collapse collapse" role="tabpanel" aria-labelledby="headingOne">
-      <p>{{ problem.description }}</p>
-      <p>{{ problem.statement }}</p>
+      <p>{{ problem.description | markdown }}</p>
+      <p>{{ problem.statement | markdown }}</p>
       <hr>
       <section class="problem-form">
         <form id="soln-pid{{problem.id}}" class="form-horizontal" action="{% url 'course:problem_submit' problem_set.id  problem.id %}" method="POST" enctype="multipart/form-data">
