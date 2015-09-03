@@ -33,6 +33,7 @@ SERVER_EMAIL = 'noreply@cs.reed.edu'
 #Grappelli settings
 GRAPPELLI_ADMIN_TITLE = "CS@Reed Admin"
 GRAPPELLI_INDEX_DASHBOARD = "vrfy.dashboard.CustomIndexDashboard"
+# MARKDOWN_EDITOR_SKIN = 'simple'
 
 # Application definition
 
@@ -40,6 +41,7 @@ INSTALLED_APPS = (
     'django.contrib.contenttypes',
     'grappelli.dashboard',
     'grappelli',
+    'django_markdown',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.sessions',
