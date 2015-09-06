@@ -54,7 +54,8 @@ def index(request):
 @login_required
 def logout_user(request):
   logout(request)
-  return HttpResponseRedirect('https://weblogin.reed.edu/cgi-bin/logout?https://cs.reed.edu/logged_out/')
+  # return HttpResponseRedirect('https://weblogin.reed.edu/cgi-bin/logout?https://cs.reed.edu/logged_out/')
+  return HttpResponseRedirect('https://weblogin.reed.edu/cgi-bin/logout-now.cgi')
 
 def logout_view(request):
   logout(request)
