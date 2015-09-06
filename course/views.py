@@ -55,7 +55,11 @@ def index(request):
 def logout_user(request):
   logout(request)
   # return HttpResponseRedirect('https://weblogin.reed.edu/cgi-bin/logout?https://cs.reed.edu/logged_out/')
-  return HttpResponseRedirect('https://weblogin.reed.edu/cgi-bin/logout-now.cgi')
+  forward_url = request.GET.get('forward_url',
+                                      'https://weblogin.reed.edu/cgi-bin/logout?https://cs.reed.edu/logged_out/')
+  response = HttpResponsePermanentRedirect(forward_url)
+  response.delete_cookie(key = 'cosign-cs')
+  return response
 
 def logout_view(request):
   logout(request)
