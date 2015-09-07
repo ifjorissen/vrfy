@@ -50,7 +50,7 @@ class Problem(models.Model):
   statement = MarkdownField(blank=True, default='', verbose_name='TL;DR') #short statement, optional(?)
   many_attempts = models.BooleanField(default=True, verbose_name="allow multiple attempts")
   autograde_problem = models.BooleanField(default=True, verbose_name="autograde this problem")
-  grade_script = models.FileField(upload_to=grade_script_upload_path, null=True, blank=True, help_text="Upload the script that grades the student submission here")
+  grade_script = models.FileField(max_length=1000, upload_to=grade_script_upload_path, null=True, blank=True, help_text="Upload the script that grades the student submission here")
   #one_force_rename = models.BooleanField(editable=False)#used to validate that one of the inlines is being renamed
   
   def get_upload_folder(self):
@@ -98,7 +98,7 @@ class Problem(models.Model):
 
 class ProblemSolutionFile(models.Model):
   problem = models.ForeignKey(Problem, null=True)
-  file_upload = models.FileField(upload_to=solution_file_upload_path, help_text="Upload a solution file here")
+  file_upload = models.FileField(max_length=1000, upload_to=solution_file_upload_path, help_text="Upload a solution file here")
   comment = models.CharField(max_length=200, null=True, blank=True)
 
   def __str__(self):
@@ -217,13 +217,16 @@ class StudentProblemSolution(models.Model):
 
   def submitted_code(self):
     attempt = self.attempt_num
-    files = self.studentproblemfile_set.get(attempt_num=attempt)
+    files = self.studentproblemfile_set.filter(attempt_num=attempt)
     #get file content (assumes only one file submission)
-    submission = File(files.submitted_file)
-    code = submission.read()
-    submission.close()
-    code = pretty_code.python_prettify(code, "inline")
-    return code
+    res = pretty_code.python_prettify("Submitted Code", "inline")
+    for f in files:
+      submission = File(f.submitted_file)
+      filename = "Filename: {!s} \n\n".format(str(f))
+      code = submission.read().decode("utf-8")
+      submission.close()
+      res += pretty_code.python_prettify(filename + code, "inline")
+    return res
 
   def cs_section(self):
     user = self.get_user()
@@ -238,7 +241,7 @@ class StudentProblemSolution(models.Model):
 class StudentProblemFile(models.Model):
   required_problem_filename = models.ForeignKey(RequiredProblemFilename, null=True)
   student_problem_solution = models.ForeignKey(StudentProblemSolution, null=True)
-  submitted_file = models.FileField(upload_to=student_file_upload_path)
+  submitted_file = models.FileField(max_length=1000, upload_to=student_file_upload_path)
   attempt_num = models.IntegerField(default=0)
 
   def __str__(self):
@@ -287,7 +290,7 @@ class ProblemResult(models.Model):
 
 #for testrunner files like session.py or sanity.py
 class GraderLib(models.Model):
-  lib_upload = models.FileField(upload_to=grader_lib_upload_path, verbose_name="Grader Resource")
+  lib_upload = models.FileField(max_length=1000, upload_to=grader_lib_upload_path, verbose_name="Grader Resource")
   comment = models.CharField(max_length=200, null=True, blank=True)
   
   def save(self, *args, **kwargs):
