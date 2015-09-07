@@ -201,17 +201,23 @@ class StudentProblemSolution(models.Model):
       score = result_obj.get_score()
     except ProblemResult.DoesNotExist:
       score = 0
+    except ProblemResult.MultipleObjectsReturned:
+      result_obj = self.problemresult_set.filter(job_id=self.job_id, attempt_num=self.attempt_num).order_by('timestamp')[0]
+      score = result_obj.get_score()
     return score
 
   def submitted_code_table(self):
     attempt = self.attempt_num
-    files = self.studentproblemfile_set.get(attempt_num=attempt)
+    files = self.studentproblemfile_set.filter(attempt_num=attempt)
     #get file content (assumes only one file submission)
-    submission = File(files.submitted_file)
-    code = submission.read()
-    submission.close()
-    code = pretty_code.python_prettify(code, "table")
-    return code
+    res = pretty_code.python_prettify("Submitted Code", "table")
+    for f in files:
+      submission = File(f.submitted_file)
+      filename = "Filename: {!s} \n\n".format(str(f))
+      code = submission.read().decode("utf-8")
+      submission.close()
+      res += pretty_code.python_prettify(filename + code, "table")
+    return res
 
   submitted_code_table.short_description = "Submitted Code"
 
