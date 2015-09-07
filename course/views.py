@@ -1,6 +1,6 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.core.urlresolvers import reverse
-from django.http import HttpResponse, Http404, HttpResponseRedirect, HttpResponseForbidden
+from django.http import HttpResponse, Http404, HttpResponseRedirect, HttpResponseForbidden, HttpResponsePermanentRedirect
 from django.core.exceptions import PermissionDenied
 from django.utils import timezone
 from django.utils.text import slugify
