@@ -30,7 +30,7 @@ log = logging.getLogger(__name__)
 @receiver(user_logged_in, sender=User)
 def sig_user_logged_in(sender, user, request, **kwargs):
   log.info("LOGIN: {} @ {}".format(user.username, request.META['REMOTE_ADDR']))
-  log.info("UPDATE: {!s} Reed Profile".format(user.username))
+  # log.info("UPDATE: {!s} Reed Profile".format(user.username))
   try:
     user_dict = ldap_lookup_user(user.username)
     reed_usr, created = Reedie.objects.get_or_create(user=user)
