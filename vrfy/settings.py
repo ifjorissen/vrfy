@@ -123,6 +123,7 @@ TANGO_KEY = "test"
 TANGO_COURSELAB_DIR = "/Users/ifjorissen/vrfy_proj/cmu_tango/courselabs/"
 #name of the makefile to be called in Tango
 MAKEFILE_NAME="autograde-Makefile"
+TANGO_DEFAULT_TIMEOUT=30
 
 
 LOGGING = {

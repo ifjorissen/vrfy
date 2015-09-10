@@ -11,6 +11,7 @@ from django.utils import timezone
 from util import tango, pretty_code
 from django_markdown.models import MarkdownField
 
+
 def student_file_upload_path(instance, filename):
   #filepath should be of the form: course/folio/user/problem_set/problem/filename  (maybe add attempt number)
   problem_set = instance.student_problem_solution.student_problem_set.problem_set.title
@@ -44,8 +45,7 @@ def grade_script_upload_path(instance, filename):
 class Problem(models.Model):
   title = models.CharField(max_length=200)
   cs_course = models.ForeignKey('catalog.Course', null=True, verbose_name="Course Name")
-  # description = models.TextField(blank=True, default='', help_text="You can use plain text, markdown, or html for your problem description") #markdown compatible
-  # statement = models.TextField(blank=True, default='', verbose_name='TL;DR') #short statement, optional(?)
+  time_limit = models.IntegerField(default=vrfy.settings.TANGO_DEFAULT_TIMEOUT, verbose_name="Grading Time Limit (seconds)")
   description = MarkdownField(blank=True, default='', help_text="You can use plain text, markdown, or html for your problem description") #markdown compatible
   statement = MarkdownField(blank=True, default='', verbose_name='TL;DR') #short statement, optional(?)
   many_attempts = models.BooleanField(default=True, verbose_name="allow multiple attempts")
@@ -126,7 +126,7 @@ class ProblemSet(models.Model):
   description = MarkdownField(default='', help_text="Provide some additional information about this problem set.")
   problems = models.ManyToManyField(Problem)
   cs_section = models.ManyToManyField('catalog.Section', verbose_name="course Section")
-  pub_date = models.DateTimeField('date assigned')
+  pub_date = models.DateTimeField('date assigned', default=timezone.now())
   due_date = models.DateTimeField('date due')
 
   def is_already_due(self):
