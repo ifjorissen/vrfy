@@ -53,6 +53,14 @@ class Problem(models.Model):
   grade_script = models.FileField(max_length=1000, upload_to=grade_script_upload_path, null=True, blank=True, help_text="Upload the script that grades the student submission here")
   #one_force_rename = models.BooleanField(editable=False)#used to validate that one of the inlines is being renamed
   
+  def latest_score_with_usr(self, section, user):
+    try:
+      sps = self.studentproblemsolution_set.get(student_problem_set__user=user, student_problem_set__problem_set__cs_section=section)
+      res = sps.latest_score()
+    except:
+      res = "none"
+    return res
+
   def get_upload_folder(self):
     course = self.cs_course.num
     file_path = '{0}/solutions/{1}_files/'.format(slugify(course), slugify(self.title))

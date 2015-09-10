@@ -1,4 +1,3 @@
-import csv
 from zipfile import ZipFile
 from django.contrib import admin
 from django.utils.text import slugify
@@ -7,10 +6,9 @@ from . import models
 import requests
 import shutil
 import os
-import json
+import json, csv
 from django.core.files import File
 from django.core.servers.basehttp import FileWrapper
-import datetime
 from itertools import chain
 import sys
 sys.path.append("../")
@@ -230,7 +228,7 @@ class StudentProblemSolutionAdmin(admin.ModelAdmin):
   # search_fields = ('student_problem_set__user__username',)
 
   def export_csv(self, request, queryset):
-    date = datetime.datetime.now()
+    date = timezone.now()
     filename = "studentsolutions-{}".format(date.strftime("%d_%m_%y"))
     response = HttpResponse(content_type="text/csv")
     response['Content-Disposition'] = 'attachment; filename="{}.csv"'.format(filename)
