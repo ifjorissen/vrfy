@@ -106,6 +106,7 @@ class ProblemAdmin(admin.ModelAdmin):
         grading = obj.grade_script
         grading_name = grading.name.split("/")[-1]
         tango.upload(obj, ps, grading_name, grading.read())
+        grading.seek(0)
 
         #upload the makefile that will run the grading script
         makefile = 'autograde:\n	@python3 ' + grading_name
