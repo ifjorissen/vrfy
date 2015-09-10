@@ -1,4 +1,3 @@
-import csv
 from zipfile import ZipFile
 from django.contrib import admin
 from django.utils.text import slugify
@@ -7,10 +6,9 @@ from . import models
 import requests
 import shutil
 import os
-import json
+import json, csv
 from django.core.files import File
 from django.core.servers.basehttp import FileWrapper
-import datetime
 from itertools import chain
 import sys
 sys.path.append("../")
@@ -75,7 +73,7 @@ class ProblemAdmin(admin.ModelAdmin):
     model = models.Problem
 
   fieldsets = [
-    ('Problem Info', {'fields': ['title', 'description', 'statement', 'many_attempts', 'autograde_problem', 'cs_course']}),
+    ('Problem Info', {'fields': ['title', 'description', 'statement', 'many_attempts', 'autograde_problem', 'time_limit','cs_course']}),
     ('Grading Script', {'fields': ['grade_script']}),
   ]
   inlines = [RequiredProblemFilenameInline, ProblemSolutionFileInline]
@@ -108,6 +106,7 @@ class ProblemAdmin(admin.ModelAdmin):
         grading = obj.grade_script
         grading_name = grading.name.split("/")[-1]
         tango.upload(obj, ps, grading_name, grading.read())
+        grading.seek(0)
 
         #upload the makefile that will run the grading script
         makefile = 'autograde:\n	@python3 ' + grading_name
@@ -230,7 +229,7 @@ class StudentProblemSolutionAdmin(admin.ModelAdmin):
   # search_fields = ('student_problem_set__user__username',)
 
   def export_csv(self, request, queryset):
-    date = datetime.datetime.now()
+    date = timezone.now()
     filename = "studentsolutions-{}".format(date.strftime("%d_%m_%y"))
     response = HttpResponse(content_type="text/csv")
     response['Content-Disposition'] = 'attachment; filename="{}.csv"'.format(filename)
@@ -244,7 +243,6 @@ class StudentProblemSolutionAdmin(admin.ModelAdmin):
 
   #send the files to a zip
   def export_files(self, request, queryset):
-    
     with ZipFile('StudentSolutions.zip', 'w') as sols_zip:
       for obj in queryset:
       
@@ -265,10 +263,9 @@ class StudentProblemSolutionAdmin(admin.ModelAdmin):
     return response
 
   def _update_result(self, solution):
-    timeout = timedelta(seconds=60)
     ps = solution.get_problemset()
-    prob_result = models.ProblemResult.objects.get(job_id=solution.job_id, attempt_num=solution.attempt_num)
     reedie = solution.get_user()
+    prob_result = models.ProblemResult.objects.get(user=reedie, sp_sol=solution, job_id=solution.job_id, attempt_num=solution.attempt_num)
     outputFile = slugify(ps.title) + "_" +slugify(solution.problem.title) + "-" + str(reedie)
     r = tango.poll(solution.problem, ps, outputFile)
     while r.status_code is 404:
@@ -278,6 +275,7 @@ class StudentProblemSolutionAdmin(admin.ModelAdmin):
     if r.status_code is 200:
       raw_output = r.text
       #Autograder [Tue Sep  1 21:39:00 2015]: Received job test-reassess-hw0_hw0reassess-isjoriss:25
+      #there will be a bug here eventually ... note try / except block in views.py
       line = r.text.split("\n")[-2]#theres a line with an empty string after the last actual output line
       job_id = r.text.split("\n")[0].split(":")[4]
       tango_time = r.text.split("\n")[0].split("[")[1].split("]")[0] #the time is on the first line surrounded by brackets
@@ -354,12 +352,18 @@ class StudentProblemSolutionAdmin(admin.ModelAdmin):
 
 
   def result_json(self, obj):
-    result = obj.problemresult_set.get(job_id=obj.job_id)
-    return json.dumps(result.json_log, indent=2)
+    if obj.problem.autograde_problem:
+      result = obj.problemresult_set.get(attempt_num=obj.attempt_num, job_id=obj.job_id)
+      return json.dumps(result.json_log, indent=2)
+    else:
+      return ("This problem wasn't autograded")
 
   def result_raw_output(self, obj):
-    result = obj.problemresult_set.get(job_id=obj.job_id)
-    return result.raw_output
+    if obj.problem.autograde_problem:
+      result = obj.problemresult_set.get(attempt_num=obj.attempt_num, job_id=obj.job_id)
+      return result.raw_output
+    else:
+      return ("This problem wasn't autograded")
 
   # def problem_set(self, obj):
   #   return obj.student_problem_set.problem_set

@@ -2,7 +2,7 @@
 File for functions that interact with Tango
 """
 from django.utils.text import slugify
-from vrfy.settings import TANGO_ADDRESS, TANGO_KEY, TANGO_COURSELAB_DIR, MAKEFILE_NAME
+from vrfy.settings import TANGO_ADDRESS, TANGO_KEY, TANGO_COURSELAB_DIR, MAKEFILE_NAME, TANGO_DEFAULT_TIMEOUT
 import requests
 import json
 import shutil
@@ -46,7 +46,7 @@ def upload(problem, problemset, filename, file):
   header = {'Filename': filename}
   return _request("upload", courselab, "POST", body=file, headers=header)
 
-def addJob(problem, problemset, files, jobName, output_file, image="autograding_image", timeout=30, max_kb=1000, callback_url=None):
+def addJob(problem, problemset, files, jobName, output_file, image="autograding_image", timeout=TANGO_DEFAULT_TIMEOUT, max_kb=1000, callback_url=None):
   courselab = _get_courselab(problem, problemset)
   #add the makefile
   files.append({"localFile" : MAKEFILE_NAME, "destFile": "Makefile"})

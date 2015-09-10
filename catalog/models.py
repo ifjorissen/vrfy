@@ -50,5 +50,10 @@ class Section(models.Model):
   prof = models.ForeignKey(User, null=True, blank=True)
   #one more model to TAs?
 
+
+  def course_section(self):
+    return self.course.title + ": " + self.section_id
+  course_section.short_description = "Course : Section"
+
   def __str__(self):
     return self.course.title + ": " + self.section_id
