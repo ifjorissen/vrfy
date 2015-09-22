@@ -218,16 +218,18 @@ class StudentProblemSolution(models.Model):
     attempt = self.attempt_num
     files = self.studentproblemfile_set.filter(attempt_num=attempt)
     #get file content (assumes only one file submission)
-    res = pretty_code.python_prettify("Submitted Code", "table")
+    res = "Submitted Code </br> ---------------------- </br>"
     for f in files:
       submission = File(f.submitted_file)
-      filename = "Filename: {!s} \n\n".format(str(f))
+      filename = "</br><b> Filename: {!s} </b></br>".format(str(f))
+      res += filename
       code = submission.read().decode("utf-8")
       submission.close()
-      res += pretty_code.python_prettify(filename + code, "table")
+      res += pretty_code.python_prettify(code, "table")
     return res
 
   submitted_code_table.short_description = "Submitted Code"
+  submitted_code_table.allow_tags = True
 
   def submitted_code(self):
     attempt = self.attempt_num
@@ -277,6 +279,23 @@ class ProblemResult(models.Model):
   score = models.IntegerField(default=-1)
   json_log = JSONField(null=True, blank=True, verbose_name="Session Log")
   raw_output = models.TextField(null=True, blank=True, verbose_name="Raw Autograder Output")
+
+  def submitted_code_table(self):
+    attempt = self.attempt_num
+    files = self.sp_sol.studentproblemfile_set.filter(attempt_num=attempt)
+    #get file content (assumes only one file submission)
+    res = "Submitted Code </br> ---------------------- </br>"
+    for f in files:
+      submission = File(f.submitted_file)
+      filename = "</br><b> Filename: {!s} </b></br>".format(str(f))
+      res += filename
+      code = submission.read().decode("utf-8")
+      submission.close()
+      res += pretty_code.python_prettify(code, "table")
+    return res
+
+  submitted_code_table.short_description = "Submitted Code"
+  submitted_code_table.allow_tags = True
 
   def external_log(self):
     return self.json_log["external_log"]

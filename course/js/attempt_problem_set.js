@@ -1,13 +1,11 @@
 var submit_checks = function() {
-  // console.log("submit_checks")
   // console.log(e)
   var returnval = true
   //varibale for all the files being renamed
   var force_renames = "";
   // console.log($(this))
-  // console.log(this)
   // console.log($(this).parent("form"))
-  $(this).parent("form").find(":file").each(function(index, element){
+  $(this).parents("form").find(":file").each(function(index, element){
     //checking for not uploaded files
     if (element.value == '') {
       $('#fileCheck').modal()
@@ -36,10 +34,10 @@ var submit_checks = function() {
   }
   //if returnval is true, nothing went wrong and you can submit
   if (returnval){
-    $(this).parent("form").submit();
+    $(this).parents("form").submit();
   }
   //else make the modal submit this form
-  var form = $(this).parent("form");
+  var form = $(this).parents("form");
   $("#modalSubmit").click(function(){
     form.submit();
   });
@@ -68,4 +66,5 @@ $(document).ready(function(){
     var mybtn = $(".popover").find('[id^="submit-"]')
     // console.log("hello")
   });
+
 });
