@@ -47,6 +47,7 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'dbbackup',
     'vrfy',
     'vrfy.apps.LDAPAuthConfig',
     'vrfy.apps.CourseConfig',
@@ -100,6 +101,29 @@ DATABASES = {
         'PORT': '5432',
     }
 }
+from django.utils import timezone
+# Database backup Info
+def media_backup_filename(databasename, servername, timestamp, extension, wildcard):
+    print("media backup")
+    return "{}_media{}-{}{}".format(servername, databasename, timestamp, extension)
+    # pass
+
+def backup_filename(databasename, servername, timestamp, extension, wildcard):
+    print("backup filename")
+    return "{}_db-{}-{}{}".format(servername, databasename, timestamp, extension)
+    # pass
+
+# DBBACKUP_FILENAME_TEMPLATE = backup_filename
+# DB_NAME = "vrfy_dev"
+# def backup_filename(databasename):
+#     print("{}hi".format(databasename))
+#     # return "{}-hi{}-{}{}".format(servername, databasename, timestamp, extension)
+#     pass
+
+MEDIA_FILENAME_TEMPLATE = media_backup_filename
+FILENAME_TEMPLATE = backup_filename
+DBBACKUP_SERVER_NAME = "cshw"
+DBBACKUP_BACKUP_DIRECTORY = "/Users/ifjorissen/vrfy_proj/vrfy_backups/"
 
 SERVER_EMAIL = 'isjoriss@reed.edu'
 
