@@ -73,7 +73,7 @@ class ProblemAdmin(admin.ModelAdmin):
     model = models.Problem
 
   fieldsets = [
-    ('Problem Info', {'fields': ['title', 'description', 'statement', 'many_attempts', 'autograde_problem', 'time_limit','cs_course']}),
+    ('Problem Info', {'fields': ['title', 'description', 'many_attempts', 'autograde_problem', 'time_limit','cs_course']}),
     ('Grading Script', {'fields': ['grade_script']}),
   ]
   inlines = [RequiredProblemFilenameInline, ProblemSolutionFileInline]
@@ -276,7 +276,7 @@ class StudentProblemSolutionAdmin(admin.ModelAdmin):
       raw_output = r.text
       #Autograder [Tue Sep  1 21:39:00 2015]: Received job test-reassess-hw0_hw0reassess-isjoriss:25
       #there will be a bug here eventually ... note try / except block in views.py
-      line = r.text.split("\n")[-2]#theres a line with an empty string after the last actual output line
+      # line = r.text.split("\n")[-2]#theres a line with an empty string after the last actual output line
       job_id = r.text.split("\n")[0].split(":")[4]
       tango_time = r.text.split("\n")[0].split("[")[1].split("]")[0] #the time is on the first line surrounded by brackets
       tango_time = time.strftime("%Y-%m-%d %H:%M:%S", time.strptime(tango_time, '%a %b %d %H:%M:%S %Y'))
@@ -291,6 +291,8 @@ class StudentProblemSolutionAdmin(admin.ModelAdmin):
           pass
 
       raw_output = r.text
+      #TO DO: bug where the autograder returns successfully but the output is nothing so
+      # trying to assign line throws an error
       line = r.text.split("\n")[-2]#theres a line with an empty string after the last actual output line
       tango_time = r.text.split("\n")[0].split("[")[1].split("]")[0] #the time is on the first line surrounded by brackets
       tango_time = time.strftime("%Y-%m-%d %H:%M:%S", time.strptime(tango_time, '%a %b %d %H:%M:%S %Y'))
@@ -389,10 +391,14 @@ class GraderLibAdmin(admin.ModelAdmin):
 
 @admin.register(models.ProblemResult)
 class ProblemResultAdmin(admin.ModelAdmin):
-  readonly_fields = ('cs_sections', 'problem', 'problem_set', 'user', 'score', 'attempt_num', 'late', 'timestamp', 'session_log', 'raw_output', 'job_id')
+  class Media:
+    css = {
+        "all": ("course/css/pygments.css",)
+    }
+  readonly_fields = ('cs_sections', 'problem', 'problem_set', 'user', 'score', 'attempt_num', 'late', 'timestamp', 'session_log', 'raw_output', 'job_id', 'submitted_code_table')
   fieldsets = [
     ('Problem Info', {'classes':('grp-collapse grp-open',), 'fields': ('problem', 'problem_set', 'cs_sections', 'user', 'timestamp', 'job_id')}),
-    ('Result Info', {'classes':('grp-collapse grp-open',), 'fields': ('score', 'attempt_num', 'late', 'session_log',)}),
+    ('Result Info', {'classes':('grp-collapse grp-open',), 'fields': ('score', 'attempt_num', 'late', ('session_log', 'submitted_code_table',))}),
     ('Raw Autograder Output', {'classes':('grp-collapse grp-closed',), 'fields': ('raw_output',)}),
   ]
   list_display = ('problem', 'problem_set', 'cs_sections', 'user', 'attempt_num', 'late', 'score', 'timestamp')

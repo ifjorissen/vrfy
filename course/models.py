@@ -278,6 +278,21 @@ class ProblemResult(models.Model):
   json_log = JSONField(null=True, blank=True, verbose_name="Session Log")
   raw_output = models.TextField(null=True, blank=True, verbose_name="Raw Autograder Output")
 
+  def submitted_code_table(self):
+    attempt = self.attempt_num
+    files = self.sp_sol.studentproblemfile_set.filter(attempt_num=attempt)
+    #get file content (assumes only one file submission)
+    res = pretty_code.python_prettify("Submitted Code", "table")
+    for f in files:
+      submission = File(f.submitted_file)
+      filename = "Filename: {!s} \n\n".format(str(f))
+      code = submission.read().decode("utf-8")
+      submission.close()
+      res += pretty_code.python_prettify(filename + code, "table")
+    return res
+
+  submitted_code_table.short_description = "Submitted Code"
+
   def external_log(self):
     return self.json_log["external_log"]
 
