@@ -24,7 +24,7 @@ def GraderLib_pre_delete(sender, **kwargs):
           tango.delete(problem, ps, name)
 
   except:
-    log.info("DELETE: Could not remove {!s}".format(filename))
+    log.info("DELETE: GraderLib Could not remove {!s}".format(filename))
     pass
 
 @receiver(pre_delete, sender=models.ProblemSet)
@@ -35,7 +35,11 @@ def ProblemSet_pre_delete(sender, **kwargs):
   ps = kwargs.get("instance")
   for problem in ps.problems.all():
     if problem.autograde_problem:
-      tango.delete(problem, ps)
+      try:
+        tango.delete(problem, ps)
+      except:
+        log.info("DELETE: ProblemSet Could not remove {!s}".format(filename))
+        pass
 
 @receiver(pre_delete, sender=models.Problem)
 def Problem_pre_delete(sender, **kwargs):
@@ -46,5 +50,10 @@ def Problem_pre_delete(sender, **kwargs):
   shutil.rmtree(MEDIA_ROOT + problem.get_upload_folder())#delete all the problem files
   if problem.autograde_problem:
     for ps in problem.problemset_set.all():
-      tango.delete(problem, ps)
+      try:
+        tango.delete(problem, ps)
+      except:
+        log.info("DELETE: Problem Could not remove {!s}".format(filename))
+        pass
+
 
