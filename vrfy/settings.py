@@ -103,14 +103,14 @@ DATABASES = {
 }
 from django.utils import timezone
 # Database backup Info
-def media_backup_filename(databasename, servername, timestamp, extension, wildcard):
-    print("media backup")
-    return "{}_media{}-{}{}".format(servername, databasename, timestamp, extension)
-    # pass
+# def media_backup_filename(databasename, servername, timestamp, extension, wildcard):
+#     print("media backup")
+#     return "{}_media{}-{}{}".format(servername, databasename, timestamp, extension)
+#     # pass
 
-def backup_filename(databasename, servername, timestamp, extension, wildcard):
-    print("backup filename")
-    return "{}_db-{}-{}{}".format(servername, databasename, timestamp, extension)
+# def backup_filename(databasename, servername, timestamp, extension, wildcard):
+#     print("backup filename")
+#     return "{}_db-{}-{}{}".format(servername, databasename, timestamp, extension)
     # pass
 
 # DBBACKUP_FILENAME_TEMPLATE = backup_filename
@@ -120,8 +120,6 @@ def backup_filename(databasename, servername, timestamp, extension, wildcard):
 #     # return "{}-hi{}-{}{}".format(servername, databasename, timestamp, extension)
 #     pass
 
-MEDIA_FILENAME_TEMPLATE = media_backup_filename
-FILENAME_TEMPLATE = backup_filename
 DBBACKUP_SERVER_NAME = "cshw"
 DBBACKUP_BACKUP_DIRECTORY = "/Users/ifjorissen/vrfy_proj/vrfy_backups/"
 
