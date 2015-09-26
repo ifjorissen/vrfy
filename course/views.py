@@ -294,6 +294,7 @@ def _get_problem_result(solution,request):
           prob_result.score = 0
           prob_result.json_log = {'score_sum':'0','external_log':["Program timed out after " + line.split(" ")[-2] + " seconds."]}
           prob_result.timestamp = tango_time
+          prob_result.raw_output = raw_output
           prob_result.save()
         else:
           #try:

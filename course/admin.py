@@ -293,6 +293,7 @@ class StudentProblemSolutionAdmin(admin.ModelAdmin):
       raw_output = r.text
       #TO DO: bug where the autograder returns successfully but the output is nothing so
       # trying to assign line throws an error
+      #TO DO: make sure we don't keep requesting when we've spent more time waiting for the job than the timeout of the problem
       line = r.text.split("\n")[-2]#theres a line with an empty string after the last actual output line
       tango_time = r.text.split("\n")[0].split("[")[1].split("]")[0] #the time is on the first line surrounded by brackets
       tango_time = time.strftime("%Y-%m-%d %H:%M:%S", time.strptime(tango_time, '%a %b %d %H:%M:%S %Y'))
@@ -303,6 +304,7 @@ class StudentProblemSolutionAdmin(admin.ModelAdmin):
         prob_result.score = 0
         prob_result.json_log = {'score_sum':'0','external_log':["Program timed out after " + line.split(" ")[-2] + " seconds."]}
         prob_result.timestamp = tango_time
+        prob_result.raw_output = raw_output
         prob_result.save()
       else:
         #try:
