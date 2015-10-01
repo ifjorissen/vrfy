@@ -18,9 +18,8 @@ from django.contrib import admin
 from vrfy import settings
 
 urlpatterns = [
-    url(r'^markdown/', include( 'django_markdown.urls')),
+    url(r'^markdown/', include('django_markdown.urls')),
     url(r'^', include('course.urls', namespace="course")),
     url(r'^grappelli/', include('grappelli.urls')),
     url(r'^admin/', include(admin.site.urls)),
 ]
-

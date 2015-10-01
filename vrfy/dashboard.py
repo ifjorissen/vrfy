@@ -14,27 +14,33 @@ from grappelli.dashboard.utils import get_admin_site_name
 
 
 class CustomIndexDashboard(Dashboard):
+
     def init_with_context(self, context):
         site_name = get_admin_site_name(context)
-        
-         # append an app list module for "Administration"
-        self.children.append(modules.Group(
-            title="Administration",
-            column=2,
-            collapsible=True,
-            children=[
-                modules.ModelList(
-                _('Users'),
-                collapsible=False,
-                models=('catalog.models.Reedie', 'django.contrib.*', ),
-            ),
-                modules.ModelList(
-                _('Enrollment'),
-                collapsible=False,
-                models=('catalog.models.Course', 'catalog.models.Section',),
-            )
-            ]
-        ))
+
+        # append an app list module for "Administration"
+        self.children.append(
+            modules.Group(
+                title="Administration",
+                column=2,
+                collapsible=True,
+                children=[
+                    modules.ModelList(
+                        _('Users'),
+                        collapsible=False,
+                        models=(
+                            'catalog.models.Reedie',
+                            'django.contrib.*',
+                        ),
+                    ),
+                    modules.ModelList(
+                        _('Enrollment'),
+                        collapsible=False,
+                        models=(
+                            'catalog.models.Course',
+                            'catalog.models.Section',
+                        ),
+                    )]))
 
         # self.children.append(modules.Group(
         #     title="Administration",
@@ -47,7 +53,7 @@ class CustomIndexDashboard(Dashboard):
         #         column=1,
         #         models=('course.models.GraderLib', 'course.models.Problem', 'course.models.ProblemSet'),
         #         # exclude=('django.contrib.*',),
-        #     ),                
+        #     ),
         #         modules.ModelList(
         #         _('Results'),
         #         collapsible=True,
@@ -68,7 +74,10 @@ class CustomIndexDashboard(Dashboard):
             _('Add Problems and Problem Sets'),
             collapsible=True,
             column=1,
-            models=('course.models.GraderLib', 'course.models.Problem', 'course.models.ProblemSet'),
+            models=(
+                'course.models.GraderLib',
+                'course.models.Problem',
+                'course.models.ProblemSet'),
             # exclude=('django.contrib.*',),
         ))
 
@@ -76,7 +85,8 @@ class CustomIndexDashboard(Dashboard):
             _('Results'),
             collapsible=True,
             column=1,
-            models=('course.models.StudentProblemSet', 'course.models.StudentProblemSolution',),
+            models=('course.models.StudentProblemSet',
+                    'course.models.StudentProblemSolution',),
             # exclude=('django.contrib.*',),
         ))
 
@@ -87,12 +97,10 @@ class CustomIndexDashboard(Dashboard):
             models=('course.models.ProblemResult',),
             # exclude=('django.contrib.*',),
         ))
-        
+
         self.children.append(modules.RecentActions(
             _('Recent Actions'),
             limit=10,
             collapsible=False,
             column=3,
         ))
-
-
