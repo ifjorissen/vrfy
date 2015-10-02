@@ -570,23 +570,23 @@ class ProblemResultAdmin(admin.ModelAdmin):
         'job_id',
         'submitted_code_table')
     fieldsets = [('Problem Info',
-                  {'classes': ('grp-collapse grp-open'),
+                  {'classes': ('grp-collapse grp-open',),
                    'fields': ('problem',
                               'problem_set',
                               'cs_sections',
                               'user',
                               'timestamp',
-                              'job_id')}),
+                              'job_id',)}),
                  ('Result Info',
-                  {'classes': ('grp-collapse grp-open'),
+                  {'classes': ('grp-collapse grp-open',),
                    'fields': ('score',
                               'attempt_num',
                               'late',
                               ('session_log',
                                'submitted_code_table'))}),
                  ('Raw Autograder Output',
-                  {'classes': ('grp-collapse grp-closed'),
-                   'fields': ('raw_output')})]
+                  {'classes': ('grp-collapse grp-closed',),
+                   'fields': ('raw_output',)})]
     list_display = (
         'problem',
         'problem_set',
