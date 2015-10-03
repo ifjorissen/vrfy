@@ -23,14 +23,14 @@ SECRET_KEY = '#yu7$c#_y#2sip5i@hi^#iocpoa0))m14@e3ob_#0&#rvj_)w+'
 DEBUG = True
 LOCAL_DEV = True
 ALLOWED_HOSTS = ["localhost", "cs.reed.edu"]
-INTERNAL_IPS = ['127.0.0.1','localhost']
+INTERNAL_IPS = ['127.0.0.1', 'localhost']
 
 # Admins & Email for the server
 ADMINS = (('Alex', 'grantal@reed.edu'), ('Isabella', 'isjoriss@reed.edu'))
 EMAIL_HOST = 'localhost'
 SERVER_EMAIL = 'noreply@cs.reed.edu'
 
-#Grappelli settings
+# Grappelli settings
 GRAPPELLI_ADMIN_TITLE = "CS@Reed Admin"
 GRAPPELLI_INDEX_DASHBOARD = "vrfy.dashboard.CustomIndexDashboard"
 # MARKDOWN_EDITOR_SKIN = 'simple'
@@ -111,7 +111,7 @@ from django.utils import timezone
 # def backup_filename(databasename, servername, timestamp, extension, wildcard):
 #     print("backup filename")
 #     return "{}_db-{}-{}{}".format(servername, databasename, timestamp, extension)
-    # pass
+# pass
 
 # DBBACKUP_FILENAME_TEMPLATE = backup_filename
 # DB_NAME = "vrfy_dev"
@@ -135,17 +135,17 @@ STATICFILES_DIRS = (
     os.path.join(BASE_DIR, "bower_components"),
 )
 
-#TANGO Settings (for more info see documentation/tango.md)
+# TANGO Settings (for more info see documentation/tango.md)
 
-#address of the tango server
+# address of the tango server
 TANGO_ADDRESS = "http://localhost:3300/"
-#key to access tango server
+# key to access tango server
 TANGO_KEY = "test"
-#location of the tango courselabs folder
+# location of the tango courselabs folder
 TANGO_COURSELAB_DIR = "/Users/ifjorissen/vrfy_proj/cmu_tango/courselabs/"
-#name of the makefile to be called in Tango
-MAKEFILE_NAME="autograde-Makefile"
-TANGO_DEFAULT_TIMEOUT=30
+# name of the makefile to be called in Tango
+MAKEFILE_NAME = "autograde-Makefile"
+TANGO_DEFAULT_TIMEOUT = 30
 
 
 LOGGING = {
@@ -153,8 +153,8 @@ LOGGING = {
     'disable_existing_loggers': False,
     'formatters': {
         'verbose': {
-            'format' : "[%(asctime)s] %(levelname)s [%(name)s:%(lineno)s] %(message)s",
-            'datefmt' : "%d/%b/%Y %H:%M:%S"
+            'format': "[%(asctime)s] %(levelname)s [%(name)s:%(lineno)s] %(message)s",
+            'datefmt': "%d/%b/%Y %H:%M:%S"
         },
         'simple': {
             'format': '%(levelname)s %(message)s'
@@ -199,9 +199,9 @@ LOGGING = {
     },
     'loggers': {
         'django': {
-            'handlers':['file', 'mail_admins'],
+            'handlers': ['file', 'mail_admins'],
             'propagate': True,
-            'level':'INFO',
+            'level': 'INFO',
         },
         'vrfy': {
             'handlers': ['vrfy_log', 'mail_admins'],
@@ -224,9 +224,10 @@ LOGGING = {
 
 # local overrides for production settings, etc.
 try:
-  from vrfy.settings_local import *
+    from vrfy.settings_local import *
 except ImportError as e:
-  import sys
-  print("Could not import local settings: {}; using defaults".format(e), file=sys.stderr)
-  pass
-
+    import sys
+    print(
+        "Could not import local settings: {}; using defaults".format(e),
+        file=sys.stderr)
+    pass

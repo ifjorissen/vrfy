@@ -8,6 +8,7 @@ class Command(CollectstaticCommand):
     """
     Make sure the media dir exists before we're running collecstatic.
     """
+
     def handle_noargs(self, **options):
         if not os.path.exists(settings.MEDIA_ROOT):
             self.stdout.write('>>> MEDIA_ROOT not found, creating one.')

@@ -24,7 +24,9 @@ class Command(StaticfilesRunserverCommand):
             stderr=self.stderr,
         )
 
-        self.stdout.write('>>> Grunt process on pid {0}'.format(self.grunt_process.pid))
+        self.stdout.write(
+            '>>> Grunt process on pid {0}'.format(
+                self.grunt_process.pid))
 
         def kill_grunt_process(pid):
             self.stdout.write('>>> Closing grunt process')
