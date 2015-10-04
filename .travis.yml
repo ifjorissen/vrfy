@@ -2,7 +2,7 @@ language: python
 python:
   - "3.4"
   - "3.5"
-install: "pip install --user -r requirements.txt"
+install: "pip install -r requirements.txt"
 script: "python3 manage.py test"
 addons:
   postgresql: "9.4"
