@@ -7,4 +7,4 @@ script: "python3 manage.py test"
 addons:
   postgresql: "9.4"
 before_script:
-  - touch vrfy/logging/{catalog,django,vrfy,ldap_auth,course}.log
+  - touch $TRAVIS_BUILD_DIR/logging/{catalog,django,vrfy,ldap_auth,course}.log
