@@ -91,16 +91,29 @@ WSGI_APPLICATION = 'vrfy.wsgi.application'
 
 
 # Database Info
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'vrfy_dev',
-        'USER': 'vrfy_dev_usr',
-        'PASSWORD': 'pass',
-        'HOST': 'localhost',
-        'PORT': '5432',
+if 'TRAVIS' in os.environ:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql_psycopg2',
+            'NAME': 'vrfy_test',
+            'USER': 'postgres',
+            'PASSWORD': '',
+            'HOST': 'localhost',
+            'PORT': '5432',
+        },
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql_psycopg2',
+            'NAME': 'vrfy_dev',
+            'USER': 'vrfy_dev_usr',
+            'PASSWORD': 'pass',
+            'HOST': 'localhost',
+            'PORT': '5432',
+        },
+    }
+
 from django.utils import timezone
 # Database backup Info
 # def media_backup_filename(databasename, servername, timestamp, extension, wildcard):
