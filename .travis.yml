@@ -6,3 +6,5 @@ install: "pip install -r requirements.txt"
 script: "python3 manage.py test"
 addons:
   postgresql: "9.4"
+before_script:
+  - touch vrfy/logging/{catalog,django,vrfy,ldap_auth,course}.log
