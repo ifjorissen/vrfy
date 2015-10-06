@@ -111,6 +111,9 @@ else:
             'PASSWORD': 'pass',
             'HOST': 'localhost',
             'PORT': '5432',
+            'TEST': {
+                'NAME': 'test_vrfy'
+            }
         },
     }
 
