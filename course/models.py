@@ -180,7 +180,7 @@ class ProblemSet(models.Model):
     problems = models.ManyToManyField(Problem)
     cs_section = models.ManyToManyField(
         'catalog.Section', verbose_name="course Section")
-    pub_date = models.DateTimeField('date assigned', default=timezone.now())
+    pub_date = models.DateTimeField('date assigned', default=timezone.now)
     due_date = models.DateTimeField('date due')
 
     def is_already_due(self):
