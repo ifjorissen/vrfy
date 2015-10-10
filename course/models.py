@@ -1,8 +1,7 @@
 import os
-import os.path
 import vrfy.settings
 from django.db import models
-from catalog.models import Section, Course, Reedie
+# from catalog.models import Section, Course, Reedie
 from django.utils.text import slugify
 from django.core.exceptions import ValidationError
 from django.core.files import File
@@ -12,6 +11,7 @@ from util import tango, pretty_code
 from django_markdown.models import MarkdownField
 
 
+# What does `instance` mean here? - RMD 2015-10-10
 def student_file_upload_path(instance, filename):
     # filepath should be of the form:
     # course/folio/user/problem_set/problem/filename  (maybe add attempt
@@ -26,6 +26,7 @@ def student_file_upload_path(instance, filename):
             problem.title), attempt, filename)
 
 
+# What does `instance` mean here? RMD 2015-10-10
 def solution_file_upload_path(instance, filename):
     # filepath should be of the form:
     # course/solutions/problem_set/problem/filename
@@ -36,6 +37,7 @@ def solution_file_upload_path(instance, filename):
     return file_path
 
 
+# `instance` isn't used in this function - RMD 2015-10-10
 def grader_lib_upload_path(instance, filename):
     file_path = 'lib/{0}'.format(filename)
     if os.path.isfile(vrfy.settings.MEDIA_ROOT + file_path):
