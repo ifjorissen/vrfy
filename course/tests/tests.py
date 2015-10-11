@@ -10,8 +10,9 @@ class FakeDingus(object):
     beep = ''
 
 
-class TestPathmakers(unittest.TestCase):
+class DataMaker(object):
 
+    @classmethod
     def make_a_problem(self):
         fake_problem = FakeDingus()
         fake_problem.title = 'Problem Title'
@@ -21,11 +22,13 @@ class TestPathmakers(unittest.TestCase):
 
         return fake_problem
 
+    @classmethod
     def make_problem_set(self):
         fake_pset = FakeDingus()
         fake_pset.title = 'The Title of This Problem Set'
         return fake_pset
 
+    @classmethod
     def make_student_problem_set(self):
         sps = FakeDingus()
         sps.problem_set = self.make_problem_set()
@@ -33,15 +36,19 @@ class TestPathmakers(unittest.TestCase):
         sps.user.username = lambda: 'catbug'
         return sps
 
+    @classmethod
     def make_student_problem_solution(self):
         sps = FakeDingus()
         sps.problem = self.make_a_problem()
         sps.student_problem_set = self.make_student_problem_set()
         return sps
 
+
+class TestPathmakers(unittest.TestCase):
+
     def test_student_file_upload_path(self):
-        dingus = self.make_student_problem_solution()
-        dingus.student_problem_solution = self.make_student_problem_solution()
+        dingus = DataMaker.make_student_problem_solution()
+        dingus.student_problem_solution = DataMaker.make_student_problem_solution()
         dingus.attempt_num = 1
 
         expected = (
@@ -56,7 +63,7 @@ class TestPathmakers(unittest.TestCase):
     @mock.patch('course.models.os')
     def test_solution_file_upload_path(self, mock_os):
         dingus = FakeDingus()
-        dingus.problem = self.make_a_problem()
+        dingus.problem = DataMaker.make_a_problem()
 
         folder = dingus.problem.get_upload_folder()
         file_name = 'poot'
@@ -78,3 +85,19 @@ class TestPathmakers(unittest.TestCase):
 
         mock_os.path.isfile.assert_called_with(expected_checked)
         self.assertEqual(expected_new_path, generated_path)
+
+
+class TestProblem(unittest.TestCase):
+
+    def test_is_late(self):
+        True
+
+    # TODO: finish mocking this out, I hope?
+    def test_latest_score(self):
+        sps = mock.create_autospec(course.models.StudentProblemSolution)
+        sps.job_id = 1
+        sps.attempt_num = 2
+
+        score = sps.latest_score()
+
+        sps.problemresult_set.assert_called_with(1, 2)
