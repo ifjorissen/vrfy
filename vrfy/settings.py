@@ -119,6 +119,7 @@ else:
 
 from django.utils import timezone
 # Database backup Info
+# Currently commented out b/c of bug in dbackup, re-activate once bug is fixed. [link to bug]()
 # def media_backup_filename(databasename, servername, timestamp, extension, wildcard):
 #     print("media backup")
 #     return "{}_media{}-{}{}".format(servername, databasename, timestamp, extension)
