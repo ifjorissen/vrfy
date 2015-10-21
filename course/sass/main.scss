@@ -28,6 +28,13 @@ body{
   align-items: center;
 }
 
+.flex-pagination .pager{
+  width: inherit;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
 .popover-footer {
   margin: 0;
   padding: 8px 14px;

@@ -1,0 +1,86 @@
+{% extends 'course/base.html' %}
+{% block content %}
+<section class="col-sm-12">
+  <h2>Your Solutions:</h2>
+  <div class="panel-group" role="tablist" aria-multiselectable="true">
+  {% for sol in solutions %}
+  <div class="panel panel-default" id="problemset-{{ps.id}}">
+    <div class="panel-heading" role="tab">
+    <div class="flex-panel-wrapper">
+      <div>
+        <p class = "h4">{{ sol.problem.title }} on <em>{{ sol.get_problemset }}</em></p>
+        <p class="h5">
+          {% if sol.latest_score == "Not Autograded" %}
+            Not Autograded
+          {% else %}
+            Latest Score: {{sol.latest_score}}{% if sol.max_score %}/{{sol.max_score}}{% endif %}
+          {% endif %}
+        </p>
+        <p class="h5"> 
+          <span class="glyphicon glyphicon-time"></span>
+          Submitted {{sol.submitted}}
+        </p>
+      </div>
+      <div>
+        <a role="button" type="button" href="{% url 'course:results_problem_detail' sol.student_problem_set.problem_set.id sol.problem.id %}" class="btn btn-default">
+          <span class="glyphicon glyphicon-eye-open"></span> results
+        </a>
+      </div>
+    </div>
+  </div>
+  </div>
+  {% endfor %}
+  </div>
+    <!-- <ul class="list-group">
+      {% for sol in solutions %}
+        <li class="list-group-item">
+          <div class="flex-panel-wrapper">
+            <div>
+              <p class = "h4">{{ sol.problem.title }}</p>
+              <p class="h5">
+                {% if sol.latest_score == "Not Autograded" %}
+                  Not Autograded
+                {% else %}
+                  Latest Score: {{sol.latest_score}}{% if sol.max_score %}/{{sol.max_score}}{% endif %}
+                {% endif %}
+              </p>
+              <p class="h5"> 
+                <span class="glyphicon glyphicon-time"></span>
+                Submitted {{sol.submitted}}
+              </p>
+            </div>
+            <div>
+              <a role="button" type="button" href="{% url 'course:results_problem_detail' sol.student_problem_set.problem_set.id sol.problem.id %}" class="btn btn-default">
+                <span class="glyphicon glyphicon-eye-open"></span> results
+              </a>
+            </div>
+          </div>
+        </li>
+      {% empty %}
+      <li class="list-group-item">
+          <div class="flex-panel-wrapper">
+              <p class = "h4">You don't have any submitted solutions! </p>
+          </div>
+        </li>
+      {% endfor %}
+    </ul> -->
+</section>
+<footer class="flex-pagination col-sm-12">
+  <nav>
+    <ul class="pager">
+      {% if solutions.has_previous %}
+        <li class="previous"><a href="?page={{ solutions.previous_page_number }}"><span class="glyphicon glyphicon-chevron-left"></span> previous </a></li>
+      {% else %}
+        <li class="previous disabled"><a href="#"><span class="glyphicon glyphicon-chevron-left"></span> previous </a></li>
+      {% endif %}
+      <li class="current">
+        Page {{ solutions.number }} of {{ solutions.paginator.num_pages }}
+      </li>
+      {% if solutions.has_next %}
+        <li class="next"><a href="?page={{ solutions.next_page_number }}"> next <span class="glyphicon glyphicon-chevron-right"></span></a></li>
+      {% else %}
+        <li class="next disabled"><a href="#"> next <span class="glyphicon glyphicon-chevron-right"> </span></a></li>
+      {% endif %}
+    </ul>
+  </nav>
+{% endblock %}
