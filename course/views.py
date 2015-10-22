@@ -380,7 +380,7 @@ def _get_problem_result(solution, request):
         try:
             # theres a line with an empty string after the last actual output
             # line
-            line = r.text.split("\n")[-2]
+            #line = r.text.split("\n")[-2]
             # the time is on the first line surrounded by brackets
             tango_time = r.text.split("\n")[0].split("[")[1].split("]")[0]
             tango_time = time.strftime(
@@ -392,23 +392,39 @@ def _get_problem_result(solution, request):
             tango_time = timezone.make_aware(
                 tango_time, timezone=timezone.UTC())
             if tango_time != prob_result.timestamp:
-                if "Autodriver: Job timed out after " in line:  # thats the text that Tango outputs when a job times out
-                    prob_result.score = 0
-                    prob_result.json_log = {'score_sum': '0', 'external_log': [
-                        "Program timed out after " + line.split(" ")[-2] + " seconds."]}
-                    prob_result.timestamp = tango_time
-                    prob_result.raw_output = raw_output
-                    prob_result.save()
-                else:
+                timeout = False
+                elided = False
+                for line in r.text.split("\n"):
+                    if "Autodriver: Job timed out after " in line:  # thats the text that Tango outputs when a job times out
+                        prob_result.json_log = {'score_sum': '0', 'external_log': [
+                            "Program timed out after " + line.split(" ")[-2] + " seconds."]}
+                        prob_result.timestamp = tango_time
+                        timeout = True
+                        break
+                    elif "...[excess bytes elided]..." in line:
+                        prob_result.json_log = {'score_sum': '0', 'external_log': [
+                        "Your program produced a lot of output. Remove any print statements you have and check for infinite loops before resubmitting."]}
+                        elided = True
+                        break
+                
+                #If there was no timeout 
+                if not (timeout or elided):
+                    # theres a line with an empty string after the last actual output
+                    # line
+                    json_line = r.text.split("\n")[-2]
                     # try:
-                    log_data = json.loads(line)
-
+                    log_data = json.loads(json_line)
                     # create the result object
                     prob_result.max_score = log_data["max_score"]
                     prob_result.score = log_data["score_sum"]
                     prob_result.raw_output = raw_output
                     prob_result.json_log = log_data
                     prob_result.timestamp = tango_time
+                    prob_result.save()
+                else:
+                    prob_result.score = 0
+                    prob_result.timestamp = tango_time
+                    prob_result.raw_output = raw_output
                     prob_result.save()
         except IndexError:
             raise ValueError
