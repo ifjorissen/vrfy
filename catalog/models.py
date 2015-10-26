@@ -28,6 +28,10 @@ class Reedie(models.Model):
     def username(self):
         return self.user.username
 
+    def last_login(self):
+        return self.last_updated
+    last_login.short_description = "Last Login"
+
 # class Enrollment(models.Model):
 #   student = models.ForeignKey(Reedie, on_delete=models.CASCADE)
 #   section = models.ForeignKey('Section', related_name='enrolled', on_delete=models.CASCADE)

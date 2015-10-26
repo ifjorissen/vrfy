@@ -24,7 +24,8 @@ class ReedieInline(admin.StackedInline):
 
 @admin.register(Reedie)
 class ReedieAdmin(admin.ModelAdmin):
-    readonly_fields = ('first_name', 'last_name', 'email', 'last_updated')
+    readonly_fields = ('username', 'first_name', 'last_name', 'email', 'last_login')
+    list_display = ('username', 'first_name', 'last_name', 'email', 'last_login')
     fieldsets = [
         ('Reed Profile Info', {
             'fields': [
