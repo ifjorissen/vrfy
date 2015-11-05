@@ -81,9 +81,24 @@ class TestPathmakers(unittest.TestCase):
 
         expected_new_path = 'lib/' + fake_path
         expected_checked = vrfy.settings.MEDIA_ROOT + expected_new_path
+
+        # Path doesn't exist, rm should not be called
+        mock_os.path.isfile.return_value = False
+
         generated_path = course.models.grader_lib_upload_path({}, fake_path)
 
         mock_os.path.isfile.assert_called_with(expected_checked)
+        mock_os.remove.assert_not_called()
+        self.assertEqual(expected_new_path, generated_path)
+
+        # Path exists
+        mock_os.path.isfile.return_value = True
+
+        generated_path = course.models.grader_lib_upload_path({}, fake_path)
+
+        mock_os.path.isfile.assert_called_with(expected_checked)
+        mock_os.remove.assert_called_with(vrfy.settings.MEDIA_ROOT +
+                                          generated_path)
         self.assertEqual(expected_new_path, generated_path)
 
 
@@ -94,7 +109,13 @@ class TestProblem(unittest.TestCase):
 
     # TODO: finish mocking this out, I hope?
     def test_latest_score(self):
-        sps = mock.create_autospec(course.models.StudentProblemSolution)
+        # sps = mock.create_autospec(course.models.StudentProblemSolution)
+        sps = course.models.StudentProblemSolution()
+        sps.problemresult_set = [FakeDingus()]
+        sps.problemresult_set[0].get = mock.Mock()
+        result_obj_mock = mock.Mock()
+        result_obj_mock.get_score.return_value = 5
+        sps.problemresult_set[0].get.return_value = result_obj_mock
         sps.job_id = 1
         sps.attempt_num = 2
 
