@@ -1,7 +1,6 @@
 import os
 import vrfy.settings
 from django.db import models
-# from catalog.models import Section, Course, Reedie
 from django.utils.text import slugify
 from django.core.exceptions import ValidationError
 from django.core.files import File
