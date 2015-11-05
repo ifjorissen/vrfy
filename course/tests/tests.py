@@ -100,25 +100,3 @@ class TestPathmakers(unittest.TestCase):
         mock_os.remove.assert_called_with(vrfy.settings.MEDIA_ROOT +
                                           generated_path)
         self.assertEqual(expected_new_path, generated_path)
-
-
-class TestProblem(unittest.TestCase):
-
-    def test_is_late(self):
-        True
-
-    # TODO: finish mocking this out, I hope?
-    def test_latest_score(self):
-        # sps = mock.create_autospec(course.models.StudentProblemSolution)
-        sps = course.models.StudentProblemSolution()
-        sps.problemresult_set = [FakeDingus()]
-        sps.problemresult_set[0].get = mock.Mock()
-        result_obj_mock = mock.Mock()
-        result_obj_mock.get_score.return_value = 5
-        sps.problemresult_set[0].get.return_value = result_obj_mock
-        sps.job_id = 1
-        sps.attempt_num = 2
-
-        score = sps.latest_score()
-
-        sps.problemresult_set.assert_called_with(1, 2)
