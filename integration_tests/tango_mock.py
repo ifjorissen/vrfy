@@ -1,3 +1,4 @@
+# Very, *very* WIP work on developing a coherent mock for the Tango service.
 from httmock import response, urlmatch
 
 from vrfy import settings
