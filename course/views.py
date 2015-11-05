@@ -113,7 +113,7 @@ def your_solutions(request):
 
     """
     all_solutions = StudentProblemSolution.objects.filter(
-        student_problem_set__user=request.user.reedie)
+        student_problem_set__user=request.user.reedie).order_by('-submitted')
 
     paginator = Paginator(all_solutions, 8)
     page = request.GET.get('page')

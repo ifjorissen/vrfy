@@ -29,7 +29,6 @@ INTERNAL_IPS = ['127.0.0.1', 'localhost']
 ADMINS = (('Alex', 'grantal@reed.edu'), ('Isabella', 'isjoriss@reed.edu'))
 EMAIL_HOST = 'localhost'
 SERVER_EMAIL = 'noreply@cs.reed.edu'
-# SESSION_COOKIE_DOMAIN = '.localhost'
 # Grappelli settings
 GRAPPELLI_ADMIN_TITLE = "CS@Reed Admin"
 GRAPPELLI_INDEX_DASHBOARD = "vrfy.dashboard.CustomIndexDashboard"
