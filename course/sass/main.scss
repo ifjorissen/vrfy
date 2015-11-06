@@ -22,6 +22,11 @@ body{
 	padding-top: $nav-height;
 }
 
+.panel-group{
+  min-height: 80vh;
+  margin-top: 2rem;
+}
+
 .flex-panel-wrapper{
   display: flex;
   justify-content: space-between;
