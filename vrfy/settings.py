@@ -29,7 +29,6 @@ INTERNAL_IPS = ['127.0.0.1', 'localhost']
 ADMINS = (('Alex', 'grantal@reed.edu'), ('Isabella', 'isjoriss@reed.edu'))
 EMAIL_HOST = 'localhost'
 SERVER_EMAIL = 'noreply@cs.reed.edu'
-
 # Grappelli settings
 GRAPPELLI_ADMIN_TITLE = "CS@Reed Admin"
 GRAPPELLI_INDEX_DASHBOARD = "vrfy.dashboard.CustomIndexDashboard"
@@ -56,12 +55,15 @@ INSTALLED_APPS = (
 
 AUTHENTICATION_BACKENDS = (
     'ldap_auth.auth_backend.LDAPRemoteUserBackend',
+    'django.contrib.auth.backends.ModelBackend',
 )
 
 MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'ldap_auth.auth_middleware.LDAPRemoteUserMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',

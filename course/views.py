@@ -18,6 +18,9 @@ from django.forms.models import modelformset_factory
 from django.shortcuts import render_to_response
 from django.utils.dateparse import parse_datetime
 
+#paginator for problem_set_index and your_solutions
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+
 import sys
 sys.path.append("../")
 import vrfy.settings
@@ -94,6 +97,40 @@ def logout_view(request):
     context = {}
     return render(request, 'course/logged_out.html', context)
 
+@login_required
+def your_solutions(request):
+    """
+    Display all of the solutions a student has submitted
+
+    **Context**
+
+    ``solutions``
+        the solutions for request.user's problems of type :model:`course.StudentProblemSolution`.
+
+    **Template:**
+
+    :template:`templates/course/your_solutions.html`
+
+    """
+    all_solutions = StudentProblemSolution.objects.filter(
+        student_problem_set__user=request.user.reedie).order_by('-submitted')
+
+    paginator = Paginator(all_solutions, 8)
+    page = request.GET.get('page')
+
+    try:
+        solutions = paginator.page(page)
+    except PageNotAnInteger:
+        # If page is not an integer, deliver first page.
+        solutions = paginator.page(1)
+    except EmptyPage:
+        # If page is out of range (e.g. 9999), deliver last page of results.
+        solutions = paginator.page(paginator.num_pages)
+
+    context = {'solutions': solutions}
+    return render(request, 'course/your_solutions.html', context)
+
+
 
 @login_required
 def attempt_problem_set(request, ps_id):
@@ -160,8 +197,21 @@ def problem_set_index(request):
     return a dict of the (problem sets : student problem set solutions)
     '''
     ps_sol_dict = {}
-    latest_problem_sets = _query_problem_sets(
+    problem_sets = _query_problem_sets(
         request.user.reedie).order_by('due_date')
+
+    paginator = Paginator(problem_sets, 8)
+    page = request.GET.get('page')
+
+    try:
+        latest_problem_sets = paginator.page(page)
+    except PageNotAnInteger:
+        # If page is not an integer, deliver first page.
+        latest_problem_sets = paginator.page(1)
+    except EmptyPage:
+        # If page is out of range (e.g. 9999), deliver last page of results.
+        latest_problem_sets = paginator.page(paginator.num_pages)
+
     for ps in latest_problem_sets:
         try:
             student_ps_sol = StudentProblemSet.objects.get(
@@ -170,8 +220,9 @@ def problem_set_index(request):
             student_ps_sol = None
 
         ps_sol_dict[ps] = student_ps_sol
+
     # student_problemset_solutions = [StudentProblemSet.objects.filter(user=request.user, problem_set__id = ps.id) for ps in latest_problem_sets]
-    context = {'ps_dict': ps_sol_dict}
+    context = {'ps_dict': ps_sol_dict, 'ps_sets':latest_problem_sets}
     return render(request, 'course/problem_set_index.html', context)
 
 
