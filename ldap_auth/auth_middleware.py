@@ -29,7 +29,7 @@ from django.core.exceptions import ImproperlyConfigured
 from vrfy.settings import LOCAL_DEV
 
 class LDAPRemoteUserMiddleware(RemoteUserMiddleware):
-  # header = "REMOTE_USER"
+  header = "HTTP_REMOTE_USER"
   def process_request(self, request):
     # AuthenticationMiddleware is required so that request.user exists.
     if not hasattr(request, 'user'):
