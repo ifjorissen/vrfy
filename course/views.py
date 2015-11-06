@@ -354,6 +354,10 @@ def problem_submit(request, ps_id, p_id):
 
 @login_required
 def results_detail(request, ps_id):
+    print('Request:\n')
+    print(request)
+    print('PS ID:\n')
+    print(ps_id)
     # returns the results of a given problem set (and all attempts)
     # logic to figure out if the results are availiable and if so, get them
     ps = _get_problem_set(ps_id, request.user.reedie)
