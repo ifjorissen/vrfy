@@ -1,8 +1,6 @@
 import os
-import os.path
 import vrfy.settings
 from django.db import models
-from catalog.models import Section, Course, Reedie
 from django.utils.text import slugify
 from django.core.exceptions import ValidationError
 from django.core.files import File
@@ -12,6 +10,7 @@ from util import tango, pretty_code
 from django_markdown.models import MarkdownField
 
 
+# What does `instance` mean here? - RMD 2015-10-10
 def student_file_upload_path(instance, filename):
     # filepath should be of the form:
     # course/folio/user/problem_set/problem/filename  (maybe add attempt
@@ -26,6 +25,7 @@ def student_file_upload_path(instance, filename):
             problem.title), attempt, filename)
 
 
+# What does `instance` mean here? RMD 2015-10-10
 def solution_file_upload_path(instance, filename):
     # filepath should be of the form:
     # course/solutions/problem_set/problem/filename
@@ -36,6 +36,7 @@ def solution_file_upload_path(instance, filename):
     return file_path
 
 
+# `instance` isn't used in this function - RMD 2015-10-10
 def grader_lib_upload_path(instance, filename):
     file_path = 'lib/{0}'.format(filename)
     if os.path.isfile(vrfy.settings.MEDIA_ROOT + file_path):
@@ -105,36 +106,9 @@ class Problem(models.Model):
                     {'grade_script': ["This field is required.", ]})
 
         #self.one_force_rename = False
-        """one_force_rename = False #one idea for making sure one of the student files is renamed; doesn't work
-      print(RequiredProblemFilename.objects.filter(problem=self))
-      for f in RequiredProblemFilename.objects.filter(problem=self):
-        print(f.force_rename)
-        if f.force_rename:
-          one_force_rename = True
-      if not one_force_rename:
-        raise ValidationError('At least one of the student files needs to be renamed. Check what student files your grading script imports.')
-    """
 
     def __str__(self):
         return self.title
-    """
-  #iterator that goes over the grading script, problem solution files and grader libs
-  class _grader_files_iterator:
-
-    def __init__(self, problem):
-      self.problem = problem
-
-    def __iter__(self):
-      return self
-
-    def next(self):
-      yield self.problem.grade_script
-      for psfile in self.problemsolutionfile_set.all():
-        yield psfile.file_upload
-      for lib in GraderLib.objects.all():
-        yield lib.lib_upload
-
-      raise StopIteration()"""
 
 
 class ProblemSolutionFile(models.Model):

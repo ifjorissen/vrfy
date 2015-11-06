@@ -9,7 +9,7 @@ urlpatterns = [
     url(r'^logout/$', views.logout_user, name='logout'),
     url(r'^logged_out/$', views.logout_view, name='logged_out'),
     url(r'^problem_sets/$', views.problem_set_index, name='problem_set_index'),
-
+    url(r'^your_solutions/$', views.your_solutions, name='your_solutions'),
     # attempt & submit urls
     url(r'^attempt/problem-set(?P<ps_id>[0-9]+)/$',
         views.attempt_problem_set,

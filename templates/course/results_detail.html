@@ -3,7 +3,7 @@
 <section class="problem-set col-sm-12">
 <section class="ps-info page-header">
 <p class="h1">{{ sps.problem_set.title }} </p>
-<p class="h2" style="margin-top:0;"><small><span class="glyphicon glyphicon-time"></span> Due {{ sps.problem_set.due_date }}</small></p>
+<p class="h2" style="margin-top:0;"><small><span class="glyphicon glyphicon-time"></span> Due {{ sps.problem_set.due_date }}</small></p> 
 <p class="lead">If the results aren't there or haven't changed since your last submission, try refreshing the page in 30 seconds</p>
 </section>
 
@@ -12,7 +12,7 @@
   <section id="result-{{result.id}}" class="panel panel-default">
     <div class="panel-heading">
       <h3><span role="button" data-toggle="collapse" data-parent="#result-{{result.id}}" href="#collapse-result-{{result.id}}" aria-expanded="true">
-        {{problem.title }}</span><span class="pull-right small">Score: {{result.score}}
+        {{problem.title }} </span><span class="pull-right small">Score: {{result.score}}
         {% if result.max_score %}/{{result.max_score}}{% endif %}</span></h3>
     </div>
     <div id="collapse-result-{{result.id}}" class="panel-body panel-collapse collapse in" role="tabpanel">
