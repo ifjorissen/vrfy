@@ -100,6 +100,7 @@ class Problem(models.Model):
         return file_path
 
     def clean(self):
+        print(self.autograde_problem)
         if self.autograde_problem:
             if (self.grade_script is None or self.grade_script == ""):
                 raise ValidationError(

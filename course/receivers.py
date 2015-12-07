@@ -53,7 +53,8 @@ def Problem_pre_delete(sender, **kwargs):
     """
     problem = kwargs.get("instance")
     # delete all the problem files
-    shutil.rmtree(MEDIA_ROOT + problem.get_upload_folder())
+    if os.path.isfile(MEDIA_ROOT + problem.get_upload_folder()):
+        shutil.rmtree(MEDIA_ROOT + problem.get_upload_folder())
     if problem.autograde_problem:
         for ps in problem.problemset_set.all():
             try:
