@@ -10,9 +10,11 @@
 * `createuser <username>`
 * `createdb -O <username> <dbname>`
 
+### Start Redis (Used as a message broker with Celery)
+  * `redis-server`
+  * Test to see if it's up & accepting connections with `redis-cli ping`
+
 **Use these names in the settings file**
-
-
 
 ### (meeting with adam 6.4.15)
 output from the test.py

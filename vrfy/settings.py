@@ -34,6 +34,15 @@ GRAPPELLI_ADMIN_TITLE = "CS@Reed Admin"
 GRAPPELLI_INDEX_DASHBOARD = "vrfy.dashboard.CustomIndexDashboard"
 # MARKDOWN_EDITOR_SKIN = 'simple'
 
+#Celery settings and Redis Info
+BROKER_URL = 'redis://localhost:6379'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379'
+CELERY_ACCEPT_CONTENT = ['application/json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'America/Los_Angeles'
+# TEST_RUNNER = 'djcelery.contrib.test_runner.CeleryTestSuiteRunner'
+
 # Application definition
 
 INSTALLED_APPS = (
@@ -47,10 +56,13 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'dbbackup',
+    'ldap_auth',
+    'course',
+    'catalog',
     'vrfy',
-    'vrfy.apps.LDAPAuthConfig',
-    'vrfy.apps.CourseConfig',
-    'vrfy.apps.CatalogConfig',
+    # 'vrfy.apps.LDAPAuthConfig',
+    # 'vrfy.apps.CourseConfig',
+    # 'vrfy.apps.CatalogConfig',
 )
 
 AUTHENTICATION_BACKENDS = (

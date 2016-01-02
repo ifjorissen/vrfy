@@ -10,29 +10,13 @@ import logging
 
 log = logging.getLogger(__name__)
 
-# @receiver(post_save, sender=User)
-# def User_post_save(sender, **kwargs):
-#   user = kwargs.get("instance")
-#   try:
-#     log.info("updating a reedie")
-#     user_dict = ldap_lookup_user(user.username)
-#     reed_usr, created = Reedie.objects.get_or_create(user=user)
-#     reed_usr.role = user_dict['eduPersonPrimaryAffiliation']
-#     reed_usr.last_updated = timezone.now()
-#     reed_usr.save()
-#   except IndexError:
-#     if user.is_superuser:
-#       log.info("superusers don't need to be reedies")
-#     else:
-#       log.info("could not find a reedie with that username")
-
-
 @receiver(user_logged_in, sender=User)
 def sig_user_logged_in(sender, user, request, **kwargs):
     log.info(
         "LOGIN: {} @ {}".format(
             user.username,
             request.META['REMOTE_ADDR']))
+    print("ok logged in")
     # log.info("UPDATE: {!s} Reed Profile".format(user.username))
     try:
         user_dict = ldap_lookup_user(user.username)
