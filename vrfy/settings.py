@@ -60,9 +60,6 @@ INSTALLED_APPS = (
     'course',
     'catalog',
     'vrfy',
-    # 'vrfy.apps.LDAPAuthConfig',
-    # 'vrfy.apps.CourseConfig',
-    # 'vrfy.apps.CatalogConfig',
 )
 
 AUTHENTICATION_BACKENDS = (
