@@ -18,5 +18,8 @@
   * log cycling
   * deletion of automatic backups
   * django admin documentation
-  * reformat views and models to get the right documentation
+  * reformat views and models comments to get the right documentation for admin
   * use a modelform instead of the javascript forms to handle problemset submissions
+  * include pk in file paths
+  * make fixtures for basic tests
+  

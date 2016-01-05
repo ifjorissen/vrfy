@@ -15,3 +15,16 @@ def test(param):
     return 'The test task executed with argument "%s" ' % param
 
 
+@shared_task
+def create_spsol(ps_id, problem_id):
+    '''
+    given a problem id and a problem set id , return the appropriate student solution and problem set objects
+    '''
+    pass
+
+@shared_task
+def send_spsol_tango(spsol):
+  '''
+  given an student problem solution, figure out if it needs to get sent to tango
+  '''
+  pass

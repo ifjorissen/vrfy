@@ -197,8 +197,9 @@ class StudentProblemSolution(models.Model):
     attempt_num = models.IntegerField(default=0, verbose_name='attempts made')
     submitted = models.DateTimeField('date submitted', null=True)
 
-    # tango jobid
-    job_id = models.IntegerField(default=-1, verbose_name="Tango Job ID")
+    # tango jobid, celery task_id
+    job_id = models.IntegerField(blank=True, editable=False, verbose_name="Tango Job ID")
+    task_id = models.CharField(max_length=50, blank=True, editable=False, verbose_name="Celery Task ID")
 
     def __str__(self):
         return self.problem.title + " - " + self.student_problem_set.user.username()

@@ -20,10 +20,16 @@ from django.utils.dateparse import parse_datetime
 
 #paginator for problem_set_index and your_solutions
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-
 import sys
 sys.path.append("../")
 import vrfy.settings
+
+#messages for success, etc
+from django.contrib import messages
+
+#form imports for student problem solutions
+from django.forms import modelformset_factory
+from .forms import StudentProblemSolutionForm
 
 # the name the form field gives to additional files
 ADDITIONAL_FILE_NAME = "additional"
@@ -137,27 +143,37 @@ def attempt_problem_set(request, ps_id):
     '''
     when a student attempts a problem set, try to get their solution set & solutions if they exist
     '''
-    ps = _get_problem_set(ps_id, request.user.reedie)
-    problem_solution_dict = {}
-    try:
-        sp_set = StudentProblemSet.objects.get(
-            problem_set=ps, user=request.user.reedie)
-        for problem in ps.problems.all():
-            try:
-                student_psol = StudentProblemSolution.objects.get(
-                    problem=problem, student_problem_set=sp_set)
-            except StudentProblemSolution.DoesNotExist:
-                student_psol = None
-            problem_solution_dict[problem] = student_psol
-    except StudentProblemSet.DoesNotExist:
-        problem_solution_dict = {
-            problem: None for problem in ps.problems.all()}
-    context = {
-        'problem_set': ps,
-        'problem_solution_dict': problem_solution_dict,
-        'additional_file_name': ADDITIONAL_FILE_NAME,
-        'max_additional_files': MAX_ADDITIONAL_FILES}
-    return render(request, 'course/attempt_problem_set.html', context)
+    if request.method == 'GET':
+        ps = _get_problem_set(ps_id, request.user.reedie)
+        problem_solution_dict = {}
+        try:
+            sp_set = StudentProblemSet.objects.get(
+                problem_set=ps, user=request.user.reedie)
+            for problem in ps.problems.all():
+                try:
+                    student_psol = StudentProblemSolution.objects.get(
+                        problem=problem, student_problem_set=sp_set)
+                    student_psol_form = StudentProblemSolutionForm(instance=student_psol)
+                except StudentProblemSolution.DoesNotExist:
+                    # student_psol = None
+                    student_psol_form = StudentProblemSolutionForm()
+                problem_solution_dict[problem] = student_psol_form
+        except StudentProblemSet.DoesNotExist:
+            problem_solution_dict = {
+                problem: None for problem in ps.problems.all()}
+        context = {
+            'problem_set': ps,
+            'problem_solution_dict': problem_solution_dict,
+            'additional_file_name': ADDITIONAL_FILE_NAME,
+            'max_additional_files': MAX_ADDITIONAL_FILES}
+        return render(request, 'course/attempt_problem_set.html', context)
+
+    elif request.method == 'POST':
+        #submit the problem
+        print("submitting the problem...")
+        return redirect('course:submit_success', ps_id, p_id)
+    else:
+        raise Http404("Don't do that")
 
 
 @login_required
