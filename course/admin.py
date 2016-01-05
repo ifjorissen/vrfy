@@ -1,4 +1,4 @@
-from zipfile import ZipFile
+
 from django.contrib import admin
 from django.utils.text import slugify
 from django.http import Http404, HttpResponse
@@ -9,7 +9,6 @@ import os
 import json
 import csv
 from django.core.files import File
-from django.core.servers.basehttp import FileWrapper
 from itertools import chain
 import sys
 sys.path.append("../")
@@ -21,6 +20,12 @@ import logging
 from django.utils.dateparse import parse_datetime
 from datetime import timedelta
 from django_markdown.admin import AdminMarkdownWidget, MarkdownField
+
+#use for exporting zip files of student solutions
+from zipfile import ZipFile
+from io import BytesIO
+#filewrapper removed from django 1.9 entirely....
+# from django.core.servers.basehttp import FileWrapper
 
 log = logging.getLogger(__name__)
 # from django.core import serializers
@@ -346,13 +351,18 @@ class StudentProblemSolutionAdmin(admin.ModelAdmin):
                              self.late(obj)])
         return response
 
-    export_csv.short_description = "Export Selected to CSV"
+    export_csv.short_description = "Export Solution Summary to CSV"
 
     # send the files to a zip
+    #IFJ refactored slightly on 1.5.16 (this is an in memory solution), since FileWrapper was removed in 1.9
+    #referred to http://stackoverflow.com/questions/67454/serving-dynamically-generated-zip-archives-in-django
+    # but amended so it works with django 1.9 and python 3.4
+    #to do: make a totally complete zip, so that if a prof downloads this, they also have the
+    #relevant grader scripts, the ta solutions, and maybe even the problem statements
     def export_files(self, request, queryset):
-        with ZipFile('StudentSolutions.zip', 'w') as sols_zip:
+        solutions_buffer = BytesIO()
+        with ZipFile(solutions_buffer, 'w') as sols_zip:
             for obj in queryset:
-
                 prob = slugify(obj.problem)
                 ps = slugify(obj.get_problemset())
                 user = str(obj.get_user())
@@ -365,15 +375,13 @@ class StudentProblemSolutionAdmin(admin.ModelAdmin):
                         psfile.submitted_file.name)
                     sols_zip.write(
                         path, "{!s}/{!s}/{!s}/{!s}".format(ps, prob, user, filename),)
-
-        # probably inefficient to write a file to disk just to read it again
-        # TODO: change to an in-mememory solution
-        with open('StudentSolutions.zip', 'rb') as sols_zip:
-            response = HttpResponse(
-                FileWrapper(sols_zip),
-                content_type='application/zip')
+        sols_zip.close()
+        sols = solutions_buffer.getvalue()
+        solutions_buffer.close()
+        response = HttpResponse(sols, content_type = "application/x-zip-compressed")
         response['Content-Disposition'] = 'attachment; filename=StudentSolutions.zip'
         return response
+    export_files.short_description = "Export Selected Solutions as Zip"
 
     def _update_result(self, solution):
         ps = solution.get_problemset()

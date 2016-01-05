@@ -26,7 +26,7 @@ ALLOWED_HOSTS = ["localhost", "cs.reed.edu"]
 INTERNAL_IPS = ['127.0.0.1', 'localhost']
 
 # Admins & Email for the server
-ADMINS = (('Alex', 'grantal@reed.edu'), ('Isabella', 'isjoriss@reed.edu'))
+ADMINS = [('Alex', 'grantal@reed.edu'), ('Isabella', 'isjoriss@reed.edu')]
 EMAIL_HOST = 'localhost'
 SERVER_EMAIL = 'noreply@cs.reed.edu'
 # Grappelli settings
@@ -44,30 +44,30 @@ CELERY_TIMEZONE = 'America/Los_Angeles'
 # TEST_RUNNER = 'djcelery.contrib.test_runner.CeleryTestSuiteRunner'
 
 # Application definition
-
-INSTALLED_APPS = (
-    'django.contrib.contenttypes',
-    'grappelli.dashboard',
-    'grappelli',
-    'django_markdown',
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'dbbackup',
+INSTALLED_APPS = [
     'ldap_auth',
     'course',
     'catalog',
     'vrfy',
-)
+    # IFJ 1.5.15 removing grappelli for now since they don't have support for 1.9
+    # 'grappelli.dashboard',
+    # 'grappelli',
+    'django_markdown',
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'dbbackup',
+]
 
-AUTHENTICATION_BACKENDS = (
+AUTHENTICATION_BACKENDS = [
     'ldap_auth.auth_backend.LDAPRemoteUserBackend',
     'django.contrib.auth.backends.ModelBackend',
-)
+]
 
-MIDDLEWARE_CLASSES = (
+MIDDLEWARE_CLASSES = [
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -77,7 +77,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.security.SecurityMiddleware',
-)
+]
 
 ROOT_URLCONF = 'vrfy.urls'
 
