@@ -3,7 +3,7 @@ from . import views
 from django.views.generic import TemplateView
 # from . import receivers
 
-
+app_name="course"
 urlpatterns = [
     url(r'^$', views.index, name='index'),
     url(r'^logout/$', views.logout_user, name='logout'),

@@ -19,8 +19,8 @@ from vrfy import settings
 
 urlpatterns = [
     url(r'^markdown/', include('django_markdown.urls')),
-    url(r'^', include('course.urls', namespace="course")),
+    url(r'^', include('course.urls')),
     url(r'^grappelli/', include('grappelli.urls')),
     url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
-    url(r'^admin/', include(admin.site.urls)),
+    url(r'^admin/', admin.site.urls),
 ]
