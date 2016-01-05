@@ -41,6 +41,7 @@ INSTALLED_APPS = (
     'grappelli.dashboard',
     'grappelli',
     'django_markdown',
+    'django.contrib.admindocs',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.sessions',
