@@ -28,7 +28,7 @@ import vrfy.settings
 from django.contrib import messages
 
 #form imports for student problem solutions
-from django.forms import modelformset_factory
+# from django.forms import modelformset_factory, inlineformset_factory
 from .forms import StudentProblemSolutionForm
 
 # the name the form field gives to additional files
@@ -153,11 +153,9 @@ def attempt_problem_set(request, ps_id):
                 try:
                     student_psol = StudentProblemSolution.objects.get(
                         problem=problem, student_problem_set=sp_set)
-                    student_psol_form = StudentProblemSolutionForm(instance=student_psol)
                 except StudentProblemSolution.DoesNotExist:
-                    # student_psol = None
-                    student_psol_form = StudentProblemSolutionForm()
-                problem_solution_dict[problem] = student_psol_form
+                    student_psol = None
+                problem_solution_dict[problem] = student_psol
         except StudentProblemSet.DoesNotExist:
             problem_solution_dict = {
                 problem: None for problem in ps.problems.all()}
@@ -167,11 +165,6 @@ def attempt_problem_set(request, ps_id):
             'additional_file_name': ADDITIONAL_FILE_NAME,
             'max_additional_files': MAX_ADDITIONAL_FILES}
         return render(request, 'course/attempt_problem_set.html', context)
-
-    elif request.method == 'POST':
-        #submit the problem
-        print("submitting the problem...")
-        return redirect('course:submit_success', ps_id, p_id)
     else:
         raise Http404("Don't do that")
 
