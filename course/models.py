@@ -13,24 +13,26 @@ from django_markdown.models import MarkdownField
 # What does `instance` mean here? - RMD 2015-10-10
 def student_file_upload_path(instance, filename):
     # filepath should be of the form:
-    # course/folio/user/problem_set/problem/filename  (maybe add attempt
+    # course/folio/user/problem_set/problem/filename-pk  (maybe add attempt
     # number)
     problem_set = instance.student_problem_solution.student_problem_set.problem_set.title
     user = instance.student_problem_solution.student_problem_set.user.username()
     problem = instance.student_problem_solution.problem
     attempt = instance.attempt_num
     course = problem.cs_course.num
-    return '{0}/folio/{1}/{2}/{3}_files/v{4}/{5}'.format(
+    pk = str(instance.pk)
+    return '{0}/folio/{1}/{2}/{3}_files/v{4}/{5}-{6}'.format(
         course, user, slugify(problem_set), slugify(
-            problem.title), attempt, filename)
+            problem.title), attempt, filename, pk)
 
 
 # What does `instance` mean here? RMD 2015-10-10
 def solution_file_upload_path(instance, filename):
     # filepath should be of the form:
-    # course/solutions/problem_set/problem/filename
+    # course/solutions/problem_set/problem/filename-pk
     problem = instance.problem
-    file_path = problem.get_upload_folder() + filename
+    pk = str(instance.pk)
+    file_path = problem.get_upload_folder() + filename + "-" + pk
     if os.path.isfile(vrfy.settings.MEDIA_ROOT + file_path):
         os.remove(vrfy.settings.MEDIA_ROOT + file_path)
     return file_path
@@ -46,8 +48,8 @@ def grader_lib_upload_path(instance, filename):
 
 def grade_script_upload_path(instance, filename):
     # filepath should be of the form:
-    # course/solutions/problem_set/problem/filename
-    file_path = instance.get_upload_folder() + filename
+    # course/solutions/problem_set/problem/filename-pk
+    file_path = instance.get_upload_folder() + filename + "-" + str(instance.pk)
     if os.path.isfile(vrfy.settings.MEDIA_ROOT + file_path):
         os.remove(vrfy.settings.MEDIA_ROOT + file_path)
     return file_path
@@ -377,6 +379,12 @@ class GraderLib(models.Model):
         for ps in ProblemSet.objects.all():
             for problem in ps.problems.all().filter(autograde_problem=True):
                 tango.upload(problem, ps, name, f)
+
+    def clean(self):
+        for gl in GraderLib.objects.all():
+            if str(self) == str(gl):
+                raise ValidationError({'lib_upload': ["Cannot have two grader libs of the same filename", ]})
+        
     """
   def delete(self):
     os.remove(self.lib_upload.name)
