@@ -1,6 +1,7 @@
 import os
 import shutil
 from django.dispatch import receiver
+from django.utils.text import slugify
 from django.db.models.signals import pre_delete, post_save, post_init
 from course import models
 from util import tango
@@ -63,3 +64,23 @@ def Problem_pre_delete(sender, **kwargs):
                 log.info(
                     "DELETE: Problem Could not remove {!s}".format(filename))
                 pass
+
+@receiver(post_save, sender=models.Problem)
+def Problem_post_save(sender, **kwargs):
+    """
+    Fixes the grading script path to include the problem's primary key
+    """
+    problem = kwargs.get("instance")
+    bad_path = MEDIA_ROOT + problem.grade_script.name
+    filename = os.path.basename(bad_path)
+    if slugify(problem) + "-None" in bad_path:
+        new_name = models.grade_script_upload_path(problem, filename)
+        good_path = MEDIA_ROOT + new_name
+        print(os.path.dirname(good_path))
+        #move file to good path
+        os.mkdir(os.path.dirname(good_path))
+        shutil.copyfile(bad_path, good_path)
+        #delete old folder
+        shutil.rmtree(os.path.dirname(bad_path))
+        problem.grade_script.name = new_name
+        problem.save()

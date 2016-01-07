@@ -13,26 +13,25 @@ from django_markdown.models import MarkdownField
 # What does `instance` mean here? - RMD 2015-10-10
 def student_file_upload_path(instance, filename):
     # filepath should be of the form:
-    # course/folio/user/problem_set/problem/filename-pk  (maybe add attempt
+    # course/folio/user/problem_set-pk/problem-pk/filename  (maybe add attempt
     # number)
-    problem_set = instance.student_problem_solution.student_problem_set.problem_set.title
+    problem_set = instance.student_problem_solution.student_problem_set.problem_set
     user = instance.student_problem_solution.student_problem_set.user.username()
     problem = instance.student_problem_solution.problem
     attempt = instance.attempt_num
     course = problem.cs_course.num
     pk = str(instance.pk)
-    return '{0}/folio/{1}/{2}/{3}_files/v{4}/{5}-{6}'.format(
-        course, user, slugify(problem_set), slugify(
-            problem.title), attempt, filename, pk)
+    return '{0}/folio/{1}/{2}-{3}/{4}-{5}_files/v{6}/{7}'.format(
+        course, user, slugify(problem_set), str(problem_set.pk), slugify(
+            problem.title), str(problem.pk), attempt, filename)
 
 
 # What does `instance` mean here? RMD 2015-10-10
 def solution_file_upload_path(instance, filename):
     # filepath should be of the form:
-    # course/solutions/problem_set/problem/filename-pk
+    # course/solutions/problem_set-pk/problem-pk/filename
     problem = instance.problem
-    pk = str(instance.pk)
-    file_path = problem.get_upload_folder() + filename + "-" + pk
+    file_path = problem.get_upload_folder() + filename
     if os.path.isfile(vrfy.settings.MEDIA_ROOT + file_path):
         os.remove(vrfy.settings.MEDIA_ROOT + file_path)
     return file_path
@@ -48,8 +47,8 @@ def grader_lib_upload_path(instance, filename):
 
 def grade_script_upload_path(instance, filename):
     # filepath should be of the form:
-    # course/solutions/problem_set/problem/filename-pk
-    file_path = instance.get_upload_folder() + filename + "-" + str(instance.pk)
+    # course/solutions/problem_set-pk/problem-pk/filename
+    file_path = instance.get_upload_folder() + filename
     if os.path.isfile(vrfy.settings.MEDIA_ROOT + file_path):
         os.remove(vrfy.settings.MEDIA_ROOT + file_path)
     return file_path
@@ -97,8 +96,8 @@ class Problem(models.Model):
 
     def get_upload_folder(self):
         course = self.cs_course.num
-        file_path = '{0}/solutions/{1}_files/'.format(
-            slugify(course), slugify(self.title))
+        file_path = '{0}/solutions/{1}-{2}_files/'.format(
+            slugify(course), slugify(self.title), str(self.pk))
         return file_path
 
     def clean(self):
