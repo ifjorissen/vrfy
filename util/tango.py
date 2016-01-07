@@ -31,7 +31,7 @@ def _request(
 
 
 def _get_courselab(problem, problemset):
-    return slugify(problemset) + "_" + slugify(problem)
+    return slugify(problemset) + "-" + str(problemset.pk) + "_" + slugify(problem) + "-" + str(problem.pk)
 
 
 def open(problem, problemset):
