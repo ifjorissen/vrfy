@@ -9,6 +9,8 @@ from __future__ import absolute_import
 # from vrfy.celery import shared_task
 from celery import shared_task
 
+#TO DO: set up celery task queues
+
 # @app.task
 @shared_task
 def test(param):
@@ -16,15 +18,18 @@ def test(param):
 
 
 @shared_task
-def create_spsol(ps_id, problem_id):
-    '''
-    given a problem id and a problem set id , return the appropriate student solution and problem set objects
-    '''
-    pass
+def send_spsol_tango(spsol_id):
+  '''
+  given the pk for a :model:`course.StudentProblemSolution`, figure out if it needs to get sent to tango
+  '''
+  #get the solution
+  #get the files
+  #send the job to tango
+  pass
 
 @shared_task
-def send_spsol_tango(spsol):
+def get_spsol_result_tango(spsol_id):
   '''
-  given an student problem solution, figure out if it needs to get sent to tango
+  given a celery task id(?) get the solution from tango and save it in a problem result
   '''
   pass
