@@ -102,10 +102,10 @@ class ProblemAdmin(admin.ModelAdmin):
                   {'fields': ['grade_script']}),
                  ]
     inlines = [RequiredProblemFilenameInline, ProblemSolutionFileInline]
-    list_display = ('title', 'cs_course', 'assigned_to', 'submissions')
+    list_display = ('title', 'cs_course', 'admin_assigned_to', 'submissions')
     list_filter = ('cs_course',)
 
-    def assigned_to(self, obj):
+    def admin_assigned_to(self, obj):
         problem_sets = obj.problemset_set.all()
         return ", ".join([ps.title for ps in problem_sets])
 
