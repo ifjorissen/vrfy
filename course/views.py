@@ -30,10 +30,13 @@ from django.contrib import messages
 #form imports for student problem solutions
 # from django.forms import modelformset_factory, inlineformset_factory
 from .forms import StudentProblemSolutionForm
+from .tasks import *
+
+from django.db.models import F
 
 # the name the form field gives to additional files
 ADDITIONAL_FILE_NAME = "additional"
-MAX_ADDITIONAL_FILES = 7
+MAX_ADDITIONAL_FILES = 7 
 
 # these helper functions enforce the universal restrictions on what
 # problemsets a user can get
@@ -238,6 +241,8 @@ def problem_set_index(request):
 @login_required
 def problem_submit(request, ps_id, p_id):
     if request.method == 'POST':  # make sure the user doesn't type this into the address bar
+        task = test(ps_id)
+        print(task)
         ps = _get_problem_set(ps_id, request.user.reedie)
         problem = get_object_or_404(Problem, pk=p_id)
 
@@ -251,8 +256,10 @@ def problem_submit(request, ps_id, p_id):
             problem=problem, student_problem_set=student_ps_sol)
         student_psol.submitted = timezone.now()
         prevscore = student_psol.latest_score()
-        student_psol.attempt_num += 1
+        student_psol.attempt_num += F('attempt_num') + 1
         student_psol.save()
+
+        create_problem = create_problem()
 
         # create the student result set & problem
         # result_set, prs_created = ProblemResultSet.objects.get_or_create(sp_set = student_ps_sol, user=request.user, problem_set=ps)
@@ -305,6 +312,7 @@ def problem_submit(request, ps_id, p_id):
                 # for the addJob command
                 files.append({"localFile": localfile, "destFile": name})
 
+            #IFJ 1.20.16: this can be a celery task
             attempts = student_psol.attempt_num
             new_prob_file = StudentProblemFile.objects.create(
                 required_problem_filename=required_pf,
@@ -314,6 +322,7 @@ def problem_submit(request, ps_id, p_id):
             new_prob_file.save()
 
         if problem.autograde_problem:  # these operatons are only required for autograding
+            #IFJ 1.20.16 TODO: edit this so only this course's grader libs get uploaded
             # add grader libraries
             for lib in GraderLib.objects.all():
                 name = lib.lib_upload.name.split("/")[-1]
@@ -350,6 +359,7 @@ def problem_submit(request, ps_id, p_id):
             if r.status_code is not 200:
                 return redirect('500.html')
             else:
+                #ifj: should be a celery task
                 response = r.json()
                 student_psol.job_id = response["jobId"]
                 prob_result.job_id = response["jobId"]
