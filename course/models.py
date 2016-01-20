@@ -100,10 +100,9 @@ class Problem(models.Model):
         return file_path
 
     def clean(self):
-        if self.autograde_problem:
-            if (self.grade_script is None or self.grade_script == ""):
-                raise ValidationError(
-                    {'grade_script': ["This field is required.", ]})
+        if self.autograde_problem and (self.grade_script is None or self.grade_script == "" or self.grade_script == None):
+            raise ValidationError(
+                {'grade_script': ["This field is required.", ]})
 
         #self.one_force_rename = False
 
