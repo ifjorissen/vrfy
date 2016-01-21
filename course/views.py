@@ -31,6 +31,7 @@ from django.contrib import messages
 # from django.forms import modelformset_factory, inlineformset_factory
 from .forms import StudentProblemSolutionForm
 from .tasks import *
+# from celery import group, chord, chain
 
 from django.db.models import F
 
@@ -58,6 +59,7 @@ def _query_problem_sets(reedie):  # if you want a queryset
 
 @login_required
 def index(request):
+    say_something.delay("sup")
     # problems due in the next week
     ps_set = _query_problem_sets(
         request.user.reedie).filter(
@@ -256,10 +258,11 @@ def problem_submit(request, ps_id, p_id):
             problem=problem, student_problem_set=student_ps_sol)
         student_psol.submitted = timezone.now()
         prevscore = student_psol.latest_score()
-        student_psol.attempt_num += F('attempt_num') + 1
+        student_psol.attempt_num += 1
         student_psol.save()
 
-        create_problem = create_problem()
+        #potential celery task to replace the above
+        # update_submission_task = update_submission(ps_id, p_id)
 
         # create the student result set & problem
         # result_set, prs_created = ProblemResultSet.objects.get_or_create(sp_set = student_ps_sol, user=request.user, problem_set=ps)
@@ -276,6 +279,7 @@ def problem_submit(request, ps_id, p_id):
 
         additional_files = 0
         files = []  # for the addJob
+        file_batch = [] #for the celery tasks
         # getting all the submitted files
         for name, f in request.FILES.items():
             # print(name, ADDITIONAL_FILE_NAME)
@@ -306,9 +310,11 @@ def problem_submit(request, ps_id, p_id):
                                 'exception': name + " is an invalid filename."}, status=403)
                         #raise PermissionDenied(name + " is an invalid filename.")
 
-            localfile = name + "-" + request.user.username
             if problem.autograde_problem:
-                r = tango.upload(problem, ps, localfile, f.read())
+                localfile = name + "-" + request.user.username
+                file_batch.append(send_file_to_tango.s(ps_id, p_id, request.user.reedie.id, localfile, f.read()))
+                # send_file_to_tango_task = send_file_to_tango.delay(ps_id, p_id, request.user.reedie, localfile, f)
+                # r = tango.upload(problem, ps, localfile, f.read())
                 # for the addJob command
                 files.append({"localFile": localfile, "destFile": name})
 
@@ -344,27 +350,34 @@ def problem_submit(request, ps_id, p_id):
                     "prevscore": prevscore,
                     "timedelta": student_psol.is_late()})
             data_name = "data.json" + "-" + request.user.username
-            tango.upload(problem, ps, data_name, tango_data)
+            file_batch.append(send_file_to_tango.s(ps_id, p_id, request.user.reedie.id, data_name, tango_data))
+            # tango.upload(problem, ps, data_name, tango_data)
             files.append({"localFile": data_name, "destFile": "data.json"})
 
-            # making Tango run the files
+            #batch upload the files
             jobName = tango.get_jobName(problem, ps, request.user.username)
-            r = tango.addJob(
-                problem,
-                ps,
-                files,
-                jobName,
-                jobName,
-                timeout=problem.time_limit)
-            if r.status_code is not 200:
-                return redirect('500.html')
-            else:
-                #ifj: should be a celery task
-                response = r.json()
-                student_psol.job_id = response["jobId"]
-                prob_result.job_id = response["jobId"]
-                student_psol.save()
-                prob_result.save()
+            file_upload_job = group(file_batch)
+            # print(file_upload_job)
+            add_job_to_tango = chord(file_upload_job)(submit_job_to_tango.s(ps_id, p_id, request.user.reedie.id, files, jobName, problem.time_limit))
+            update_response = chain(add_job_to_tango, update_results.s(student_psol.id, prob_result.id)).apply_async()
+
+
+            # r = tango.addJob(
+            #     problem,
+            #     ps,
+            #     files,
+            #     jobName,
+            #     jobName,
+            #     timeout=problem.time_limit)
+            # if r.status_code is not 200:
+            #     return redirect('500.html')
+            # else:
+            #     #ifj: should be a celery task
+            #     response = r.json()
+            #     student_psol.job_id = response["jobId"]
+            #     prob_result.job_id = response["jobId"]
+            #     student_psol.save()
+            #     prob_result.save()
         return redirect('course:submit_success', ps_id, p_id)
 
     else:

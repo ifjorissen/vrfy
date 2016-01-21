@@ -78,6 +78,21 @@ def addJob(
                        "max_kb": max_kb})
     return _request("addJob", courselab, "POST", body=body)
 
+# def addJob_with_courselab(courselab, 
+#         files,
+#         jobName,
+#         output_file,
+#         image="autograding_image",
+#         timeout=TANGO_DEFAULT_TIMEOUT,
+#         max_kb=1000,
+#         callback_url=None)
+#     files.append({"localFile": MAKEFILE_NAME, "destFile": "Makefile"})
+#         body = json.dumps({"image": image,
+#                            "files": files,
+#                            "jobName": jobName,
+#                            "output_file": output_file,
+#                            "timeout": timeout,
+#                            "max_kb": max_kb})
 
 def poll(problem, problemset, outputFile):
     courselab = _get_courselab(problem, problemset)
