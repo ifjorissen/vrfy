@@ -24,6 +24,7 @@ DEBUG = True
 LOCAL_DEV = True
 ALLOWED_HOSTS = ["localhost", "cs.reed.edu"]
 INTERNAL_IPS = ['127.0.0.1', 'localhost']
+APPEND_SLASH = False
 
 # Admins & Email for the server
 ADMINS = [('Alex', 'grantal@reed.edu'), ('Isabella', 'isjoriss@reed.edu')]
@@ -37,7 +38,8 @@ GRAPPELLI_INDEX_DASHBOARD = "vrfy.dashboard.CustomIndexDashboard"
 #Celery settings and Redis Info
 BROKER_URL = 'redis://localhost:6379'
 CELERY_RESULT_BACKEND = 'redis://localhost:6379'
-# CELERY_ACCEPT_CONTENT = ['application/json']
+CELERY_DISABLE_RATE_LIMITS = True
+CELERY_ACCEPT_CONTENT = ['pickle', 'json']
 # CELERY_TASK_SERIALIZER = 'json'
 # CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'America/Los_Angeles'

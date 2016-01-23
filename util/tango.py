@@ -56,7 +56,10 @@ def upload(problem, problemset, filename, file):
     header = {'Filename': filename}
     return _request("upload", courselab, "POST", body=file, headers=header)
 
-
+#TODO: Implement w/ callback url, and have a task run when it gets pinged, instead of
+#having a task poll in the background to see if the results exist
+#note: the callback url does work: just add "callback_url": "http://localhost:8000/notifyURL/"
+#and tango will hit that url as defined in the view
 def addJob(
         problem,
         problemset,
@@ -68,6 +71,13 @@ def addJob(
         max_kb=1000,
         callback_url=None):
     courselab = _get_courselab(problem, problemset)
+    #we should delete the old output file if it exists
+    try:
+        outfile_path = "output/" + output_file
+        delete(problem, problemset, outfile_path)
+    except:
+        log.info("DELETE:{!s} did not exist in tango".format(outfile_path))
+
     # add the makefile
     files.append({"localFile": MAKEFILE_NAME, "destFile": "Makefile"})
     body = json.dumps({"image": image,
@@ -75,24 +85,9 @@ def addJob(
                        "jobName": jobName,
                        "output_file": output_file,
                        "timeout": timeout,
-                       "max_kb": max_kb})
+                       "max_kb": max_kb,
+                       "callback_url": callback_url})
     return _request("addJob", courselab, "POST", body=body)
-
-# def addJob_with_courselab(courselab, 
-#         files,
-#         jobName,
-#         output_file,
-#         image="autograding_image",
-#         timeout=TANGO_DEFAULT_TIMEOUT,
-#         max_kb=1000,
-#         callback_url=None)
-#     files.append({"localFile": MAKEFILE_NAME, "destFile": "Makefile"})
-#         body = json.dumps({"image": image,
-#                            "files": files,
-#                            "jobName": jobName,
-#                            "output_file": output_file,
-#                            "timeout": timeout,
-#                            "max_kb": max_kb})
 
 def poll(problem, problemset, outputFile):
     courselab = _get_courselab(problem, problemset)

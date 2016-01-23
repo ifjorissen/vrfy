@@ -24,6 +24,7 @@ urlpatterns = [
         views.submit_success,
         name='submit_success'),
 
+    url(r'^notifyURL/(?P<spsol_id>[0-9]+)/?$', views.notifyURL, name='notify'),
     # results urls
     url(
         r'^results/problem-set(?P<ps_id>[0-9]+)/problem(?P<p_id>[0-9]+)/$',

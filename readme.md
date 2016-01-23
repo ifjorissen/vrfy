@@ -16,7 +16,7 @@
 
 ### Celery
   * in a new tab, start celery to monitor tasks with: `celery --app=vrfy.celery:app worker --loglevel=DEBUG`
-  * in another tab, run `celery -A vrfy flower`, which starts a simple webserver so you can monitor tasks with a gui
+  * in another tab, run `celery -A vrfy flower`, which starts a simple webserver so you can monitor the workers and tasks
 
 **Use these names in the settings file**
 
