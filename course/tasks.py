@@ -20,17 +20,6 @@ import json
 
 #IFJ 1.20.16: TO DO: set up celery task queues
 
-# @app.task
-@shared_task
-def test(param):
-    return 'The test task executed with argument "%s" ' % param
-
-@shared_task
-def say_something(param):
-    logger.info("Hello, world")
-    print("howdy")
-    return 'The test task executed with argument "%s" ' % param
-
 @shared_task(bind=True, max_retries=5)
 def send_file_to_tango(self, ps_id, p_id, reedie_id, localfile, file_data):
   '''
@@ -86,17 +75,14 @@ def update_results(jobID, username, prob_result_id):
   ps = solution.student_problem_set.problem_set
   outputFile = slugify(ps.title) + "_" + slugify(solution.problem.title) + "-" + username
   r = tango.poll(solution.problem, ps, outputFile)
-  #check if the job is running:
-
   if r.status_code is 404:
-    print("404")
     message = "job: {} not ready; 404 returned".format(jobID)
     self.retry(message=message, countdown=1)
   elif r.status_code is 200:
     raw_output = r.text
+    # theres a line with an empty string after the last actual output
+    # what we really want is the 4th line of the output
     try:
-      # theres a line with an empty string after the last actual output
-      # what we really want is the 4th line of the output
       line = r.text.split("\n")[-2]
       job_id = r.text.split("\n")[0].split(":")[4]
       print("job ids: {} {}".format(job_id, jobID))

@@ -60,7 +60,6 @@ def _query_problem_sets(reedie):  # if you want a queryset
 
 @login_required
 def index(request):
-    say_something.delay("sup")
     # problems due in the next week
     ps_set = _query_problem_sets(
         request.user.reedie).filter(
@@ -249,8 +248,6 @@ def problem_set_index(request):
 @login_required
 def problem_submit(request, ps_id, p_id):
     if request.method == 'POST':  # make sure the user doesn't type this into the address bar
-        task = test(ps_id)
-        print(task)
         ps = _get_problem_set(ps_id, request.user.reedie)
         problem = get_object_or_404(Problem, pk=p_id)
 
@@ -466,49 +463,49 @@ def _get_problem_result(solution, request):
             sp_sol=solution,
             job_id=solution.job_id,
             attempt_num=solution.attempt_num)
-        # outputFile = slugify(
-        #     ps.title) + "_" + slugify(solution.problem.title) + "-" + request.user.username
-        # r = tango.poll(solution.problem, ps, outputFile)
-        # raw_output = r.text
-        # try:
-        #     # theres a line with an empty string after the last actual output
-        #     # line
-        #     line = r.text.split("\n")[-2]
-        #     # the time is on the first line surrounded by brackets
-        #     tango_time = r.text.split("\n")[0].split("[")[1].split("]")[0]
-        #     tango_time = time.strftime(
-        #         "%Y-%m-%d %H:%M:%S",
-        #         time.strptime(
-        #             tango_time,
-        #             '%a %b %d %H:%M:%S %Y'))
-        #     tango_time = parse_datetime(tango_time)
-        #     tango_time = timezone.make_aware(
-        #         tango_time, timezone=timezone.UTC())
-        #     if tango_time != prob_result.timestamp:
-        #         if "Autodriver: Job timed out after " in line:  # thats the text that Tango outputs when a job times out
-        #             prob_result.score = 0
-        #             prob_result.json_log = {'score_sum': '0', 'external_log': [
-        #                 "Program timed out after " + line.split(" ")[-2] + " seconds."]}
-        #             prob_result.timestamp = tango_time
-        #             prob_result.raw_output = raw_output
-        #             prob_result.save()
-        #         else:
-        #             # try:
-        #             log_data = json.loads(line)
+        outputFile = slugify(
+            ps.title) + "_" + slugify(solution.problem.title) + "-" + request.user.username
+        r = tango.poll(solution.problem, ps, outputFile)
+        raw_output = r.text
+        try:
+            # theres a line with an empty string after the last actual output
+            # line
+            line = r.text.split("\n")[-2]
+            # the time is on the first line surrounded by brackets
+            tango_time = r.text.split("\n")[0].split("[")[1].split("]")[0]
+            tango_time = time.strftime(
+                "%Y-%m-%d %H:%M:%S",
+                time.strptime(
+                    tango_time,
+                    '%a %b %d %H:%M:%S %Y'))
+            tango_time = parse_datetime(tango_time)
+            tango_time = timezone.make_aware(
+                tango_time, timezone=timezone.UTC())
+            if tango_time != prob_result.timestamp:
+                if "Autodriver: Job timed out after " in line:  # thats the text that Tango outputs when a job times out
+                    prob_result.score = 0
+                    prob_result.json_log = {'score_sum': '0', 'external_log': [
+                        "Program timed out after " + line.split(" ")[-2] + " seconds."]}
+                    prob_result.timestamp = tango_time
+                    prob_result.raw_output = raw_output
+                    prob_result.save()
+                else:
+                    # try:
+                    log_data = json.loads(line)
 
-        #             # create the result object
-        #             prob_result.max_score = log_data["max_score"]
-        #             prob_result.score = log_data["score_sum"]
-        #             prob_result.raw_output = raw_output
-        #             prob_result.json_log = log_data
-        #             prob_result.timestamp = tango_time
-        #             prob_result.save()
-        # except IndexError:
-        #     raise ValueError
+                    # create the result object
+                    prob_result.max_score = log_data["max_score"]
+                    prob_result.score = log_data["score_sum"]
+                    prob_result.raw_output = raw_output
+                    prob_result.json_log = log_data
+                    prob_result.timestamp = tango_time
+                    prob_result.save()
+        except IndexError:
+            raise ValueError
             # context = {'exception' : "Uhh, Something went wrong with your code. Did you run (and test) your code?  If not, make sure your code is bug free and resubmit. \nIf the problem persists, contact your professor or TA, as it might be a problem with the grading script."}
             # return render(request, '500.html', context, status=500)
             # except ValueError: #if the json isn't there, something went wrong when running the job, or the grader file messed up
-            #raise Http404("Something went wrong. Make sure your code is bug free and resubmit. \nIf the problem persists, contact your professor or TA")
+            # raise Http404("Something went wrong. Make sure your code is bug free and resubmit. \nIf the problem persists, contact your professor or TA")
     else:
         # special not-autograded stuff goes here
         prob_result = ProblemResult.objects.get(
