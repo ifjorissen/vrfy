@@ -23,7 +23,7 @@ def student_file_upload_path(instance, filename):
     problem = instance.student_problem_solution.problem
     attempt = instance.attempt_num
     course = problem.cs_course.num
-    return 'cs{0}/folio/{1}/{2}_{3}/{4}_{5}_files/v{5}/{6}'.format(
+    return 'cs{0}/folio/{1}/{2}_{3}/{4}_{5}_files/v{6}/{7}'.format(
         course, user, slugify(problem_set.title), str(problem_set.id), slugify(
             problem.title), str(problem.id), attempt, filename)
 
@@ -49,7 +49,7 @@ def grader_lib_upload_path(instance, filename):
     '''
     # filepath should be of the form:
     # cscourse/lib/filename_filenamepk  
-    file_path = 'cs{}/lib/{0}_{1}'.format(filename, instance.cs_course.num, instance.id)
+    file_path = 'cs{0}/lib/{1}_{2}'.format(instance.cs_course.num, filename, instance.id)
     if os.path.isfile(vrfy.settings.MEDIA_ROOT + file_path):
         os.remove(vrfy.settings.MEDIA_ROOT + file_path)
     return file_path
