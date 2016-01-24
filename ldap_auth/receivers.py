@@ -16,7 +16,6 @@ def sig_user_logged_in(sender, user, request, **kwargs):
         "LOGIN: {} @ {}".format(
             user.username,
             request.META['REMOTE_ADDR']))
-    print("ok logged in")
     # log.info("UPDATE: {!s} Reed Profile".format(user.username))
     try:
         user_dict = ldap_lookup_user(user.username)

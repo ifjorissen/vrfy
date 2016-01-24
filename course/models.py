@@ -1,6 +1,6 @@
 import os
 import vrfy.settings
-from django.db import models
+from django.db import connection, models
 from django.utils.text import slugify
 from django.core.exceptions import ValidationError
 from django.core.files import File
@@ -49,7 +49,7 @@ def grader_lib_upload_path(instance, filename):
     '''
     # filepath should be of the form:
     # cscourse/lib/filename_filenamepk  
-    file_path = 'cs{0}/lib/{1}_{2}'.format(instance.cs_course.num, filename, instance.id)
+    file_path = 'cs{0}/lib/{1}'.format(instance.cs_course.num, filename)
     if os.path.isfile(vrfy.settings.MEDIA_ROOT + file_path):
         os.remove(vrfy.settings.MEDIA_ROOT + file_path)
     return file_path
@@ -66,6 +66,19 @@ def grade_script_upload_path(instance, filename):
         os.remove(vrfy.settings.MEDIA_ROOT + file_path)
     return file_path
 
+
+def prefetch_id(instance):
+    """ Fetch the next value in a django id autofield postgresql sequence """
+    cursor = connection.cursor()
+    cursor.execute(
+        "SELECT nextval('{0}_{1}_id_seq'::regclass)".format(
+            instance._meta.app_label.lower(),
+            instance._meta.object_name.lower(),
+        )
+    )
+    row = cursor.fetchone()
+    cursor.close()
+    return int(row[0])
 
 class Problem(models.Model):
     '''
@@ -136,6 +149,14 @@ class Problem(models.Model):
         '''
         problem_sets = self.problemset_set.all()
         return problem_sets
+
+    def save(self, *args, **kwargs):
+        '''
+        we are overriding the save method so when we add the grading script we will be able to associate an id as well
+        '''
+        if not self.id and self.grade_script:
+            self.id = prefetch_id(self)
+        super(Problem, self).save(*args, **kwargs)
 
     def __str__(self):
         return self.title
@@ -397,13 +418,22 @@ class ProblemResult(models.Model):
     submitted_code_table.allow_tags = True
 
     def external_log(self):
-        return self.json_log["external_log"]
+        if not self.json_log:
+            return ["Sorry, we don't have an external log for this problem"]
+        else: 
+            return self.json_log["external_log"]
 
     def internal_log(self):
-        return self.json_log["internal_log"]
+        if not self.json_log:
+            return ["Sorry, we don't have an internal log for this problem"]
+        else: 
+            return self.json_log["internal_log"]
 
     def sanity_log(self):
-        return self.json_log["sanity_compare"]
+        if not self.json_log:
+            return ["Sorry, we don't have a sanity_compare log for this problem"]
+        else: 
+            return self.json_log["sanity_compare"]
 
     def get_score(self):
         if self.problem.autograde_problem:

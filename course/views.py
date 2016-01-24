@@ -17,7 +17,7 @@ from django.contrib.auth import logout
 from django.forms.models import modelformset_factory
 from django.shortcuts import render_to_response
 from django.utils.dateparse import parse_datetime
-from django.views.decorators.csrf import csrf_protect
+from django.views.decorators.csrf import csrf_exempt
 
 #paginator for problem_set_index and your_solutions
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
@@ -25,12 +25,7 @@ import sys
 sys.path.append("../")
 import vrfy.settings
 
-#messages for success, etc
-from django.contrib import messages
-
-#form imports for student problem solutions
-# from django.forms import modelformset_factory, inlineformset_factory
-from .forms import StudentProblemSolutionForm
+#import celery tasks
 from .tasks import *
 
 
@@ -56,6 +51,26 @@ def _query_problem_sets(reedie):  # if you want a queryset
     return ProblemSet.objects.filter(
         pub_date__lte=timezone.now(),
         cs_section__in=reedie.enrolled.all())
+
+def _get_problem_result(solution, request):
+    '''
+    attempt to get the problem from tango if it's been autograded
+    if not, get the normal result
+    if the result doesn't exist, return none
+    '''
+    ps = solution.student_problem_set.problem_set
+    # poll the tango server
+    if solution.problem.autograde_problem:
+        prob_result = ProblemResult.objects.get(
+            sp_sol=solution,
+            job_id=solution.job_id,
+            attempt_num=solution.attempt_num)
+    else:
+        # special not-autograded stuff goes here
+        prob_result = ProblemResult.objects.get(
+            sp_sol=solution, attempt_num=solution.attempt_num)
+
+    return prob_result
 
 
 @login_required
@@ -204,11 +219,20 @@ def submit_success(request, ps_id, p_id):
     else:  # if it's a human graded problem
         return results_problem_detail(request, ps_id, p_id)
 
-@csrf_protect
-def notifyURL(request):
-    print("a job has finished!!")
-    print(request)
-    return 
+#IFJ: 1.24.16-- There is probably a better & more secure way to do this
+@csrf_exempt
+def notifyURL(request, spsol_id, probres_id):
+    if request.method == 'POST':
+        f = request.FILES['file']
+        tango_result = f.read()
+        tango_result = tango_result.decode(('utf-8'))
+
+        task = save_autograde_results(spsol_id, probres_id, tango_result)            
+        response = HttpResponse()
+        response.status_code = 202
+        return response
+    else:
+        return HttpResponseForbidden("Don't do that.") 
 
 @login_required
 def problem_set_index(request):
@@ -263,9 +287,6 @@ def problem_submit(request, ps_id, p_id):
         prevscore = student_psol.latest_score()
         student_psol.attempt_num += 1
         student_psol.save()
-
-        #potential celery task to replace the above
-        # update_submission_task = update_submission(ps_id, p_id)
 
         # create the student result set & problem
         # result_set, prs_created = ProblemResultSet.objects.get_or_create(sp_set = student_ps_sol, user=request.user, problem_set=ps)
@@ -352,47 +373,21 @@ def problem_submit(request, ps_id, p_id):
                     "timedelta": student_psol.is_late()})
             data_name = "data.json" + "-" + request.user.username
             file_batch.append(send_file_to_tango.s(ps_id, p_id, request.user.reedie.id, data_name, tango_data))
-            # tango.upload(problem, ps, data_name, tango_data)
             files.append({"localFile": data_name, "destFile": "data.json"})
 
             #batch upload the files
             jobName = tango.get_jobName(problem, ps, request.user.username)
             file_upload_job = group(file_batch)
-            celery_callback = submit_job_to_tango.s(ps_id, p_id, student_psol.id, request.user.reedie.id, files, jobName, problem.time_limit) | get_response.s(prob_result.id)
-            # add_job_to_tango = chord(file_upload_job)(callback)
+            celery_callback = submit_job_to_tango.s(student_psol.id, prob_result.id, files, jobName, problem.time_limit) | get_response.s(prob_result.id)
             add_job_to_tango = (file_upload_job | celery_callback).delay()
-            # update_response = (add_job_to_tango | update_results.s(student_psol.id, prob_result.id)).apply_async()
-            # add_job_to_tango = (group(file_batch) | submit_job_to_tango.s(ps_id, p_id, request.user.reedie.id, files, jobName, problem.time_limit) | get_response.s(prob_result.id)).delay()
-            # res = update_results(request.user.username, prob_result.id).delay(countdown=5)
-
-            # r = tango.addJob(
-            #     problem,
-            #     ps,
-            #     files,
-            #     jobName,
-            #     jobName,
-            #     timeout=problem.time_limit)
-            # if r.status_code is not 200:
-            #     return redirect('500.html')
-            # else:
-            #     #ifj: should be a celery task
-            #     response = r.json()
-            #     student_psol.job_id = response["jobId"]
-            #     prob_result.job_id = response["jobId"]
-            #     student_psol.save()
-            #     prob_result.save()
         return redirect('course:submit_success', ps_id, p_id)
 
     else:
-        raise Http404("Don't do that")
+        raise HttpResponseForbidden("Don't do that")
 
 
 @login_required
 def results_detail(request, ps_id):
-    print('Request:\n')
-    print(request)
-    print('PS ID:\n')
-    print(ps_id)
     # returns the results of a given problem set (and all attempts)
     # logic to figure out if the results are availiable and if so, get them
     ps = _get_problem_set(ps_id, request.user.reedie)
@@ -448,83 +443,3 @@ def results_problem_detail(request, ps_id, p_id):
 
     context = {'solution': sp_sol, "result": result}
     return render(request, 'course/results_problem_detail.html', context)
-
-
-def _get_problem_result(solution, request):
-    '''
-    attempt to get the problem from tango if it's been autograded
-    if not, get the normal result
-    if the result doesn't exist, return none
-    '''
-    ps = solution.student_problem_set.problem_set
-    # poll the tango server
-    if solution.problem.autograde_problem:
-        prob_result = ProblemResult.objects.get(
-            sp_sol=solution,
-            job_id=solution.job_id,
-            attempt_num=solution.attempt_num)
-        outputFile = slugify(
-            ps.title) + "_" + slugify(solution.problem.title) + "-" + request.user.username
-        r = tango.poll(solution.problem, ps, outputFile)
-        raw_output = r.text
-        try:
-            # theres a line with an empty string after the last actual output
-            # line
-            #line = r.text.split("\n")[-2]
-            # the time is on the first line surrounded by brackets
-            tango_time = r.text.split("\n")[0].split("[")[1].split("]")[0]
-            tango_time = time.strftime(
-                "%Y-%m-%d %H:%M:%S",
-                time.strptime(
-                    tango_time,
-                    '%a %b %d %H:%M:%S %Y'))
-            tango_time = parse_datetime(tango_time)
-            tango_time = timezone.make_aware(
-                tango_time, timezone=timezone.UTC())
-            if tango_time != prob_result.timestamp:
-                timeout = False
-                elided = False
-                for line in r.text.split("\n"):
-                    if "Autodriver: Job timed out after " in line:  # thats the text that Tango outputs when a job times out
-                        prob_result.json_log = {'score_sum': '0', 'external_log': [
-                            "Program timed out after " + line.split(" ")[-2] + " seconds."]}
-                        prob_result.timestamp = tango_time
-                        timeout = True
-                        break
-                    elif "...[excess bytes elided]..." in line:
-                        prob_result.json_log = {'score_sum': '0', 'external_log': [
-                        "Your program produced a lot of output. Remove any print statements you have and check for infinite loops before resubmitting."]}
-                        elided = True
-                        break
-                
-                #If there was no timeout 
-                if not (timeout or elided):
-                    # theres a line with an empty string after the last actual output
-                    # line
-                    json_line = r.text.split("\n")[-2]
-                    # try:
-                    log_data = json.loads(json_line)
-                    # create the result object
-                    prob_result.max_score = log_data["max_score"]
-                    prob_result.score = log_data["score_sum"]
-                    prob_result.raw_output = raw_output
-                    prob_result.json_log = log_data
-                    prob_result.timestamp = tango_time
-                    prob_result.save()
-                else:
-                    prob_result.score = 0
-                    prob_result.timestamp = tango_time
-                    prob_result.raw_output = raw_output
-                    prob_result.save()
-        except IndexError:
-            raise ValueError
-            # context = {'exception' : "Uhh, Something went wrong with your code. Did you run (and test) your code?  If not, make sure your code is bug free and resubmit. \nIf the problem persists, contact your professor or TA, as it might be a problem with the grading script."}
-            # return render(request, '500.html', context, status=500)
-            # except ValueError: #if the json isn't there, something went wrong when running the job, or the grader file messed up
-            # raise Http404("Something went wrong. Make sure your code is bug free and resubmit. \nIf the problem persists, contact your professor or TA")
-    else:
-        # special not-autograded stuff goes here
-        prob_result = ProblemResult.objects.get(
-            sp_sol=solution, attempt_num=solution.attempt_num)
-
-    return prob_result

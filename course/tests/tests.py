@@ -90,7 +90,7 @@ class TestPathmakers(unittest.TestCase):
         dingus = DataMaker.make_grader_lib()
         fake_path = 'otter_pops'
 
-        expected_new_path = 'cs5/lib/' + fake_path + "_6"
+        expected_new_path = 'cs5/lib/' + fake_path
         expected_checked = vrfy.settings.MEDIA_ROOT + expected_new_path
 
         # Path doesn't exist, rm should not be called
