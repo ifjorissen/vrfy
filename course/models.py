@@ -398,13 +398,22 @@ class ProblemResult(models.Model):
     submitted_code_table.allow_tags = True
 
     def external_log(self):
-        return self.json_log["external_log"]
+        if not self.json_log:
+            return ["Sorry, we don't have an external log for this problem"]
+        else: 
+            return self.json_log["external_log"]
 
     def internal_log(self):
-        return self.json_log["internal_log"]
+        if not self.json_log:
+            return ["Sorry, we don't have an internal log for this problem"]
+        else: 
+            return self.json_log["internal_log"]
 
     def sanity_log(self):
-        return self.json_log["sanity_compare"]
+        if not self.json_log:
+            return ["Sorry, we don't have a sanity_compare log for this problem"]
+        else: 
+            return self.json_log["sanity_compare"]
 
     def get_score(self):
         if self.problem.autograde_problem:

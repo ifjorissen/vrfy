@@ -36,11 +36,11 @@ def send_file_to_tango(self, ps_id, p_id, reedie_id, localfile, file_data):
   return r
 
 @shared_task(bind=True, max_retries=5)
-def submit_job_to_tango(self, results, ps_id, p_id, spsol_id, reedie_id, files, jobName, timeout):
-  reedie = Reedie.objects.get(pk=reedie_id)
-  ps = ProblemSet.objects.get(pk=ps_id, pub_date__lte=timezone.now(), cs_section__in=reedie.enrolled.all())
-  problem = Problem.objects.get(pk=p_id)
-  tango_callback_url = "http://localhost:8000/notifyURL/{}/".format(spsol_id)
+def submit_job_to_tango(self, results, spsol_id, prob_result_id, files, jobName, timeout):
+  student_psol = StudentProblemSolution.objects.get(pk=spsol_id)
+  ps = student_psol.student_problem_set.problem_set
+  problem = student_psol.problem
+  tango_callback_url = "http://localhost:8000/notifyURL/student-solution{}/problem-result{}/".format(spsol_id, prob_result_id)
   r = tango.addJob(
                 problem,
                 ps,
@@ -57,7 +57,7 @@ def submit_job_to_tango(self, results, ps_id, p_id, spsol_id, reedie_id, files, 
     job_id = response["jobId"]
   return job_id
 
-@shared_task 
+@shared_task(ignore_result=True) 
 def get_response(job_id, prob_result_id):
   prob_result = ProblemResult.objects.get(pk=prob_result_id)
   student_psol = StudentProblemSolution.objects.get(pk=prob_result.sp_sol.id)
@@ -65,67 +65,67 @@ def get_response(job_id, prob_result_id):
   prob_result.job_id = job_id
   student_psol.save()
   prob_result.save()
-  return job_id
 
-@shared_task()
-def update_results(jobID, username, prob_result_id):
-  print("trying to get results")
+@shared_task(ignore_result=True)
+def save_autograde_results(spsol_id, prob_result_id, tango_result):
+  #try to find the solution and the result we made
+  #if not, return the hw 
   prob_result = ProblemResult.objects.get(pk=prob_result_id)
-  solution = StudentProblemSolution.objects.get(pk=prob_result.sp_sol.id)
-  ps = solution.student_problem_set.problem_set
-  outputFile = slugify(ps.title) + "_" + slugify(solution.problem.title) + "-" + username
-  r = tango.poll(solution.problem, ps, outputFile)
-  if r.status_code is 404:
-    message = "job: {} not ready; 404 returned".format(jobID)
-    self.retry(message=message, countdown=1)
-  elif r.status_code is 200:
-    raw_output = r.text
-    # theres a line with an empty string after the last actual output
-    # what we really want is the 4th line of the output
-    try:
-      line = r.text.split("\n")[-2]
-      job_id = r.text.split("\n")[0].split(":")[4]
-      print("job ids: {} {}".format(job_id, jobID))
-      if int(job_id) == int(jobID):
-        # the time is on the first line surrounded by brackets
-        tango_time = r.text.split("\n")[0].split("[")[1].split("]")[0]
-        tango_time = time.strftime(
-            "%Y-%m-%d %H:%M:%S",
-            time.strptime(
-                tango_time,
-                '%a %b %d %H:%M:%S %Y'))
-        tango_time = parse_datetime(tango_time)
-        tango_time = timezone.make_aware(
-            tango_time, timezone=timezone.UTC())
-        if "Autodriver: Job timed out after " in line:  # thats the text that Tango outputs when a job times out
-          prob_result.score = 0
-          prob_result.json_log = {'score_sum': '0', 'external_log': [
-              "Program timed out after " + line.split(" ")[-2] + " seconds."]}
-          prob_result.timestamp = tango_time
-          prob_result.raw_output = raw_output
-          prob_result.save()
-        else:
-          # try:
-          log_data = json.loads(line)
+  solution = StudentProblemSolution.objects.get(pk=spsol_id)
 
-          # create the result object
-          prob_result.max_score = log_data["max_score"]
-          prob_result.score = log_data["score_sum"]
-          prob_result.raw_output = raw_output
-          prob_result.json_log = log_data
-          prob_result.timestamp = tango_time
-          prob_result.save()
-      else: 
-        print("old results?")
-        message = "job: {} not ready; 200 returned for old results {}".format(jobID, job_id)
-        self.update_state(state='FAILURE')
-    except IndexError:
-      print("index error")
-      self.update_state(state='FAILURE')
-      # message = "Index error, job: {} not ready; 200 returned for old results {}".format(jobID, job_id)
-      # self.retry(message=message, countdown=1, throw=False)
+  lines = tango_result.splitlines()
+  job_id = lines[0].split(":")[4]
+  jobID = prob_result.job_id
+  status = lines[4]
+  tango_time = lines[0].split("[")[1].split("]")[0]
+  tango_time = time.strftime(
+      "%Y-%m-%d %H:%M:%S",
+      time.strptime(
+          tango_time,
+          '%a %b %d %H:%M:%S %Y'))
+  tango_time = parse_datetime(tango_time)
+  tango_time = timezone.make_aware(
+      tango_time, timezone=timezone.UTC())
+  if "Autodriver: Job exited with status 0" in status:
+      #process normally
+    try: 
+      #the output from the session is in the last line
+      log_data = lines[-1]
+      json_log = json.loads(log_data)
+      score = json_log["score_sum"]
+      prob_result.max_score = json_log["max_score"]
+    except (IndexError, TypeError):
+      score = 0
+      json_log = {'score_sum': '0', 'external_log': ["We weren't able to parse the output from the autograder. Please let your professor know."]}
+
+  #case where timeout reached but the job wasn't "killed"
+  #(really only seems to happen when we encounter an infinite loop with a print statement)
+  elif "Autodriver: Job exited with status 2" in status:
+    #in this case there won't be any json output
+    #update the result
+    score = 0
+    prob_result.json_log = {'score_sum': '0', 'external_log': [
+      "We had some trouble autograding your solution. This kind of error usually occurs when there are too many print statements. Please check your code."]}
+
+  #case where the job times out
+  elif "Autodriver: Job timed out after " in status:
+    timeout = status.split(" ")[-2]
+    #update the result
+    score = 0
+    json_log = {'score_sum': '0', 'external_log': [
+      "Hmmm. It looks like your program timed out after " + timeout + " seconds."]}
+
   else:
-    print("failed")
-    self.update_state(state='FAILURE')
-  return r
+    #we have no idea what happened
+    score = 0
+    json_log = {'score_sum': '0', 'external_log': ["We weren't able to parse the output from the autograder. Please let your professor know."]}
 
+  if prob_result.timestamp is None:
+    prob_result.timestamp = tango_time
+
+  prob_result.score = score
+  prob_result.json_log = json_log
+  prob_result.raw_output = tango_result
+  prob_result.save()
+
+  return

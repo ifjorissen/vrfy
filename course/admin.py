@@ -24,6 +24,8 @@ from django_markdown.admin import AdminMarkdownWidget, MarkdownField
 #use for exporting zip files of student solutions
 from zipfile import ZipFile
 from io import BytesIO
+
+from .tasks import get_response, submit_job_to_tango
 #filewrapper removed from django 1.9 entirely....
 # from django.core.servers.basehttp import FileWrapper
 
@@ -383,84 +385,84 @@ class StudentProblemSolutionAdmin(admin.ModelAdmin):
         return response
     export_files.short_description = "Export Selected Solutions as Zip"
 
-    def _update_result(self, solution):
-        ps = solution.get_problemset()
-        reedie = solution.get_user()
-        prob_result = models.ProblemResult.objects.get(
-            user=reedie,
-            sp_sol=solution,
-            job_id=solution.job_id,
-            attempt_num=solution.attempt_num)
-        outputFile = slugify(ps.title) + "_" + \
-            slugify(solution.problem.title) + "-" + str(reedie)
-        r = tango.poll(solution.problem, ps, outputFile)
-        while r.status_code is 404:
-            time.sleep(.2)
-            r = tango.poll(solution.problem, ps, outputFile)
+    # def _update_result(self, solution):
+    #     ps = solution.get_problemset()
+    #     reedie = solution.get_user()
+    #     prob_result = models.ProblemResult.objects.get(
+    #         user=reedie,
+    #         sp_sol=solution,
+    #         job_id=solution.job_id,
+    #         attempt_num=solution.attempt_num)
+    #     outputFile = slugify(ps.title) + "_" + \
+    #         slugify(solution.problem.title) + "-" + str(reedie)
+    #     r = tango.poll(solution.problem, ps, outputFile)
+    #     while r.status_code is 404:
+    #         time.sleep(.2)
+    #         r = tango.poll(solution.problem, ps, outputFile)
 
-        if r.status_code is 200:
-            raw_output = r.text
-            # Autograder [Tue Sep  1 21:39:00 2015]: Received job test-reassess-hw0_hw0reassess-isjoriss:25
-            # there will be a bug here eventually ... note try / except block in views.py
-            # line = r.text.split("\n")[-2]#theres a line with an empty string
-            # after the last actual output line
-            job_id = r.text.split("\n")[0].split(":")[4]
-            # the time is on the first line surrounded by brackets
-            tango_time = r.text.split("\n")[0].split("[")[1].split("]")[0]
-            tango_time = time.strftime(
-                "%Y-%m-%d %H:%M:%S",
-                time.strptime(
-                    tango_time,
-                    '%a %b %d %H:%M:%S %Y'))
-            tango_time = parse_datetime(tango_time)
-            tango_time = timezone.make_aware(
-                tango_time, timezone=timezone.UTC())
-            while int(job_id) != prob_result.job_id:
-                time.sleep(.5)
-                r = tango.poll(solution.problem, ps, outputFile)
-                try:
-                    job_id = int(r.text.split("\n")[0].split(":")[4])
-                except:
-                    pass
+    #     if r.status_code is 200:
+    #         raw_output = r.text
+    #         # Autograder [Tue Sep  1 21:39:00 2015]: Received job test-reassess-hw0_hw0reassess-isjoriss:25
+    #         # there will be a bug here eventually ... note try / except block in views.py
+    #         # line = r.text.split("\n")[-2]#theres a line with an empty string
+    #         # after the last actual output line
+    #         job_id = r.text.split("\n")[0].split(":")[4]
+    #         # the time is on the first line surrounded by brackets
+    #         tango_time = r.text.split("\n")[0].split("[")[1].split("]")[0]
+    #         tango_time = time.strftime(
+    #             "%Y-%m-%d %H:%M:%S",
+    #             time.strptime(
+    #                 tango_time,
+    #                 '%a %b %d %H:%M:%S %Y'))
+    #         tango_time = parse_datetime(tango_time)
+    #         tango_time = timezone.make_aware(
+    #             tango_time, timezone=timezone.UTC())
+    #         while int(job_id) != prob_result.job_id:
+    #             time.sleep(.5)
+    #             r = tango.poll(solution.problem, ps, outputFile)
+    #             try:
+    #                 job_id = int(r.text.split("\n")[0].split(":")[4])
+    #             except:
+    #                 pass
 
-            raw_output = r.text
-            # TO DO: bug where the autograder returns successfully but the output is nothing so
-            # trying to assign line throws an error
-            # TO DO: make sure we don't keep requesting when we've spent more
-            # time waiting for the job than the timeout of the problem
-            # theres a line with an empty string after the last actual output
-            # line
-            line = r.text.split("\n")[-2]
-            # the time is on the first line surrounded by brackets
-            tango_time = r.text.split("\n")[0].split("[")[1].split("]")[0]
-            tango_time = time.strftime(
-                "%Y-%m-%d %H:%M:%S",
-                time.strptime(
-                    tango_time,
-                    '%a %b %d %H:%M:%S %Y'))
-            tango_time = parse_datetime(tango_time)
-            tango_time = timezone.make_aware(
-                tango_time, timezone=timezone.UTC())
+    #         raw_output = r.text
+    #         # TO DO: bug where the autograder returns successfully but the output is nothing so
+    #         # trying to assign line throws an error
+    #         # TO DO: make sure we don't keep requesting when we've spent more
+    #         # time waiting for the job than the timeout of the problem
+    #         # theres a line with an empty string after the last actual output
+    #         # line
+    #         line = r.text.split("\n")[-2]
+    #         # the time is on the first line surrounded by brackets
+    #         tango_time = r.text.split("\n")[0].split("[")[1].split("]")[0]
+    #         tango_time = time.strftime(
+    #             "%Y-%m-%d %H:%M:%S",
+    #             time.strptime(
+    #                 tango_time,
+    #                 '%a %b %d %H:%M:%S %Y'))
+    #         tango_time = parse_datetime(tango_time)
+    #         tango_time = timezone.make_aware(
+    #             tango_time, timezone=timezone.UTC())
 
-            if "Autodriver: Job timed out after " in line:  # thats the text that Tango outputs when a job times out
-                prob_result.score = 0
-                prob_result.json_log = {'score_sum': '0', 'external_log': [
-                    "Program timed out after " + line.split(" ")[-2] + " seconds."]}
-                prob_result.timestamp = tango_time
-                prob_result.raw_output = raw_output
-                prob_result.save()
-            else:
-                # try:
-                log_data = json.loads(line)
-                # create the result object
-                prob_result.max_score = log_data["max_score"]
-                prob_result.score = log_data["score_sum"]
-                prob_result.raw_output = raw_output
-                prob_result.json_log = log_data
-                prob_result.timestamp = tango_time
-                prob_result.save()
-        else:
-            return redirect('500.html')
+    #         if "Autodriver: Job timed out after " in line:  # thats the text that Tango outputs when a job times out
+    #             prob_result.score = 0
+    #             prob_result.json_log = {'score_sum': '0', 'external_log': [
+    #                 "Program timed out after " + line.split(" ")[-2] + " seconds."]}
+    #             prob_result.timestamp = tango_time
+    #             prob_result.raw_output = raw_output
+    #             prob_result.save()
+    #         else:
+    #             # try:
+    #             log_data = json.loads(line)
+    #             # create the result object
+    #             prob_result.max_score = log_data["max_score"]
+    #             prob_result.score = log_data["score_sum"]
+    #             prob_result.raw_output = raw_output
+    #             prob_result.json_log = log_data
+    #             prob_result.timestamp = tango_time
+    #             prob_result.save()
+    #     else:
+    #         return redirect('500.html')
 
     # sends the job to tango again but doesn't increase the attempt counter
     def reassess(self, request, queryset):
@@ -487,33 +489,26 @@ class StudentProblemSolutionAdmin(admin.ModelAdmin):
                            [obj.problem.grade_script.name.split("/")[-1]]):
                 files.append({'localFile': str(f), 'destFile': str(f)})
 
-            jobName = tango.get_jobName(
-                obj.problem, obj.get_problemset(), str(
-                    sf.student_problem_solution.get_user()))
-            r = tango.addJob(
-                obj.problem,
-                obj.get_problemset(),
-                files,
-                jobName,
-                jobName)
-            if r.status_code is not 200:
-                return redirect('500.html')
-            else:
-                # create a new problem result
-                response = r.json()
-                job_id = response["jobId"]
-                obj.job_id = job_id
-                prob_result = models.ProblemResult.objects.create(
-                    job_id=job_id,
+            #create a new problem result
+            prob_result = models.ProblemResult.objects.create(
                     attempt_num=obj.attempt_num,
                     sp_sol=obj,
                     sp_set=obj.student_problem_set,
                     user=obj.get_user(),
                     problem=obj.problem,
                     timestamp=obj.submitted)
-                obj.save()
-                prob_result.save()
-                self._update_result(obj)
+
+            #get relevant ids & info for the task
+            spsol_id = obj.id
+            prob_result_id = prob_result.id
+            time_limit = obj.problem.time_limit
+
+            #form the tango jobname
+            jobName = tango.get_jobName(
+                obj.problem, obj.get_problemset(), str(
+                    obj.get_user()))
+
+            (submit_job_to_tango.s(None, spsol_id, prob_result_id, files, jobName, time_limit) | get_response.s(prob_result_id)).delay()
 
     def result_json(self, obj):
         if obj.problem.autograde_problem:
