@@ -24,9 +24,10 @@ DEBUG = True
 LOCAL_DEV = True
 ALLOWED_HOSTS = ["localhost", "cs.reed.edu"]
 INTERNAL_IPS = ['127.0.0.1', 'localhost']
+APPEND_SLASH = False
 
 # Admins & Email for the server
-ADMINS = (('Alex', 'grantal@reed.edu'), ('Isabella', 'isjoriss@reed.edu'))
+ADMINS = [('Alex', 'grantal@reed.edu'), ('Isabella', 'isjoriss@reed.edu')]
 EMAIL_HOST = 'localhost'
 SERVER_EMAIL = 'noreply@cs.reed.edu'
 # Grappelli settings
@@ -34,31 +35,41 @@ GRAPPELLI_ADMIN_TITLE = "CS@Reed Admin"
 GRAPPELLI_INDEX_DASHBOARD = "vrfy.dashboard.CustomIndexDashboard"
 # MARKDOWN_EDITOR_SKIN = 'simple'
 
-# Application definition
+#Celery settings and Redis Info
+BROKER_URL = 'redis://localhost:6379'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379'
+CELERY_DISABLE_RATE_LIMITS = True
+CELERY_ACCEPT_CONTENT = ['pickle', 'json']
+# CELERY_TASK_SERIALIZER = 'json'
+# CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'America/Los_Angeles'
+# TEST_RUNNER = 'djcelery.contrib.test_runner.CeleryTestSuiteRunner'
 
-INSTALLED_APPS = (
-    'django.contrib.contenttypes',
-    'grappelli.dashboard',
-    'grappelli',
+# Application definition
+INSTALLED_APPS = [
+    'ldap_auth',
+    'course',
+    'catalog',
+    'vrfy',
+    # IFJ 1.5.15 removing grappelli for now since they don't have support for 1.9
+    # 'grappelli.dashboard',
+    # 'grappelli',
     'django_markdown',
     'django.contrib.admin',
     'django.contrib.auth',
+    'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'dbbackup',
-    'vrfy',
-    'vrfy.apps.LDAPAuthConfig',
-    'vrfy.apps.CourseConfig',
-    'vrfy.apps.CatalogConfig',
-)
+]
 
-AUTHENTICATION_BACKENDS = (
+AUTHENTICATION_BACKENDS = [
     'ldap_auth.auth_backend.LDAPRemoteUserBackend',
     'django.contrib.auth.backends.ModelBackend',
-)
+]
 
-MIDDLEWARE_CLASSES = (
+MIDDLEWARE_CLASSES = [
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -68,7 +79,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.security.SecurityMiddleware',
-)
+]
 
 ROOT_URLCONF = 'vrfy.urls'
 

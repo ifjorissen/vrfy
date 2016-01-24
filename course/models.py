@@ -12,23 +12,28 @@ from django_markdown.models import MarkdownField
 
 # What does `instance` mean here? - RMD 2015-10-10
 def student_file_upload_path(instance, filename):
+    '''
+    given an instance of a :model:`course.StudentProblemFile` and a filename, return the unique upload path
+    '''
     # filepath should be of the form:
-    # course/folio/user/problem_set/problem/filename  (maybe add attempt
+    # course/folio/user/problem_set_pspk/problem_probpk_files/v0/filename  (maybe add attempt
     # number)
-    problem_set = instance.student_problem_solution.student_problem_set.problem_set.title
+    problem_set = instance.student_problem_solution.student_problem_set.problem_set
     user = instance.student_problem_solution.student_problem_set.user.username()
     problem = instance.student_problem_solution.problem
     attempt = instance.attempt_num
     course = problem.cs_course.num
-    return '{0}/folio/{1}/{2}/{3}_files/v{4}/{5}'.format(
-        course, user, slugify(problem_set), slugify(
-            problem.title), attempt, filename)
-
+    return 'cs{0}/folio/{1}/{2}_{3}/{4}_{5}_files/v{6}/{7}'.format(
+        course, user, slugify(problem_set.title), str(problem_set.id), slugify(
+            problem.title), str(problem.id), attempt, filename)
 
 # What does `instance` mean here? RMD 2015-10-10
 def solution_file_upload_path(instance, filename):
+    '''
+    given a :model:`course.ProblemSolutionFile` and a filename, return the unique upload path
+    '''
     # filepath should be of the form:
-    # course/solutions/problem_set/problem/filename
+    # course/solutions/problem_set_pspk/problem_pk_files/filename
     problem = instance.problem
     file_path = problem.get_upload_folder() + filename
     if os.path.isfile(vrfy.settings.MEDIA_ROOT + file_path):
@@ -38,13 +43,22 @@ def solution_file_upload_path(instance, filename):
 
 # `instance` isn't used in this function - RMD 2015-10-10
 def grader_lib_upload_path(instance, filename):
-    file_path = 'lib/{0}'.format(filename)
+    '''
+    given a :model:`course.GraderLib` and a filename, remove the existing GraderLib if it exists, and replace it
+    with the new upload
+    '''
+    # filepath should be of the form:
+    # cscourse/lib/filename_filenamepk  
+    file_path = 'cs{0}/lib/{1}_{2}'.format(instance.cs_course.num, filename, instance.id)
     if os.path.isfile(vrfy.settings.MEDIA_ROOT + file_path):
         os.remove(vrfy.settings.MEDIA_ROOT + file_path)
     return file_path
 
 
 def grade_script_upload_path(instance, filename):
+    '''
+    given a :model:`course.ProblemSolutionFile` and a filename, remove the existing file if it exists, and replace it
+    '''
     # filepath should be of the form:
     # course/solutions/problem_set/problem/filename
     file_path = instance.get_upload_folder() + filename
@@ -54,6 +68,12 @@ def grade_script_upload_path(instance, filename):
 
 
 class Problem(models.Model):
+    '''
+    The building block of everything. A problem is associated with a :model:`catalog.course` and 
+    (often) assigned to one or more :model:`course.ProblemSet`s. 
+    The problem model contains a bunch of extra information about how many attempts can be made, and 
+    whether or not it should be submitted to Tango. 
+    '''
     title = models.CharField(max_length=200)
     cs_course = models.ForeignKey(
         'catalog.Course',
@@ -94,9 +114,14 @@ class Problem(models.Model):
         return res
 
     def get_upload_folder(self):
+        ''' given an instance of a :model:`Problem` return the directory for the solution files
+            which are of type :model:`ProblemSolutionFile`
+        '''
+        # filepath should be of the form:
+        # cscourse/solutions/problem_set_pspk/problem_pk_files/
         course = self.cs_course.num
-        file_path = '{0}/solutions/{1}_files/'.format(
-            slugify(course), slugify(self.title))
+        file_path = 'cs{0}/solutions/{1}_{2}_files/'.format(
+            slugify(course), slugify(self.title), str(self.id))
         return file_path
 
     def clean(self):
@@ -105,12 +130,21 @@ class Problem(models.Model):
                 {'grade_script': ["This field is required.", ]})
 
         #self.one_force_rename = False
+    def assigned_to(self):
+        '''
+        return the :model:`course.ProblemSet`s which have assigned this problem
+        '''
+        problem_sets = self.problemset_set.all()
+        return problem_sets
 
     def __str__(self):
         return self.title
 
 
 class ProblemSolutionFile(models.Model):
+    '''
+    Stores a solution file (supplied by the math TA/graders) to a given :model:`course.Problem`.
+    '''
     problem = models.ForeignKey(Problem, null=True)
     file_upload = models.FileField(
         max_length=1000,
@@ -123,6 +157,10 @@ class ProblemSolutionFile(models.Model):
 
 
 class RequiredProblemFilename(models.Model):
+    '''
+    Stores a file name that all :model:`course.StudentProblemSolution`s will need to use when uploading the corresponding
+    :model:`course.StudentProblemFile` (for a given :model:`course.Problem` on a :model:`course.ProblemSet`).  
+    '''
     file_title = models.CharField(
         max_length=200,
         help_text="Use the name of the python file the grader script imports as a module. E.g: main.py if the script imports main")
@@ -145,6 +183,9 @@ class RequiredProblemFilename(models.Model):
 
 
 class ProblemSet(models.Model):
+    '''
+    A bag of :model:`course.Problem`s associated with a :model:`catalog.Section`
+    '''
     title = models.CharField(max_length=200)
     # description = models.TextField(default='', help_text="Provide some additional information about this problem set.")
     description = MarkdownField(
@@ -169,6 +210,11 @@ class ProblemSet(models.Model):
 
 
 class StudentProblemSet(models.Model):
+    '''
+    For every :model:`catalog.Reedie` enrolled in the :model:`catalog.Section`
+    we have a Student Problem Set, which is a bag of :model:`course.StudentProblemSolution`s
+    and, for each attempt on each problem, a collection of :model:`course.ProblemResults`.
+    '''
     problem_set = models.ForeignKey(ProblemSet)
     user = models.ForeignKey('catalog.Reedie')
     submitted = models.DateTimeField('date submitted')
@@ -191,13 +237,20 @@ class StudentProblemSet(models.Model):
 
 
 class StudentProblemSolution(models.Model):
+    '''
+    Stores a solution for a corresponding :model:`course.Problem` assigned to a :model:`course.ProblemSet`.
+    The solution is also linked to a corresponding :model:`course.StudentProblemSet`.
+    Each attempt is recorded as a :model:`course.ProblemResult`, and the latest attempt numbers,
+    job_ids, and submit dates are updated each time an attempt is made. 
+    '''
     problem = models.ForeignKey(Problem)
     student_problem_set = models.ForeignKey(StudentProblemSet, null=True)
     attempt_num = models.IntegerField(default=0, verbose_name='attempts made')
     submitted = models.DateTimeField('date submitted', null=True)
 
-    # tango jobid
-    job_id = models.IntegerField(default=-1, verbose_name="Tango Job ID")
+    # tango jobid, will be blank if the problem is not autograde
+    # should be set to -1 if, for some reason tango doesn't return a job id
+    job_id = models.IntegerField(blank=True, null=True, verbose_name="Tango Job ID")
 
     def __str__(self):
         return self.problem.title + " - " + self.student_problem_set.user.username()
@@ -280,6 +333,10 @@ class StudentProblemSolution(models.Model):
 
 
 class StudentProblemFile(models.Model):
+    '''
+    Stores one of the files (which may or may not be associated with a :model:`course.RequiredProblemFilename`)
+    for a :model:`course.StudentProblemSolution`.
+    '''
     required_problem_filename = models.ForeignKey(
         RequiredProblemFilename, null=True)
     student_problem_solution = models.ForeignKey(
@@ -294,8 +351,12 @@ class StudentProblemFile(models.Model):
 
 
 class ProblemResult(models.Model):
+    '''
+    Stores the results for the corresponding :model:`course.StudentProblemSolution` for a 
+    given attempt
+    '''
     # tango jobid
-    job_id = models.IntegerField(default=-1, verbose_name="Tango Job ID")
+    job_id = models.IntegerField(blank=True, null=True, verbose_name="Tango Job ID")
     attempt_num = models.IntegerField(default=-1)
     sp_sol = models.ForeignKey(
         StudentProblemSolution,
@@ -311,7 +372,7 @@ class ProblemResult(models.Model):
         'date received (from Tango)',
         null=True)  # , editable=False)
     max_score = models.IntegerField(blank=True, null=True)
-    score = models.IntegerField(default=-1)
+    score = models.IntegerField(default=-1, editable=True)
     json_log = JSONField(null=True, blank=True, verbose_name="Session Log")
     raw_output = models.TextField(
         null=True,
@@ -360,22 +421,29 @@ class ProblemResult(models.Model):
         return self.problem.title + "_" + self.user.username() + "_jobID" + \
             str(self.job_id)
 
-# for testrunner files like session.py or sanity.py
-
 
 class GraderLib(models.Model):
+    '''
+    Stores a grader (utility) library for a specific :model:'catalog.Course' that will be available to the autograder.
+    '''
     lib_upload = models.FileField(
         max_length=1000,
         upload_to=grader_lib_upload_path,
         verbose_name="Grader Resource")
+    cs_course = models.ForeignKey(
+        'catalog.Course',
+        null=True,
+        verbose_name="Course Name")
     comment = models.CharField(max_length=200, null=True, blank=True)
 
     def save(self, *args, **kwargs):
         super(GraderLib, self).save(*args, **kwargs)
         name = self.lib_upload.name.split("/")[-1]
         f = self.lib_upload.read()
-        for ps in ProblemSet.objects.all():
-            for problem in ps.problems.all().filter(autograde_problem=True):
+        #(re)upload this library to all the problems in this course
+        #to do: this should be a celery task
+        for problem in Problem.objects.filter(cs_course=self.cs_course, autograde_problem=True):
+            for ps in problem.assigned_to():
                 tango.upload(problem, ps, name, f)
     """
   def delete(self):

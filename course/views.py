@@ -17,17 +17,28 @@ from django.contrib.auth import logout
 from django.forms.models import modelformset_factory
 from django.shortcuts import render_to_response
 from django.utils.dateparse import parse_datetime
+from django.views.decorators.csrf import csrf_protect
 
 #paginator for problem_set_index and your_solutions
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-
 import sys
 sys.path.append("../")
 import vrfy.settings
 
+#messages for success, etc
+from django.contrib import messages
+
+#form imports for student problem solutions
+# from django.forms import modelformset_factory, inlineformset_factory
+from .forms import StudentProblemSolutionForm
+from .tasks import *
+
+
+# from celery import group, chord, chain
+
 # the name the form field gives to additional files
 ADDITIONAL_FILE_NAME = "additional"
-MAX_ADDITIONAL_FILES = 7
+MAX_ADDITIONAL_FILES = 7 
 
 # these helper functions enforce the universal restrictions on what
 # problemsets a user can get
@@ -137,27 +148,30 @@ def attempt_problem_set(request, ps_id):
     '''
     when a student attempts a problem set, try to get their solution set & solutions if they exist
     '''
-    ps = _get_problem_set(ps_id, request.user.reedie)
-    problem_solution_dict = {}
-    try:
-        sp_set = StudentProblemSet.objects.get(
-            problem_set=ps, user=request.user.reedie)
-        for problem in ps.problems.all():
-            try:
-                student_psol = StudentProblemSolution.objects.get(
-                    problem=problem, student_problem_set=sp_set)
-            except StudentProblemSolution.DoesNotExist:
-                student_psol = None
-            problem_solution_dict[problem] = student_psol
-    except StudentProblemSet.DoesNotExist:
-        problem_solution_dict = {
-            problem: None for problem in ps.problems.all()}
-    context = {
-        'problem_set': ps,
-        'problem_solution_dict': problem_solution_dict,
-        'additional_file_name': ADDITIONAL_FILE_NAME,
-        'max_additional_files': MAX_ADDITIONAL_FILES}
-    return render(request, 'course/attempt_problem_set.html', context)
+    if request.method == 'GET':
+        ps = _get_problem_set(ps_id, request.user.reedie)
+        problem_solution_dict = {}
+        try:
+            sp_set = StudentProblemSet.objects.get(
+                problem_set=ps, user=request.user.reedie)
+            for problem in ps.problems.all():
+                try:
+                    student_psol = StudentProblemSolution.objects.get(
+                        problem=problem, student_problem_set=sp_set)
+                except StudentProblemSolution.DoesNotExist:
+                    student_psol = None
+                problem_solution_dict[problem] = student_psol
+        except StudentProblemSet.DoesNotExist:
+            problem_solution_dict = {
+                problem: None for problem in ps.problems.all()}
+        context = {
+            'problem_set': ps,
+            'problem_solution_dict': problem_solution_dict,
+            'additional_file_name': ADDITIONAL_FILE_NAME,
+            'max_additional_files': MAX_ADDITIONAL_FILES}
+        return render(request, 'course/attempt_problem_set.html', context)
+    else:
+        raise Http404("Don't do that")
 
 
 @login_required
@@ -190,6 +204,11 @@ def submit_success(request, ps_id, p_id):
     else:  # if it's a human graded problem
         return results_problem_detail(request, ps_id, p_id)
 
+@csrf_protect
+def notifyURL(request):
+    print("a job has finished!!")
+    print(request)
+    return 
 
 @login_required
 def problem_set_index(request):
@@ -245,6 +264,9 @@ def problem_submit(request, ps_id, p_id):
         student_psol.attempt_num += 1
         student_psol.save()
 
+        #potential celery task to replace the above
+        # update_submission_task = update_submission(ps_id, p_id)
+
         # create the student result set & problem
         # result_set, prs_created = ProblemResultSet.objects.get_or_create(sp_set = student_ps_sol, user=request.user, problem_set=ps)
         mytimestamp = None
@@ -260,6 +282,7 @@ def problem_submit(request, ps_id, p_id):
 
         additional_files = 0
         files = []  # for the addJob
+        file_batch = [] #for the celery tasks
         # getting all the submitted files
         for name, f in request.FILES.items():
             # print(name, ADDITIONAL_FILE_NAME)
@@ -290,12 +313,13 @@ def problem_submit(request, ps_id, p_id):
                                 'exception': name + " is an invalid filename."}, status=403)
                         #raise PermissionDenied(name + " is an invalid filename.")
 
-            localfile = name + "-" + request.user.username
             if problem.autograde_problem:
-                r = tango.upload(problem, ps, localfile, f.read())
+                localfile = name + "-" + request.user.username
+                file_batch.append(send_file_to_tango.s(ps_id, p_id, request.user.reedie.id, localfile, f.read()))
                 # for the addJob command
                 files.append({"localFile": localfile, "destFile": name})
 
+            #IFJ 1.20.16: this can be a celery task
             attempts = student_psol.attempt_num
             new_prob_file = StudentProblemFile.objects.create(
                 required_problem_filename=required_pf,
@@ -305,6 +329,7 @@ def problem_submit(request, ps_id, p_id):
             new_prob_file.save()
 
         if problem.autograde_problem:  # these operatons are only required for autograding
+            #IFJ 1.20.16 TODO: edit this so only this course's grader libs get uploaded
             # add grader libraries
             for lib in GraderLib.objects.all():
                 name = lib.lib_upload.name.split("/")[-1]
@@ -326,26 +351,36 @@ def problem_submit(request, ps_id, p_id):
                     "prevscore": prevscore,
                     "timedelta": student_psol.is_late()})
             data_name = "data.json" + "-" + request.user.username
-            tango.upload(problem, ps, data_name, tango_data)
+            file_batch.append(send_file_to_tango.s(ps_id, p_id, request.user.reedie.id, data_name, tango_data))
+            # tango.upload(problem, ps, data_name, tango_data)
             files.append({"localFile": data_name, "destFile": "data.json"})
 
-            # making Tango run the files
+            #batch upload the files
             jobName = tango.get_jobName(problem, ps, request.user.username)
-            r = tango.addJob(
-                problem,
-                ps,
-                files,
-                jobName,
-                jobName,
-                timeout=problem.time_limit)
-            if r.status_code is not 200:
-                return redirect('500.html')
-            else:
-                response = r.json()
-                student_psol.job_id = response["jobId"]
-                prob_result.job_id = response["jobId"]
-                student_psol.save()
-                prob_result.save()
+            file_upload_job = group(file_batch)
+            celery_callback = submit_job_to_tango.s(ps_id, p_id, student_psol.id, request.user.reedie.id, files, jobName, problem.time_limit) | get_response.s(prob_result.id)
+            # add_job_to_tango = chord(file_upload_job)(callback)
+            add_job_to_tango = (file_upload_job | celery_callback).delay()
+            # update_response = (add_job_to_tango | update_results.s(student_psol.id, prob_result.id)).apply_async()
+            # add_job_to_tango = (group(file_batch) | submit_job_to_tango.s(ps_id, p_id, request.user.reedie.id, files, jobName, problem.time_limit) | get_response.s(prob_result.id)).delay()
+            # res = update_results(request.user.username, prob_result.id).delay(countdown=5)
+
+            # r = tango.addJob(
+            #     problem,
+            #     ps,
+            #     files,
+            #     jobName,
+            #     jobName,
+            #     timeout=problem.time_limit)
+            # if r.status_code is not 200:
+            #     return redirect('500.html')
+            # else:
+            #     #ifj: should be a celery task
+            #     response = r.json()
+            #     student_psol.job_id = response["jobId"]
+            #     prob_result.job_id = response["jobId"]
+            #     student_psol.save()
+            #     prob_result.save()
         return redirect('course:submit_success', ps_id, p_id)
 
     else:
@@ -486,8 +521,7 @@ def _get_problem_result(solution, request):
             # context = {'exception' : "Uhh, Something went wrong with your code. Did you run (and test) your code?  If not, make sure your code is bug free and resubmit. \nIf the problem persists, contact your professor or TA, as it might be a problem with the grading script."}
             # return render(request, '500.html', context, status=500)
             # except ValueError: #if the json isn't there, something went wrong when running the job, or the grader file messed up
-            #raise Http404("Something went wrong. Make sure your code is bug free and resubmit. \nIf the problem persists, contact your professor or TA")
-
+            # raise Http404("Something went wrong. Make sure your code is bug free and resubmit. \nIf the problem persists, contact your professor or TA")
     else:
         # special not-autograded stuff goes here
         prob_result = ProblemResult.objects.get(

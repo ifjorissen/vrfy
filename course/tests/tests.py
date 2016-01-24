@@ -16,6 +16,7 @@ class DataMaker(object):
     def make_a_problem(self):
         fake_problem = FakeDingus()
         fake_problem.title = 'Problem Title'
+        fake_problem.id = 2
         fake_problem.cs_course = FakeDingus()
         fake_problem.cs_course.num = 5
         fake_problem.get_upload_folder = lambda: "fake_folder/"
@@ -26,6 +27,7 @@ class DataMaker(object):
     def make_problem_set(self):
         fake_pset = FakeDingus()
         fake_pset.title = 'The Title of This Problem Set'
+        fake_pset.id = 3
         return fake_pset
 
     @classmethod
@@ -39,10 +41,18 @@ class DataMaker(object):
     @classmethod
     def make_student_problem_solution(self):
         sps = FakeDingus()
+        sps.id = 4
         sps.problem = self.make_a_problem()
         sps.student_problem_set = self.make_student_problem_set()
         return sps
 
+    @classmethod
+    def make_grader_lib(self):
+        grader_lib = FakeDingus()
+        grader_lib.id = 6
+        grader_lib.cs_course = FakeDingus()
+        grader_lib.cs_course.num = 5
+        return grader_lib
 
 class TestPathmakers(unittest.TestCase):
 
@@ -52,8 +62,8 @@ class TestPathmakers(unittest.TestCase):
         dingus.attempt_num = 1
 
         expected = (
-            '5/folio/catbug/the-title-of-this-problem-set/' +
-            'problem-title_files/v1/poot'
+            'cs5/folio/catbug/the-title-of-this-problem-set_3/' +
+            'problem-title_2_files/v1/poot'
         )
 
         res = course.models.student_file_upload_path(dingus, 'poot')
@@ -77,15 +87,16 @@ class TestPathmakers(unittest.TestCase):
 
     @mock.patch('course.models.os')
     def test_grader_lib_upload_path(self, mock_os):
+        dingus = DataMaker.make_grader_lib()
         fake_path = 'otter_pops'
 
-        expected_new_path = 'lib/' + fake_path
+        expected_new_path = 'cs5/lib/' + fake_path + "_6"
         expected_checked = vrfy.settings.MEDIA_ROOT + expected_new_path
 
         # Path doesn't exist, rm should not be called
         mock_os.path.isfile.return_value = False
 
-        generated_path = course.models.grader_lib_upload_path({}, fake_path)
+        generated_path = course.models.grader_lib_upload_path(dingus, fake_path)
 
         mock_os.path.isfile.assert_called_with(expected_checked)
         mock_os.remove.assert_not_called()
@@ -94,7 +105,7 @@ class TestPathmakers(unittest.TestCase):
         # Path exists
         mock_os.path.isfile.return_value = True
 
-        generated_path = course.models.grader_lib_upload_path({}, fake_path)
+        generated_path = course.models.grader_lib_upload_path(dingus, fake_path)
 
         mock_os.path.isfile.assert_called_with(expected_checked)
         mock_os.remove.assert_called_with(vrfy.settings.MEDIA_ROOT +
