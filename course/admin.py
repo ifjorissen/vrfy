@@ -542,12 +542,13 @@ class StudentProblemSolutionAdmin(admin.ModelAdmin):
 @admin.register(models.GraderLib)
 class GraderLibAdmin(admin.ModelAdmin):
     # readonly_fields=('lib_upload',)
-    fields = ('lib_upload', 'comment')
+    fields = ('lib_upload', 'cs_course', 'comment')
+    list_display = ('lib_upload', 'cs_course')
 
     def get_readonly_fields(self, request, obj=None):
         if obj:  # obj is not None, so this is an edit
             # Return a list or tuple of readonly fields' names
-            return ['lib_upload', ]
+            return ['lib_upload', 'cs_course']
         else:  # This is an addition
             return []
 

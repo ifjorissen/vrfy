@@ -25,12 +25,7 @@ import sys
 sys.path.append("../")
 import vrfy.settings
 
-#messages for success, etc
-from django.contrib import messages
-
-#form imports for student problem solutions
-# from django.forms import modelformset_factory, inlineformset_factory
-from .forms import StudentProblemSolutionForm
+#import celery tasks
 from .tasks import *
 
 
@@ -385,7 +380,6 @@ def problem_submit(request, ps_id, p_id):
             file_upload_job = group(file_batch)
             celery_callback = submit_job_to_tango.s(student_psol.id, prob_result.id, files, jobName, problem.time_limit) | get_response.s(prob_result.id)
             add_job_to_tango = (file_upload_job | celery_callback).delay()
-
         return redirect('course:submit_success', ps_id, p_id)
 
     else:
@@ -394,10 +388,6 @@ def problem_submit(request, ps_id, p_id):
 
 @login_required
 def results_detail(request, ps_id):
-    print('Request:\n')
-    print(request)
-    print('PS ID:\n')
-    print(ps_id)
     # returns the results of a given problem set (and all attempts)
     # logic to figure out if the results are availiable and if so, get them
     ps = _get_problem_set(ps_id, request.user.reedie)
