@@ -244,6 +244,10 @@ class ProblemSetAdmin(admin.ModelAdmin):
 class StudentProblemSetAdmin(admin.ModelAdmin):
     readonly_fields = ('problem_set', 'user', 'submitted')
     inlines = [StudentProblemSolutionInline]
+
+    class Media:
+        js = ['course/js/list_filter_collapse.js']
+
     list_display = (
         'problem_set',
         'cs_sections',
@@ -481,6 +485,7 @@ class ProblemResultAdmin(admin.ModelAdmin):
         css = {
             "all": ("course/css/pygments.css",)
         }
+        js = ['course/js/list_filter_collapse.js']
     readonly_fields = (
         'cs_sections',
         'problem',
