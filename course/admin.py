@@ -270,6 +270,7 @@ class StudentProblemSolutionAdmin(admin.ModelAdmin):
         css = {
             "all": ("course/css/pygments.css",)
         }
+        js = ['course/js/list_filter_collapse.js', 'course/js/alert_reassess.js']
 
     can_delete = False
     exclude = ('job_id',)
@@ -323,8 +324,7 @@ class StudentProblemSolutionAdmin(admin.ModelAdmin):
         'submitted',
         'latest_score',
         'late')
-    list_filter = ('student_problem_set__user__user__username',
-                   'student_problem_set__problem_set', 'problem')
+    list_filter = ('student_problem_set__problem_set__cs_section', 'student_problem_set__problem_set', 'student_problem_set__user__user__username', 'problem')
     # search_fields = ('student_problem_set__user__username',)
 
     def export_csv(self, request, queryset):
