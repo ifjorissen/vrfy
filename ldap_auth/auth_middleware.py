@@ -45,6 +45,8 @@ class LDAPRemoteUserMiddleware(RemoteUserMiddleware):
     except KeyError:
       if LOCAL_DEV:
         username = 'isjoriss'
+      else:
+        username = None
       # If specified header doesn't exist then remove any existing
       # authenticated remote-user, or return (leaving request.user set to
       # AnonymousUser by the AuthenticationMiddleware).
