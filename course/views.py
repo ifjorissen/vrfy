@@ -399,7 +399,7 @@ def problem_submit(request, ps_id, p_id):
         return redirect('course:submit_success', ps_id, p_id)
 
     else:
-        raise HttpResponseForbidden("Don't do that")
+        return HttpResponseForbidden("Don't do that")
 
 
 @login_required
