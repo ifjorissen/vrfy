@@ -32,4 +32,7 @@ urlpatterns = [
         name='results_problem_detail'),
     url(r'^results/problem-set(?P<ps_id>[0-9]+)/$',
         views.results_detail, name='results_detail'),
+
+    #serve problem assets to admin users 
+    url(r'^problem_assets/(?P<path>.*)$', views.serve_problem_asset, name='serve_problem_asset'),
 ]
