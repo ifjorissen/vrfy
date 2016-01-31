@@ -139,9 +139,12 @@ STATIC_URL = '/static/'
 MEDIA_ROOT = 'problem_assets/'
 # MEDIA_URL = 'http://localhost:8000/problem_assets/'
 MEDIA_URL = '/problem_assets/'
+# MEDIA_URL = os.path.join(BASE_DIR, "problem_assets/")
 STATICFILES_DIRS = (
     # os.path.join(BASE_DIR, "static"),
+    os.path.join(BASE_DIR, "problem_assets/"),
     os.path.join(BASE_DIR, "bower_components"),
+    # '/problem_assets/'
 )
 
 # TANGO Settings (for more info see documentation/tango.md)

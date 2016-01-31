@@ -19,6 +19,7 @@ from django.shortcuts import render_to_response
 from django.utils.dateparse import parse_datetime
 from django.views.decorators.csrf import csrf_exempt
 
+
 #paginator for problem_set_index and your_solutions
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 import sys
@@ -28,6 +29,9 @@ import vrfy.settings
 #import celery tasks
 from .tasks import *
 
+#import django.contrib.staticfile.views.serve 
+#so we can make a view to allow admins to see problem assets
+from django.contrib.staticfiles import views
 
 # from celery import group, chord, chain
 
@@ -227,12 +231,24 @@ def notifyURL(request, spsol_id, probres_id):
         tango_result = f.read()
         tango_result = tango_result.decode(('utf-8'))
 
-        task = save_autograde_results(spsol_id, probres_id, tango_result)            
+        task = save_autograde_results(spsol_id, probres_id, tango_result).delay()            
         response = HttpResponse()
         response.status_code = 202
         return response
     else:
         return HttpResponseForbidden("Don't do that.") 
+
+
+@login_required
+def serve_problem_asset(request, path):
+    '''
+    a wrapper function around django.contrib.staticfiles.views.serve()
+    to serve problem assets to superusers only
+    '''
+    if request.user.is_superuser:
+        return views.serve(request, path, show_indexes=True)
+    else:
+        return HttpResponseForbidden("Don't do that.")
 
 @login_required
 def problem_set_index(request):

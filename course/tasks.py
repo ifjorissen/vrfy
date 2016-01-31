@@ -94,7 +94,7 @@ def save_autograde_results(spsol_id, prob_result_id, tango_result):
       json_log = json.loads(log_data)
       score = json_log["score_sum"]
       prob_result.max_score = json_log["max_score"]
-    except (IndexError, TypeError):
+    except (ValueError, IndexError, TypeError):
       score = 0
       json_log = {'score_sum': '0', 'external_log': ["We weren't able to parse the output from the autograder. Please let your professor know."]}
 
