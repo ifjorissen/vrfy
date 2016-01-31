@@ -231,7 +231,7 @@ def notifyURL(request, spsol_id, probres_id):
         tango_result = f.read()
         tango_result = tango_result.decode(('utf-8'))
 
-        task = save_autograde_results(spsol_id, probres_id, tango_result).delay()            
+        task = save_autograde_results.delay(spsol_id, probres_id, tango_result)        
         response = HttpResponse()
         response.status_code = 202
         return response
